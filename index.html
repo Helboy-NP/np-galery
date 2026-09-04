@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>NPGalery</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- Library Render Dokumen & Barcode Scanner HP Real-Time -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+    <div id="auth-modal" class="auth-overlay hidden">
+        <div class="auth-card">
+            <div class="auth-header">
+                <img src="logo-np.jpg" alt="Logo NPGalery" class="auth-logo">
+                <h2>Masuk ke NPGalery</h2>
+                <p>Silakan masukkan kredensial untuk melanjutkan</p>
+            </div>
+            <form id="auth-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="auth-username">Username</label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="auth-username" placeholder="Masukkan username" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="auth-password">Password</label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="auth-password" placeholder="Masukkan password" required>
+                    </div>
+                </div>
+                <button type="submit" class="auth-btn">
+                    <span>Masuk</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <header class="floating-header-container">
+        <div class="floating-header">
+            <div class="header-brand">
+                <img src="logo-np.jpg" alt="Logo NPGalery" class="app-logo">
+                <h1 class="title">NP - Galery</h1>
+            </div>
+
+            <div class="header-actions">
+                <button id="btn-restart" class="header-icon-btn" title="Restart Aplikasi" onclick="restartApp(this)">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+                
+                <button id="btn-protection" class="header-icon-btn status-protected" title="Status Proteksi: Aman" onclick="toggleProtectionStatus(this)">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </button>
+                
+                <button id="btn-theme" class="header-icon-btn" title="Ganti Tema" onclick="toggleTheme()">
+                    <i class="fa-solid fa-moon" id="theme-icon"></i>
+                </button>
+                
+                <button id="btn-logout" class="header-icon-btn" title="Keluar / Logout" onclick="handleLogout()">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="content-container">
+        <div class="content-card">
+            
+            <section id="section-transaksi" class="tab-content active">
+                <div class="stats-dashboard">
+                    <div class="stat-card stat-main">
+                        <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Keuntungan</span>
+                            <span id="keuntungan-qty">0 Unit</span>
+                            <h3 class="stat-value" id="keuntungan-nominal">Rp 0</h3>
+                        </div>
+                    </div>
+
+                    <div class="stat-side-group">
+                        <div class="stat-card">
+                            <i class="fa-solid fa-box-open stat-icon-small"></i>
+                            <div>
+                                <span class="stat-label-small">Stok Ready</span>
+                                <h4 class="stat-value-small">0</h4>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa-solid fa-bag-shopping stat-icon-small"></i>
+                            <div>
+                                <span class="stat-label-small">Terjual</span>
+                                <h4 class="stat-value-small">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-tab-container sub-tab-grid-3" style="display: flex;">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('sub-stok-jual', this)">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                        <span>Stok</span>
+                    </button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('sub-diagnosis', this)">
+                        <i class="fa-solid fa-stethoscope"></i>
+                        <span>System Check</span>
+                    </button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('sub-modal', this)">
+                        <i class="fa-solid fa-coins"></i>
+                        <span>Modal</span>
+                    </button>
+                </div>
+
+                <div id="sub-stok-jual" class="sub-content active">
+                    
+                    <button id="btn-toggle-form" class="toggle-form-btn" onclick="toggleStokForm()">
+                        <div class="toggle-btn-left">
+                            <i class="fa-solid fa-circle-plus"></i>
+                            <span>Tambah Unit Masuk</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down toggle-icon" id="icon-toggle-form"></i>
+                    </button>
+
+                    <div id="stok-form-collapse" class="stok-form-collapse collapsed">
+                        <div class="add-product-card glass-form">
+                            
+                            <div class="add-form-group position-relative">
+                                <label>Pilih Tipe HP (Ketik minimal 2 huruf)</label>
+                                <div class="autocomplete-wrapper">
+                                    <i class="fa-solid fa-magnifying-glass icon-search-glass"></i>
+                                    <input type="text" id="stok-produk-input" placeholder="Cari tipe HP di sini..." autocomplete="off" onkeyup="handleAutocomplete(this.value)" onfocus="handleAutocomplete(this.value)">
+                                    <ul id="stok-autocomplete-list" class="autocomplete-list hidden"></ul>
+                                </div>
+                            </div>
+                            
+                            <div class="add-price-row">
+                                <div class="add-form-group half-width">
+                                    <label>Kondisi Unit</label>
+                                    <select id="stok-kondisi" class="form-select-glass">
+                                        <option value="New">Baru (New)</option>
+                                        <option value="Second">Bekas (Second)</option>
+                                    </select>
+                                </div>
+                                <div class="add-form-group half-width">
+                                    <label>Kelengkapan</label>
+                                    <select id="stok-kelengkapan" class="form-select-glass">
+                                        <option value="Fullset">Fullset Lengkap</option>
+                                        <option value="Unit + Charger">Batangan + Cas</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="add-price-row">
+                                <div class="add-form-group half-width">
+                                    <label>Nomor IMEI / SN</label>
+                                    <div class="imei-scan-wrapper">
+                                        <input type="text" id="stok-imei" placeholder="Ketik atau scan barcode">
+                                        <button type="button" id="btn-scan-imei" onclick="startImeiScanner()" title="Scan Barcode/QR Real-Time">
+                                            <i class="fa-solid fa-camera"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="add-form-group half-width">
+                                    <label>Jumlah Unit</label>
+                                    <input type="number" id="stok-qty" placeholder="1" min="1" value="1">
+                                </div>
+                            </div>
+
+                            <div class="add-price-row">
+                                <div class="add-form-group half-width">
+                                    <label>Modal Ambil (Rp)</label>
+                                    <input type="text" id="stok-harga" placeholder="Contoh: 1.500.000">
+                                </div>
+                                <div class="add-form-group half-width">
+                                    <label>Tanggal Barang Masuk</label>
+                                    <input type="date" id="stok-tanggal">
+                                </div>
+                            </div>
+
+                            <div class="add-action-row">
+                                <button class="add-submit-btn compact-btn" onclick="simpanStokBaru()">
+                                    <i class="fa-solid fa-floppy-disk"></i> Masukkan ke Gudang
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="promo-action-bar">
+                        <button class="promo-btn btn-broadcast-wa" onclick="broadcastStokWA()" title="Salin dan buka format broadcast WhatsApp">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            <span>Broadcast WA</span>
+                        </button>
+                        <button class="promo-btn btn-story-banner" onclick="previewStoryBanner()" title="Lihat pratinjau banner katalog story">
+                            <i class="fa-solid fa-image"></i>
+                            <span>Banner Story</span>
+                        </button>
+                    </div>
+
+                    <div class="stok-masuk-section">
+                        <div class="stok-masuk-header">
+                            <div class="header-left">
+                                <i class="fa-solid fa-clipboard-list"></i>
+                                <h4>Daftar Stok Masuk</h4>
+                            </div>
+                            <span id="badge-stok-count" class="badge-count">0 Unit</span>
+                        </div>
+                        <div id="stok-masuk-container" class="stok-masuk-container">
+                            <div id="empty-stok-msg" class="empty-stok-msg">
+                                Belum ada unit yang dicatat hari ini.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="sub-diagnosis" class="sub-content">
+                    <div class="add-product-card compact-diagnosis-card" style="margin-top: 0;">
+                        <div class="add-header compact-header" style="margin-bottom: 12px;">
+                            <i class="fa-solid fa-stethoscope" style="font-size: 16px; color: var(--azure-primary);"></i>
+                            <h3>Diagnosis Hardware HP</h3>
+                        </div>
+                        
+                        <div class="diagnosis-search-stack">
+                            <div class="autocomplete-wrapper" style="flex: 1;">
+                                <i class="fa-solid fa-magnifying-glass icon-search-glass"></i>
+                                <input type="text" id="diagnosis-input-model" placeholder="Cari merek / model HP..." autocomplete="off">
+                            </div>
+                            <button class="add-submit-btn compact-btn" onclick="triggerDiagnosisCheck()" style="width: 100% !important; margin-top: 0;">
+                                <i class="fa-solid fa-clipboard-check"></i> Buka Menu & Ceklis
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stok-masuk-section" style="margin-top: 12px;">
+                        <div class="stok-masuk-header" style="margin-bottom: 8px;">
+                            <div class="header-left">
+                                <i class="fa-solid fa-list-check"></i>
+                                <h4>Shortcut Brand</h4>
+                            </div>
+                        </div>
+                        <div class="stok-masuk-container" style="padding: 10px; display: flex; flex-direction: row; gap: 8px; flex-wrap: wrap;">
+                            <button type="button" class="btn-select-ctrl" onclick="quickDiagnosisBrand('Samsung')"><i class="fa-solid fa-mobile"></i> Samsung</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sub-modal" class="sub-content">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-coins icon-placeholder"></i>
+                        <h2>Manajemen Modal</h2>
+                        <p>Catat dan pantau alokasi perputaran modal usaha.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-pricelist" class="tab-content">
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('sub-banding-harga', this)">
+                        <i class="fa-solid fa-code-compare"></i>
+                        <span>Perbandingan Harga</span>
+                    </button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('sub-tambah-produk', this)">
+                        <i class="fa-solid fa-circle-plus"></i>
+                        <span>Tambah Produk</span>
+                    </button>
+                </div>
+
+                <div id="sub-banding-harga" class="sub-content active">
+                    <div class="pricelist-filter-area">
+                        <div class="filter-search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="filter-model-input" placeholder="Cari Model Smartphone..." oninput="filterPriceList()">
+                        </div>
+                        <div class="filter-select-box">
+                            <select id="filter-brand-select" class="form-select-glass" onchange="filterPriceList()">
+                                <option value="ALL">Semua Merk</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- TOMBOL PINTASAN WA KE SUPPLIER/KONTAK DI BAWAH PENCARIAN -->
+                    <div class="pricelist-quick-bar">
+                        <button type="button" class="btn-quick-wa" onclick="openDirectWaModal()" title="Kirim Pesan WA ke Kontak/Supplier">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            <span>Chat Nomor WA</span>
+                        </button>
+                    </div>
+
+                    <div class="pricelist-summary">
+                        <span id="pricelist-count-badge">Menampilkan 0 Item</span>
+                    </div>
+
+                    <div id="pricelist-container" class="pricelist-cards-wrapper">
+                    </div>
+                </div>
+
+                <div id="sub-tambah-produk" class="sub-content">
+                    <div class="add-product-card">
+                        
+                        <div class="add-header compact-header">
+                            <i class="fa-solid fa-box-open"></i>
+                            <h3>Tambah Produk Baru</h3>
+                        </div>
+
+                        <div class="add-form-group">
+                            <label>Nama Produk (Merek di awal kata)</label>
+                            <input type="text" id="add-input-name" placeholder="Contoh: Realme 8 Pro Plus (8/128)">
+                        </div>
+                        
+                        <div class="add-price-row">
+                            <div class="add-form-group half-width">
+                                <label>Harga Jakarta</label>
+                                <input type="text" id="add-input-jkt" placeholder="Contoh: 1.500">
+                            </div>
+                            <div class="add-form-group half-width">
+                                <label>Harga Cikarang</label>
+                                <input type="text" id="add-input-sgc" placeholder="Contoh: 1.450">
+                            </div>
+                        </div>
+
+                        <div class="add-action-row">
+                            <button class="add-submit-btn compact-btn" onclick="addNewProduct()">
+                                <i class="fa-solid fa-plus"></i> Tambah
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-pribadi" class="tab-content">
+                <div class="stats-pribadi-grid">
+                    <div class="pribadi-card card-saldo">
+                        <div class="pribadi-card-header">
+                            <span class="pribadi-label">Saldo Aktif</span>
+                            <i class="fa-solid fa-vault pribadi-icon-bg"></i>
+                        </div>
+                        <h3 class="pribadi-value">Rp 0</h3>
+                    </div>
+
+                    <div class="pribadi-card card-pengeluaran">
+                        <div class="pribadi-card-header">
+                            <span class="pribadi-label">Pengeluaran</span>
+                            <i class="fa-solid fa-money-bill-transfer pribadi-icon-bg"></i>
+                        </div>
+                        <h3 class="pribadi-value">Rp 0</h3>
+                    </div>
+                </div>
+
+                <div class="sub-tab-container sub-tab-grid-3">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('sub-kas', this)">
+                        <i class="fa-solid fa-cash-register"></i>
+                        <span>Kas</span>
+                    </button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('sub-laporan', this)">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>Laporan</span>
+                    </button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('sub-rjual', this)">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>R.Jual</span>
+                    </button>
+                </div>
+
+                <!-- SUB-TAB KAS -->
+                <div id="sub-kas" class="sub-content active">
+                    
+                    <div class="pricelist-filter-area" style="margin-bottom: 16px;">
+                        <div class="filter-select-box" style="flex: 1;">
+                            <select id="filter-kas-kategori" class="form-select-glass" onchange="renderManajemenKas()">
+                                <option value="ALL">Semua Catatan</option>
+                                <option value="masuk">Uang Masuk</option>
+                                <option value="keluar">Uang Keluar</option>
+                            </select>
+                        </div>
+                        <div class="filter-search-box" style="flex: 1;">
+                            <input type="date" id="filter-kas-tanggal" onchange="renderManajemenKas()" style="padding: 9px 10px;">
+                        </div>
+                    </div>
+
+                    <button id="btn-toggle-kas-form" class="toggle-form-btn" onclick="toggleKasForm()">
+                        <div class="toggle-btn-left">
+                            <i class="fa-solid fa-circle-plus"></i>
+                            <span>Catat Keluar Masuk Uang</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down toggle-icon" id="icon-toggle-kas-form"></i>
+                    </button>
+
+                    <div id="kas-form-collapse" class="stok-form-collapse collapsed">
+                        <div class="add-product-card glass-form">
+                            <div class="add-header compact-header">
+                                <i class="fa-solid fa-cash-register"></i>
+                                <h3>Tambah Catatan Kas</h3>
+                            </div>
+
+                            <div class="add-form-group">
+                                <label>Untuk Keperluan Apa?</label>
+                                <input type="text" id="kas-keterangan" placeholder="Misal: Beli sparepart, makan, laba unit...">
+                            </div>
+                            
+                            <div class="add-price-row">
+                                <div class="add-form-group half-width">
+                                    <label>Aliran Kas</label>
+                                    <select id="kas-kategori" class="form-select-glass">
+                                        <option value="masuk">Uang Masuk (+)</option>
+                                        <option value="keluar">Uang Keluar (-)</option>
+                                    </select>
+                                </div>
+                                <div class="add-form-group half-width">
+                                    <label>Jumlah Uang (Rp)</label>
+                                    <div class="calc-input-wrapper">
+                                        <input type="text" id="kas-nominal" placeholder="Contoh: 150.000">
+                                        <button type="button" id="btn-open-calc" class="btn-calc-trigger" onclick="openKasCalculator()" title="Buka Kalkulator">
+                                            <i class="fa-solid fa-calculator"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="add-form-group">
+                                <label>Tanggal Transaksi</label>
+                                <input type="date" id="kas-tanggal">
+                            </div>
+
+                            <div class="add-action-row">
+                                <button class="add-submit-btn compact-btn" onclick="tambahKasPribadi()">
+                                    <i class="fa-solid fa-floppy-disk"></i> Simpan Catatan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stok-masuk-section" style="margin-top: 16px;">
+                        <div class="stok-masuk-header">
+                            <div class="header-left">
+                                <i class="fa-solid fa-book"></i>
+                                <h4>Riwayat Mutasi Kas</h4>
+                            </div>
+                            <span id="badge-kas-count" class="badge-count">0 Catatan</span>
+                        </div>
+                        <div id="kas-masuk-container" class="stok-masuk-container" style="max-height: 400px;">
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SUB-TAB LAPORAN DENGAN FILTER KATEGORI TUNGGAL -->
+                <div id="sub-laporan" class="sub-content">
+                    <div class="stok-masuk-header" style="margin-bottom: 12px;">
+                        <div class="header-left">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            <h4 style="font-size: 14px; font-weight: 800;">Laporan & Rekapitulasi</h4>
+                        </div>
+                        <button class="header-icon-btn" onclick="renderLaporanKeuangan()" title="Muat Ulang Laporan" style="width: 28px; height: 28px; background: var(--bg-page); border: 1px solid var(--border-subtle);">
+                            <i class="fa-solid fa-rotate-right" style="font-size: 11px; color: var(--text-secondary);"></i>
+                        </button>
+                    </div>
+
+                    <!-- 1 Filter Dropdown Kategori Utama Pengganti 4 Sub-Tab -->
+                    <div class="pricelist-filter-area" style="margin-bottom: 8px;">
+                        <div class="filter-select-box" style="flex: 1;">
+                            <label style="font-size: 10.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; display: block;">Pilih Kategori Laporan</label>
+                            <select id="report-main-category-select" class="form-select-glass" onchange="onReportCategorySelectChanged(this.value)">
+                                <option value="kas">Kas Pribadi</option>
+                                <option value="penjualan">Penjualan</option>
+                                <option value="stok">Stok Ready</option>
+                                <option value="pricelist">Price List</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Filter Khusus Kas (Muncul otomatis saat Kas dipilih) -->
+                    <div id="report-filter-kas-area" class="pricelist-filter-area" style="margin-top: 8px; margin-bottom: 8px;">
+                        <div class="filter-select-box" style="flex: 1;">
+                            <select id="report-filter-kas-kategori" class="form-select-glass" onchange="renderLaporanKeuangan()">
+                                <option value="ALL">Semua Mutasi</option>
+                                <option value="masuk">Kas Masuk Saja</option>
+                                <option value="keluar">Kas Keluar Saja</option>
+                            </select>
+                        </div>
+                        <div class="filter-search-box" style="flex: 1;">
+                            <input type="date" id="report-filter-kas-tanggal" onchange="renderLaporanKeuangan()" style="padding: 9px 10px;" title="Filter Tanggal Spesifik">
+                        </div>
+                    </div>
+
+                    <!-- Filter Khusus Price List (Muncul otomatis saat Price List dipilih) -->
+                    <div id="report-filter-pricelist-area" style="margin-top: 8px; margin-bottom: 8px; display: none; flex-direction: column; gap: 8px;">
+                        <div class="pricelist-filter-area" style="margin-bottom: 0;">
+                            <div class="filter-select-box" style="flex: 1;">
+                                <select id="report-filter-brand-select" class="form-select-glass" onchange="onReportBrandChanged()">
+                                    <option value="ALL">Semua Merk</option>
+                                </select>
+                            </div>
+                            <div class="filter-search-box" style="flex: 1.2;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="report-filter-model-input" placeholder="Cari tipe model..." oninput="onReportBrandChanged()">
+                            </div>
+                        </div>
+                        <div class="model-selection-ctrl-bar">
+                            <span id="selected-models-count-badge" class="selection-indicator">0 Model Dipilih</span>
+                            <div class="selection-actions-btns">
+                                <button type="button" class="btn-select-ctrl" onclick="selectAllPriceListModels(true)"><i class="fa-solid fa-check-double"></i> Pilih Semua</button>
+                                <button type="button" class="btn-select-ctrl" onclick="selectAllPriceListModels(false)"><i class="fa-solid fa-xmark"></i> Batal Semua</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="export-action-bar" style="margin-top: 10px;">
+                        <button class="export-btn preview-action-btn" onclick="openReportPreview()">
+                            <i class="fa-solid fa-eye"></i> Preview
+                        </button>
+                        <div class="export-dropdown-group">
+                            <select id="export-format-select" class="form-select-glass" style="font-size: 12px; padding: 8px 10px;">
+                                <option value="txt">Format TXT</option>
+                                <option value="csv">Format CSV (Excel)</option>
+                                <option value="docs">Format DOCS</option>
+                                <option value="img">Format Gambar (PNG)</option>
+                            </select>
+                            <button class="export-btn download-action-btn" onclick="executeExportReport()">
+                                <i class="fa-solid fa-download"></i> Unduh
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="laporan-container" class="laporan-grid" style="margin-top: 10px;">
+                    </div>
+                </div>
+
+                <div id="sub-rjual" class="sub-content">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-clock-rotate-left icon-placeholder"></i>
+                        <h2>Riwayat Penjualan</h2>
+                        <p>Daftar riwayat transaksi barang yang telah terjual.</p>
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <nav class="floating-nav-container">
+        <div class="floating-nav">
+            <button class="nav-item active" onclick="switchTab('section-transaksi', this)">
+                <i class="fa-solid fa-right-left"></i>
+                <span>Transaksi</span>
+            </button>
+
+            <button class="nav-item" onclick="switchTab('section-pricelist', this)">
+                <i class="fa-solid fa-tags"></i>
+                <span>Price List</span>
+            </button>
+
+            <button class="nav-item" onclick="switchTab('section-pribadi', this)">
+                <i class="fa-solid fa-wallet"></i>
+                <span>Pribadi</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MODAL POP-UP SCANNER KAMERA HP SUNGGUHAN (HTML5-QRCODE) -->
+    <div class="custom-modal-overlay" id="scanner-modal">
+        <div class="custom-modal-card scanner-modal-card">
+            <div class="edit-modal-header">
+                <h3><i class="fa-solid fa-camera" style="color: var(--azure-primary); margin-right: 6px;"></i> Scan IMEI / Barcode</h3>
+                <p style="font-size: 11px; color: var(--text-secondary);">Arahkan kamera ke barcode/QR pada dus HP</p>
+            </div>
+            <div class="scanner-viewfinder-wrap">
+                <div id="scanner-reader"></div>
+                <div class="scanner-target-laser"></div>
+            </div>
+            <div class="edit-modal-actions" style="margin-top: 14px;">
+                <button type="button" class="btn-cancel" onclick="stopImeiScanner()" style="width: 100%;">
+                    <i class="fa-solid fa-xmark"></i> Tutup Kamera
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP CHAT WHATSAPP KE SUPPLIER/NOMOR TERTENTU -->
+    <div class="custom-modal-overlay" id="direct-wa-modal">
+        <div class="custom-modal-card">
+            <div class="edit-modal-header">
+                <h3><i class="fa-brands fa-whatsapp" style="color: #10B981; margin-right: 6px;"></i> Chat WhatsApp</h3>
+                <p style="font-size: 11px; color: var(--text-secondary);">Langsung terhubung ke chat tanpa simpan kontak</p>
+            </div>
+            <div class="edit-input-group">
+                <label>Nomor HP / WhatsApp Tujuan</label>
+                <input type="tel" id="input-direct-wa-phone" placeholder="Contoh: 08123456789 atau 62812...">
+            </div>
+            <div class="edit-input-group">
+                <label>Pesan Awal (Opsional)</label>
+                <input type="text" id="input-direct-wa-msg" placeholder="Halo admin, mau tanya stok / price list...">
+            </div>
+            <div class="edit-modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeDirectWaModal()">Batal</button>
+                <button type="button" class="btn-save" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%);" onclick="submitDirectWa()">
+                    <i class="fa-brands fa-whatsapp"></i> Mulai Chat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DIAGNOSIS KODE DIAL DENGAN CHECKBOX -->
+    <div class="custom-modal-overlay" id="diagnosis-modal">
+        <div class="custom-modal-card" style="max-width: 420px; max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="margin-bottom: 10px; text-align: left; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                <h3 id="diagnosis-modal-title" style="font-size: 15px;"><i class="fa-solid fa-stethoscope" style="color: var(--azure-primary); margin-right: 6px;"></i> Menu Diagnosis</h3>
+                <p id="diagnosis-modal-subtitle" style="font-size: 11px; color: var(--text-secondary);">Daftar kode dial rahasia perangkat</p>
+            </div>
+            <div id="diagnosis-modal-body" style="overflow-y: auto; flex: 1; padding-right: 4px; display: flex; flex-direction: column; gap: 8px;">
+            </div>
+            <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button class="btn-cancel" onclick="closeDiagnosisModal()" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP KALKULATOR KAS -->
+    <div class="custom-modal-overlay" id="calc-modal">
+        <div class="custom-modal-card calc-modal-card">
+            <div class="edit-modal-header" style="margin-bottom: 8px; text-align: left; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                <h3 style="font-size: 15px;"><i class="fa-solid fa-calculator" style="color: var(--azure-primary); margin-right: 6px;"></i> Hitung Cepat Kas</h3>
+                <p style="font-size: 11px; color: var(--text-secondary);">Hitung total nominal sebelum dicatat</p>
+            </div>
+            <div class="calc-display-wrap">
+                <div id="calc-history" class="calc-history-text"></div>
+                <div id="calc-current" class="calc-current-text">0</div>
+            </div>
+            <div class="calc-keyboard-grid">
+                <button type="button" class="calc-btn calc-btn-func" onclick="calcClear()">C</button>
+                <button type="button" class="calc-btn calc-btn-func" onclick="calcBackspace()"><i class="fa-solid fa-delete-left"></i></button>
+                <button type="button" class="calc-btn calc-btn-op" onclick="calcAppendOp('/')">÷</button>
+                <button type="button" class="calc-btn calc-btn-op" onclick="calcAppendOp('*')">×</button>
+
+                <button type="button" class="calc-btn" onclick="calcAppendNumber('7')">7</button>
+                <button type="button" class="calc-btn" onclick="calcAppendNumber('8')">8</button>
+                <button type="button" class="calc-btn" onclick="calcAppendNumber('9')">9</button>
+                <button type="button" class="calc-btn calc-btn-op" onclick="calcAppendOp('-')">-</button>
+
+                <button type="button" class="calc-btn" onclick="calcAppendNumber('4')">4</button>
+                <button type="button" class="calc-btn" onclick="calcAppendNumber('5')">5</button>
+                <button type="button" class="calc-btn" onclick="calcAppendNumber('6')">6</button>
+                <button type="button" class="calc-btn calc-btn-op" onclick="calcAppendOp('+')">+</button>
+
+                <button type="button" class="calc-btn" onclick="calcAppendNumber('1')">1</button>
+                <button type="button" class="calc-btn" onclick="calcAppendNumber('2')">2</button>
+                <button type="button" class="calc-btn" onclick="calcAppendNumber('3')">3</button>
+                <button type="button" class="calc-btn calc-btn-eq" onclick="calcCalculate()">=</button>
+
+                <button type="button" class="calc-btn" onclick="calcAppendNumber('0')">0</button>
+                <button type="button" class="calc-btn" onclick="calcAppendNumber('000')">000</button>
+                <button type="button" class="calc-btn" onclick="calcAppendDot()">.</button>
+            </div>
+            <div class="calc-actions-footer">
+                <button type="button" class="btn-cancel" onclick="closeKasCalculator()" style="flex: 0.8;">Batal</button>
+                <button type="button" class="btn-save" onclick="applyCalculatorResult()"><i class="fa-solid fa-check"></i> Gunakan Hasil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL INVOICE A4 -->
+    <div class="custom-modal-overlay" id="invoice-modal">
+        <div class="custom-modal-card invoice-modal-card" style="max-width: 520px; max-height: 94vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="margin-bottom: 8px; text-align: left; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                <h3 style="font-size: 15px;"><i class="fa-solid fa-receipt" style="color: var(--azure-primary); margin-right: 6px;"></i> Invoice Penjualan A4</h3>
+                <p style="font-size: 11px; color: var(--text-secondary);">Bukti transaksi resmi NP - Galery Smartphone</p>
+            </div>
+            <div id="invoice-preview-body" class="invoice-preview-scroll-area"></div>
+            <div class="invoice-modal-actions" style="margin-top: 10px; display: flex; gap: 6px;">
+                <button class="btn-cancel" onclick="closeInvoiceModal()" style="flex: 0.7;">Selesai</button>
+                <button class="invoice-btn-wa" onclick="shareInvoiceWA()"><i class="fa-brands fa-whatsapp"></i> Kirim WA</button>
+                <button class="btn-save" onclick="downloadInvoiceImage()"><i class="fa-solid fa-download"></i> Unduh Nota A4</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PREVIEW LAPORAN (DINAMIS SESUAI FORMAT A4 / TXT / CSV) -->
+    <div class="custom-modal-overlay" id="report-preview-modal">
+        <div class="custom-modal-card" style="max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="margin-bottom: 12px; text-align: left; border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px;">
+                <h3 style="font-size: 16px;"><i class="fa-solid fa-file-lines" style="color: var(--azure-primary); margin-right: 6px;"></i> Pratinjau Detail Laporan</h3>
+                <p id="report-preview-subtitle" style="font-size: 11.5px; color: var(--text-secondary);">Rincian lengkap data kategori NPGalery</p>
+            </div>
+            <div id="report-preview-content" style="overflow-y: auto; flex: 1; padding-right: 4px; font-size: 12px; line-height: 1.5; color: var(--text-primary);"></div>
+            <div class="edit-modal-actions" style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+                <button class="btn-cancel" onclick="closeReportPreview()">Tutup</button>
+                <button class="btn-save" onclick="executeExportReportFromPreview()"><i class="fa-solid fa-download"></i> Unduh File</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BANNER STORY -->
+    <div class="custom-modal-overlay" id="story-preview-modal">
+        <div class="custom-modal-card story-preview-card" style="max-width: 440px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="margin-bottom: 10px; text-align: left; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                <h3 style="font-size: 15px;"><i class="fa-solid fa-image" style="color: var(--azure-primary); margin-right: 6px;"></i> Pratinjau Banner Story</h3>
+                <p style="font-size: 11px; color: var(--text-secondary);">Tampilan banner katalog siap dibagikan ke Story</p>
+            </div>
+            <div id="story-preview-body" class="story-preview-scroll-area"></div>
+            <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button class="btn-cancel" onclick="closeStoryPreview()">Tutup</button>
+                <button class="btn-save" onclick="executeDownloadStoryBanner()"><i class="fa-solid fa-download"></i> Unduh Banner</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wadah Render Canvas Laporan A4 Tersembunyi (Proporsi Lebar Standar 794px) -->
+    <div id="export-render-canvas-wrap" style="position: absolute; left: -9999px; top: 0; width: 794px; z-index: -1;">
+        <div id="export-render-canvas" class="elegant-export-card"></div>
+    </div>
+    <div id="story-banner-canvas-wrap" style="position: absolute; left: -9999px; top: 0; width: 480px; z-index: -1;">
+        <div id="story-banner-canvas" class="elegant-story-card"></div>
+    </div>
+    <div id="invoice-render-canvas-wrap" style="position: absolute; left: -9999px; top: 0; width: 794px; z-index: -1;">
+        <div id="invoice-render-canvas"></div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

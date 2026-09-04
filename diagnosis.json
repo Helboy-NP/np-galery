@@ -1,0 +1,141 @@
+{
+  "diagnosis_data": [
+    {
+      "brand": "Samsung",
+      "codes": [
+        { "code": "*#0*#", "description": "Hardware" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#1234#", "description": "Firmware" },
+        { "code": "*#0228#", "description": "Baterai" },
+        { "code": "*#9900#", "description": "SysDump" },
+        { "code": "*#0011#", "description": "Sinyal" },
+        { "code": "Samsung Member", "description": "APK" }
+      ]
+    },
+    {
+      "brand": "Oppo",
+      "codes": [
+        { "code": "*#899#", "description": "Engineer" },
+        { "code": "*#808#", "description": "Engineer" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#6776#", "description": "Firmware" },
+        { "code": "*#800#", "description": "Lookup" },
+        { "code": "Phone Manager", "description": "APK" }
+      ]
+    },
+    {
+      "brand": "Vivo",
+      "codes": [
+        { "code": "*#558#", "description": "Engineer" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#*#4636#*#*", "description": "Statistik" },
+        { "code": "*#*#4838#*#*", "description": "Statistik" },
+        { "code": "I Manager", "description": "APK" }
+      ]
+    },
+    {
+      "brand": "Realme",
+      "codes": [
+        { "code": "*#899#", "description": "Engineer" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#6776#", "description": "Software Version" },
+        { "code": "*#800#", "description": "Log Capture" },
+        { "code": "Phone Manager", "description": "APK" }
+      ]
+    },
+    {
+      "brand": "Infinix",
+      "codes": [
+        { "code": "*#90#", "description": "Engineer" },
+        { "code": "*#87#", "description": "Auto Check" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#*#4636#*#*", "description": "Statistik" },
+        { "code": "Call Care", "description": "Garansi" },
+        { "code": "Phone Manager", "description": "APK" }
+      ]
+    },
+    {
+      "brand": "Tecno",
+      "codes": [
+        { "code": "*#90#", "description": "Engineer" },
+        { "code": "*#87#", "description": "Auto Check" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#*#4636#*#*", "description": "Statistik" },
+        { "code": "Menu CIT", "description": "Ketuk Versi Karnel" },
+        { "code": "Phone Master", "description": "APK" }
+      ]
+    },
+    {
+      "brand": "Itel",
+      "codes": [
+        { "code": "*#90#", "description": "Engineer" },
+        { "code": "*#87#", "description": "Auto Check" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#*#4636#*#*", "description": "Statistik" },
+        { "code": "*#1234#", "description": "Firmware" },
+        { "code": "Phone Master", "description": "APK" }
+      ]
+    },
+    {
+      "brand": "Poco",
+      "codes": [
+        { "code": "*#*#6484#*#*", "description": "Menu CIT" },
+        { "code": "*#*#64663#*#*", "description": "Menu CIT" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#*#4636#*#*", "description": "Statistik" },
+        { "code": "*#*#284#*#*", "description": "Bug Report" },
+        { "code": "Mode CIT", "description": "Ketuk Versi Karnel" }
+      ]
+    },
+    {
+      "brand": "Xiaomi",
+      "codes": [
+        { "code": "*#*#6484#*#*", "description": "Menu CIT" },
+        { "code": "*#*#64663#*#*", "description": "Menu CIT" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#*#4636#*#*", "description": "Statistik" },
+        { "code": "*#*#284#*#*", "description": "Bug Report" },
+        { "code": "Mode CIT", "description": "Ketuk Versi Karnel" }
+      ]
+    },
+    {
+      "brand": "Redmi",
+      "codes": [
+        { "code": "*#*#6484#*#*", "description": "Menu CIT" },
+        { "code": "*#*#64663#*#*", "description": "Menu CIT" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#*#4636#*#*", "description": "Statistik" },
+        { "code": "*#*#284#*#*", "description": "Bug Report" },
+        { "code": "Mode CIT", "description": "Ketuk Versi Karnel" }
+      ]
+    },
+    {
+      "brand": "Asus",
+      "codes": [
+        { "code": "Aplikasi Kalkulator .12345+=", "description": "Menu SMMI Test" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#*#4636#*#*", "description": "Statistik" },
+        { "code": "ROG", "description": "Aplikasi Armoury Crate > Console > Diagnostic" },
+        { "code": "Pengaturan > Sistem > Perawatan Perangkat", "description": "Manual" }
+      ]
+    },
+    {
+      "brand": "Huawei",
+      "codes": [
+        { "code": "*#*#2846579#*#*", "description": "Project Menu" },
+        { "code": "*#*#121314#*#*", "description": "Fungsional" },
+        { "code": "*#*#4636#*#*", "description": "Statistik" },
+        { "code": "My Huawei / Support / Hi Care", "description": "APK" }
+      ]
+    },
+    {
+      "brand": "iQOO",
+      "codes": [
+        { "code": "*#558#", "description": "Engineering Mode" },
+        { "code": "*#06#", "description": "Imei" },
+        { "code": "*#*#4838#*#*", "description": "Statistik" },
+        { "code": "I Manager", "description": "APK" }
+      ]
+    }
+  ]
+}

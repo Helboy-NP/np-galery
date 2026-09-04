@@ -1,0 +1,3677 @@
+[
+  {
+    "id": "1",
+    "brand": "INFINIX",
+    "model": "Smart 8 (4/64)",
+    "jkt": "1.100",
+    "sgc": "--"
+  },
+  {
+    "id": "2",
+    "brand": "INFINIX",
+    "model": "Smart 8 (4/128)",
+    "jkt": "1.000 / 1.200",
+    "sgc": "--"
+  },
+  {
+    "id": "3",
+    "brand": "INFINIX",
+    "model": "Smart 8 Pro (8/128)",
+    "jkt": "1.200 / 1.250",
+    "sgc": "1.200"
+  },
+  {
+    "id": "4",
+    "brand": "INFINIX",
+    "model": "Smart 9 HD (3/64)",
+    "jkt": "1.000 / 1.050",
+    "sgc": "750"
+  },
+  {
+    "id": "5",
+    "brand": "INFINIX",
+    "model": "Smart 9 HD (4/64)",
+    "jkt": "1.100 / 1.150",
+    "sgc": "900"
+  },
+  {
+    "id": "6",
+    "brand": "INFINIX",
+    "model": "Smart 9 (4/128)",
+    "jkt": "1.150 / 1.300",
+    "sgc": "1.000"
+  },
+  {
+    "id": "7",
+    "brand": "INFINIX",
+    "model": "Smart 10 (3/32)",
+    "jkt": "--",
+    "sgc": "800"
+  },
+  {
+    "id": "8",
+    "brand": "INFINIX",
+    "model": "Smart 10 (3/64)",
+    "jkt": "1.050 / 1.100",
+    "sgc": "--"
+  },
+  {
+    "id": "9",
+    "brand": "INFINIX",
+    "model": "Smart 10 (4/64)",
+    "jkt": "1.200 / 1.250",
+    "sgc": "1.000"
+  },
+  {
+    "id": "10",
+    "brand": "INFINIX",
+    "model": "Smart 10 (4/128)",
+    "jkt": "1.250 / 1.350",
+    "sgc": "1.100"
+  },
+  {
+    "id": "11",
+    "brand": "INFINIX",
+    "model": "Smart 10 Plus (8/128)",
+    "jkt": "1.350 / 1.550",
+    "sgc": "1.300"
+  },
+  {
+    "id": "12",
+    "brand": "INFINIX",
+    "model": "Smart 20 (4/64)",
+    "jkt": "--",
+    "sgc": "1.150"
+  },
+  {
+    "id": "13",
+    "brand": "INFINIX",
+    "model": "Smart 20 (4/128)",
+    "jkt": "--",
+    "sgc": "1.300"
+  },
+  {
+    "id": "14",
+    "brand": "INFINIX",
+    "model": "Hot 30i (4/128)",
+    "jkt": "--",
+    "sgc": "1.050"
+  },
+  {
+    "id": "15",
+    "brand": "INFINIX",
+    "model": "Hot 30i (8/128)",
+    "jkt": "1.200 / 1.250",
+    "sgc": "1.200"
+  },
+  {
+    "id": "16",
+    "brand": "INFINIX",
+    "model": "Hot 30i (8/256)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "17",
+    "brand": "INFINIX",
+    "model": "Hot 30 Play (4/128)",
+    "jkt": "--",
+    "sgc": "1.050"
+  },
+  {
+    "id": "18",
+    "brand": "INFINIX",
+    "model": "Hot 40i (8/256)",
+    "jkt": "1.350 / 1.400",
+    "sgc": "1.350"
+  },
+  {
+    "id": "19",
+    "brand": "INFINIX",
+    "model": "Hot 40 Pro (8/256)",
+    "jkt": "1.750",
+    "sgc": "1.550"
+  },
+  {
+    "id": "20",
+    "brand": "INFINIX",
+    "model": "Hot 40 Pro (12/256)",
+    "jkt": "1.850 / 1.900",
+    "sgc": "1.750"
+  },
+  {
+    "id": "21",
+    "brand": "INFINIX",
+    "model": "Hot 50i (6/128)",
+    "jkt": "1.300 / 1.400",
+    "sgc": "1.250"
+  },
+  {
+    "id": "22",
+    "brand": "INFINIX",
+    "model": "Hot 50 (8/128)",
+    "jkt": "1.625 / 1.650",
+    "sgc": "1.550"
+  },
+  {
+    "id": "23",
+    "brand": "INFINIX",
+    "model": "Hot 50 (6/256)",
+    "jkt": "1.625 / 1.650",
+    "sgc": "1.450"
+  },
+  {
+    "id": "24",
+    "brand": "INFINIX",
+    "model": "Hot 50 5G",
+    "jkt": "--",
+    "sgc": "1.650"
+  },
+  {
+    "id": "25",
+    "brand": "INFINIX",
+    "model": "Hot 50 Pro (8/256)",
+    "jkt": "1.700 / 1.800",
+    "sgc": "1.700"
+  },
+  {
+    "id": "26",
+    "brand": "INFINIX",
+    "model": "Hot 50 Pro Plus (8/256)",
+    "jkt": "2.000 / 2.200",
+    "sgc": "1.900"
+  },
+  {
+    "id": "27",
+    "brand": "INFINIX",
+    "model": "Hot 60i (6/128)",
+    "jkt": "1.700",
+    "sgc": "1.500"
+  },
+  {
+    "id": "28",
+    "brand": "INFINIX",
+    "model": "Hot 60i (8/256)",
+    "jkt": "1.850 / 2.000",
+    "sgc": "1.700"
+  },
+  {
+    "id": "29",
+    "brand": "INFINIX",
+    "model": "Hot 60 Pro (8/128)",
+    "jkt": "2.150 / 2.200",
+    "sgc": "1.900"
+  },
+  {
+    "id": "30",
+    "brand": "INFINIX",
+    "model": "Hot 60 Pro (8/256)",
+    "jkt": "2.250 / 2.400",
+    "sgc": "2.050"
+  },
+  {
+    "id": "31",
+    "brand": "INFINIX",
+    "model": "Hot 60 Pro Plus (8/128)",
+    "jkt": "2.300",
+    "sgc": "2.200"
+  },
+  {
+    "id": "32",
+    "brand": "INFINIX",
+    "model": "Hot 60 Pro Plus (8/256)",
+    "jkt": "2.400 / 2.450",
+    "sgc": "2.350"
+  },
+  {
+    "id": "33",
+    "brand": "INFINIX",
+    "model": "Hot 70 (4/128)",
+    "jkt": "1.700",
+    "sgc": "1.450"
+  },
+  {
+    "id": "34",
+    "brand": "INFINIX",
+    "model": "Hot 70 (6/128)",
+    "jkt": "1.900",
+    "sgc": "1.700"
+  },
+  {
+    "id": "35",
+    "brand": "INFINIX",
+    "model": "Hot 70 (6/256)",
+    "jkt": "--",
+    "sgc": "1.850"
+  },
+  {
+    "id": "36",
+    "brand": "INFINIX",
+    "model": "Hot 70 (8/128)",
+    "jkt": "--",
+    "sgc": "2.100"
+  },
+  {
+    "id": "37",
+    "brand": "INFINIX",
+    "model": "Note 30",
+    "jkt": "1.650",
+    "sgc": "--"
+  },
+  {
+    "id": "38",
+    "brand": "INFINIX",
+    "model": "Note 30 (8/256)",
+    "jkt": "--",
+    "sgc": "1.300"
+  },
+  {
+    "id": "39",
+    "brand": "INFINIX",
+    "model": "Note 30 Pro",
+    "jkt": "--",
+    "sgc": "1.600"
+  },
+  {
+    "id": "40",
+    "brand": "INFINIX",
+    "model": "Note 40 (8/256)",
+    "jkt": "1.850 / 1.900",
+    "sgc": "1.850"
+  },
+  {
+    "id": "41",
+    "brand": "INFINIX",
+    "model": "Note 40 (8/256) + Wireless",
+    "jkt": "2.000",
+    "sgc": "--"
+  },
+  {
+    "id": "42",
+    "brand": "INFINIX",
+    "model": "Note 40S (8/256)",
+    "jkt": "--",
+    "sgc": "1.900"
+  },
+  {
+    "id": "43",
+    "brand": "INFINIX",
+    "model": "Note 40 Pro 4G (8/256)",
+    "jkt": "2.250",
+    "sgc": "2.100"
+  },
+  {
+    "id": "44",
+    "brand": "INFINIX",
+    "model": "Note 40 Pro 5G (8/256)",
+    "jkt": "2.350 / 2.400",
+    "sgc": "2.300"
+  },
+  {
+    "id": "45",
+    "brand": "INFINIX",
+    "model": "Note 40 Pro Plus 5G (12/256)",
+    "jkt": "2.550",
+    "sgc": "2.500"
+  },
+  {
+    "id": "46",
+    "brand": "INFINIX",
+    "model": "Note 50 (8/256)",
+    "jkt": "2.275 / 2.300",
+    "sgc": "2.150"
+  },
+  {
+    "id": "47",
+    "brand": "INFINIX",
+    "model": "Note 50 Pro (8/256)",
+    "jkt": "2.600 / 2.700",
+    "sgc": "2.350"
+  },
+  {
+    "id": "48",
+    "brand": "INFINIX",
+    "model": "Note 50s 5G (8/256)",
+    "jkt": "2.650",
+    "sgc": "2.350"
+  },
+  {
+    "id": "49",
+    "brand": "INFINIX",
+    "model": "Note 50x 5G (8/256)",
+    "jkt": "2.500",
+    "sgc": "2.100"
+  },
+  {
+    "id": "50",
+    "brand": "INFINIX",
+    "model": "Note Edge (8/128)",
+    "jkt": "--",
+    "sgc": "2.250"
+  },
+  {
+    "id": "51",
+    "brand": "INFINIX",
+    "model": "Note Edge (8/256)",
+    "jkt": "2.700",
+    "sgc": "2.400"
+  },
+  {
+    "id": "52",
+    "brand": "INFINIX",
+    "model": "Note 60 (8/256)",
+    "jkt": "3.300",
+    "sgc": "2.600"
+  },
+  {
+    "id": "53",
+    "brand": "INFINIX",
+    "model": "Note 60 Pro (8/256)",
+    "jkt": "3.800",
+    "sgc": "3.000"
+  },
+  {
+    "id": "54",
+    "brand": "INFINIX",
+    "model": "Note 60 Pro (12/256)",
+    "jkt": "4.350",
+    "sgc": "--"
+  },
+  {
+    "id": "55",
+    "brand": "INFINIX",
+    "model": "Note 60 Pro (12/512)",
+    "jkt": "--",
+    "sgc": "3.500"
+  },
+  {
+    "id": "56",
+    "brand": "INFINIX",
+    "model": "GT 20 Pro (8/256)",
+    "jkt": "2.900",
+    "sgc": "--"
+  },
+  {
+    "id": "57",
+    "brand": "INFINIX",
+    "model": "GT 20 Pro (12/256)",
+    "jkt": "3.200",
+    "sgc": "--"
+  },
+  {
+    "id": "58",
+    "brand": "INFINIX",
+    "model": "GT 30 5G (8/256)",
+    "jkt": "3.100",
+    "sgc": "--"
+  },
+  {
+    "id": "59",
+    "brand": "INFINIX",
+    "model": "GT 30 (8/256)",
+    "jkt": "2.900",
+    "sgc": "2.300"
+  },
+  {
+    "id": "60",
+    "brand": "INFINIX",
+    "model": "GT 30 Pro (8/256)",
+    "jkt": "3.400",
+    "sgc": "2.950"
+  },
+  {
+    "id": "61",
+    "brand": "INFINIX",
+    "model": "GT 30 Pro (12/256)",
+    "jkt": "3.950",
+    "sgc": "3.400"
+  },
+  {
+    "id": "62",
+    "brand": "INFINIX",
+    "model": "GT 50 Pro (12/256)",
+    "jkt": "--",
+    "sgc": "4.000"
+  },
+  {
+    "id": "63",
+    "brand": "INFINIX",
+    "model": "GT 50 Pro (12/512)",
+    "jkt": "--",
+    "sgc": "4.500"
+  },
+  {
+    "id": "64",
+    "brand": "ITEL",
+    "model": "A100C (3/64)",
+    "jkt": "--",
+    "sgc": "850"
+  },
+  {
+    "id": "65",
+    "brand": "ITEL",
+    "model": "A100C (4/64)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "66",
+    "brand": "ITEL",
+    "model": "A200 (3/128)",
+    "jkt": "--",
+    "sgc": "950"
+  },
+  {
+    "id": "67",
+    "brand": "ITEL",
+    "model": "A200 (4/64)",
+    "jkt": "--",
+    "sgc": "1.050"
+  },
+  {
+    "id": "68",
+    "brand": "ITEL",
+    "model": "A80 (4/128)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "69",
+    "brand": "ITEL",
+    "model": "A90 (4/64)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "70",
+    "brand": "ITEL",
+    "model": "A90 (4/128)",
+    "jkt": "--",
+    "sgc": "1.150"
+  },
+  {
+    "id": "71",
+    "brand": "ITEL",
+    "model": "City 100 (6/128)",
+    "jkt": "--",
+    "sgc": "1.200"
+  },
+  {
+    "id": "72",
+    "brand": "ITEL",
+    "model": "City 100 (8/128)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "73",
+    "brand": "ITEL",
+    "model": "City 200 (4/128)",
+    "jkt": "--",
+    "sgc": "1.100"
+  },
+  {
+    "id": "74",
+    "brand": "ITEL",
+    "model": "City 200 (4/256)",
+    "jkt": "--",
+    "sgc": "1.300"
+  },
+  {
+    "id": "75",
+    "brand": "ITEL",
+    "model": "City 200 (6/128)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "76",
+    "brand": "ITEL",
+    "model": "P55 (6/128 5G)",
+    "jkt": "--",
+    "sgc": "1.100"
+  },
+  {
+    "id": "77",
+    "brand": "ITEL",
+    "model": "P55 (8/128)",
+    "jkt": "--",
+    "sgc": "1.250"
+  },
+  {
+    "id": "78",
+    "brand": "ITEL",
+    "model": "P65 (8/256)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "79",
+    "brand": "ITEL",
+    "model": "P70 (4/128)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "80",
+    "brand": "ITEL",
+    "model": "P70 (8/128)",
+    "jkt": "--",
+    "sgc": "1.300"
+  },
+  {
+    "id": "81",
+    "brand": "ITEL",
+    "model": "RS4 (8/128)",
+    "jkt": "1.650",
+    "sgc": "1.400"
+  },
+  {
+    "id": "82",
+    "brand": "ITEL",
+    "model": "RS4 (8/256)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "83",
+    "brand": "ITEL",
+    "model": "RS4 (12/256)",
+    "jkt": "1.800",
+    "sgc": "1.750"
+  },
+  {
+    "id": "84",
+    "brand": "ITEL",
+    "model": "S23 (8/128)",
+    "jkt": "--",
+    "sgc": "1.250"
+  },
+  {
+    "id": "85",
+    "brand": "ITEL",
+    "model": "S23 (8/256)",
+    "jkt": "--",
+    "sgc": "1.400"
+  },
+  {
+    "id": "86",
+    "brand": "ITEL",
+    "model": "S23 plus (8/256)",
+    "jkt": "--",
+    "sgc": "1.650"
+  },
+  {
+    "id": "87",
+    "brand": "ITEL",
+    "model": "S25 (8/128)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "88",
+    "brand": "ITEL",
+    "model": "S25 (8/256)",
+    "jkt": "--",
+    "sgc": "1.550"
+  },
+  {
+    "id": "89",
+    "brand": "ITEL",
+    "model": "S25 Ultra (8/128)",
+    "jkt": "1.600 / 1.750",
+    "sgc": "1.550"
+  },
+  {
+    "id": "90",
+    "brand": "ITEL",
+    "model": "S25 Ultra (8/256)",
+    "jkt": "1.850 / 1.900",
+    "sgc": "1.700"
+  },
+  {
+    "id": "91",
+    "brand": "ITEL",
+    "model": "S26 Ultra (8/128)",
+    "jkt": "--",
+    "sgc": "1.600"
+  },
+  {
+    "id": "92",
+    "brand": "ITEL",
+    "model": "S26 Ultra (8/256)",
+    "jkt": "--",
+    "sgc": "1.850"
+  },
+  {
+    "id": "93",
+    "brand": "ITEL",
+    "model": "Spark Go 3 (4/64)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "94",
+    "brand": "ITEL",
+    "model": "Spark Go 3 (4/128)",
+    "jkt": "--",
+    "sgc": "1.150"
+  },
+  {
+    "id": "95",
+    "brand": "OPPO",
+    "model": "A18 (4/128)",
+    "jkt": "--",
+    "sgc": "1.050"
+  },
+  {
+    "id": "96",
+    "brand": "OPPO",
+    "model": "A3 (8/128)",
+    "jkt": "--",
+    "sgc": "1.550"
+  },
+  {
+    "id": "97",
+    "brand": "OPPO",
+    "model": "A3 Pro (5G)",
+    "jkt": "--",
+    "sgc": "1.850"
+  },
+  {
+    "id": "98",
+    "brand": "OPPO",
+    "model": "A3X (4/64)",
+    "jkt": "--",
+    "sgc": "1.050"
+  },
+  {
+    "id": "99",
+    "brand": "OPPO",
+    "model": "A3x (4/128)",
+    "jkt": "1.300",
+    "sgc": "1.200"
+  },
+  {
+    "id": "100",
+    "brand": "OPPO",
+    "model": "A3x (6/128)",
+    "jkt": "1.500",
+    "sgc": "1.450"
+  },
+  {
+    "id": "101",
+    "brand": "OPPO",
+    "model": "A5 (8/128)",
+    "jkt": "--",
+    "sgc": "1.700"
+  },
+  {
+    "id": "102",
+    "brand": "OPPO",
+    "model": "A5 (8/256)",
+    "jkt": "--",
+    "sgc": "1.900"
+  },
+  {
+    "id": "103",
+    "brand": "OPPO",
+    "model": "A5I (4/64)",
+    "jkt": "--",
+    "sgc": "1.100"
+  },
+  {
+    "id": "104",
+    "brand": "OPPO",
+    "model": "A5I (4/128)",
+    "jkt": "--",
+    "sgc": "1.250"
+  },
+  {
+    "id": "105",
+    "brand": "OPPO",
+    "model": "A5I Pro (8/128)",
+    "jkt": "--",
+    "sgc": "1.950"
+  },
+  {
+    "id": "106",
+    "brand": "OPPO",
+    "model": "A5X (4/128)",
+    "jkt": "--",
+    "sgc": "1.300"
+  },
+  {
+    "id": "107",
+    "brand": "OPPO",
+    "model": "A5X (6/128)",
+    "jkt": "--",
+    "sgc": "1.550"
+  },
+  {
+    "id": "108",
+    "brand": "OPPO",
+    "model": "A5X (8/128)",
+    "jkt": "--",
+    "sgc": "1.850"
+  },
+  {
+    "id": "109",
+    "brand": "OPPO",
+    "model": "A5 Pro (8/128)",
+    "jkt": "--",
+    "sgc": "1.800"
+  },
+  {
+    "id": "110",
+    "brand": "OPPO",
+    "model": "A5 Pro (8/256)",
+    "jkt": "--",
+    "sgc": "2.000"
+  },
+  {
+    "id": "111",
+    "brand": "OPPO",
+    "model": "A5 Pro (5G 8/256)",
+    "jkt": "--",
+    "sgc": "2.300"
+  },
+  {
+    "id": "112",
+    "brand": "OPPO",
+    "model": "A6 (6/128)",
+    "jkt": "--",
+    "sgc": "1.750"
+  },
+  {
+    "id": "113",
+    "brand": "OPPO",
+    "model": "A6 (6/256)",
+    "jkt": "--",
+    "sgc": "2.100"
+  },
+  {
+    "id": "114",
+    "brand": "OPPO",
+    "model": "A6C (4/64)",
+    "jkt": "--",
+    "sgc": "1.550"
+  },
+  {
+    "id": "115",
+    "brand": "OPPO",
+    "model": "A6C (4/128)",
+    "jkt": "--",
+    "sgc": "1.750"
+  },
+  {
+    "id": "116",
+    "brand": "OPPO",
+    "model": "A6 Pro (8/128)",
+    "jkt": "--",
+    "sgc": "2.400"
+  },
+  {
+    "id": "117",
+    "brand": "OPPO",
+    "model": "A6 Pro 4G (8/256)",
+    "jkt": "2.900",
+    "sgc": "2.650"
+  },
+  {
+    "id": "118",
+    "brand": "OPPO",
+    "model": "A6 Pro 5G (8/256)",
+    "jkt": "3.300",
+    "sgc": "3.150"
+  },
+  {
+    "id": "119",
+    "brand": "OPPO",
+    "model": "A6S (8/128)",
+    "jkt": "--",
+    "sgc": "2.500"
+  },
+  {
+    "id": "120",
+    "brand": "OPPO",
+    "model": "A6S (8/256)",
+    "jkt": "--",
+    "sgc": "2.750"
+  },
+  {
+    "id": "121",
+    "brand": "OPPO",
+    "model": "A6T (4/64)",
+    "jkt": "--",
+    "sgc": "1.450"
+  },
+  {
+    "id": "122",
+    "brand": "OPPO",
+    "model": "A6T (4/128)",
+    "jkt": "--",
+    "sgc": "1.600"
+  },
+  {
+    "id": "123",
+    "brand": "OPPO",
+    "model": "A6T (6/128)",
+    "jkt": "--",
+    "sgc": "1.950"
+  },
+  {
+    "id": "124",
+    "brand": "OPPO",
+    "model": "A6T (6/256)",
+    "jkt": "--",
+    "sgc": "2.100"
+  },
+  {
+    "id": "125",
+    "brand": "OPPO",
+    "model": "A6T (8/128)",
+    "jkt": "--",
+    "sgc": "2.550"
+  },
+  {
+    "id": "126",
+    "brand": "OPPO",
+    "model": "A6T Pro (8/256 4G)",
+    "jkt": "--",
+    "sgc": "3.200"
+  },
+  {
+    "id": "127",
+    "brand": "OPPO",
+    "model": "A6X (4/64)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "128",
+    "brand": "OPPO",
+    "model": "A6X (4/128)",
+    "jkt": "--",
+    "sgc": "1.550"
+  },
+  {
+    "id": "129",
+    "brand": "OPPO",
+    "model": "A6X (6/128)",
+    "jkt": "--",
+    "sgc": "1.850"
+  },
+  {
+    "id": "130",
+    "brand": "OPPO",
+    "model": "A6X (8/128)",
+    "jkt": "--",
+    "sgc": "2.000"
+  },
+  {
+    "id": "131",
+    "brand": "OPPO",
+    "model": "A38 (4/128)",
+    "jkt": "--",
+    "sgc": "1.150"
+  },
+  {
+    "id": "132",
+    "brand": "OPPO",
+    "model": "A38 (6/128)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "133",
+    "brand": "OPPO",
+    "model": "A58 (6/128)",
+    "jkt": "--",
+    "sgc": "1.200"
+  },
+  {
+    "id": "134",
+    "brand": "OPPO",
+    "model": "A58 (8/128)",
+    "jkt": "--",
+    "sgc": "1.450"
+  },
+  {
+    "id": "135",
+    "brand": "OPPO",
+    "model": "A60 (8/128)",
+    "jkt": "1.600",
+    "sgc": "1.600"
+  },
+  {
+    "id": "136",
+    "brand": "OPPO",
+    "model": "A60 (8/256)",
+    "jkt": "--",
+    "sgc": "1.800"
+  },
+  {
+    "id": "137",
+    "brand": "OPPO",
+    "model": "A76 (6/128)",
+    "jkt": "--",
+    "sgc": "1.150"
+  },
+  {
+    "id": "138",
+    "brand": "OPPO",
+    "model": "A78 (4G)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "139",
+    "brand": "OPPO",
+    "model": "A78 (5G)",
+    "jkt": "--",
+    "sgc": "1.600"
+  },
+  {
+    "id": "140",
+    "brand": "OPPO",
+    "model": "A79 (5G)",
+    "jkt": "--",
+    "sgc": "1.650"
+  },
+  {
+    "id": "141",
+    "brand": "OPPO",
+    "model": "A96 (8/256)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "142",
+    "brand": "OPPO",
+    "model": "A98",
+    "jkt": "--",
+    "sgc": "1.800"
+  },
+  {
+    "id": "143",
+    "brand": "OPPO",
+    "model": "Reno 10 (5G)",
+    "jkt": "--",
+    "sgc": "2.500"
+  },
+  {
+    "id": "144",
+    "brand": "OPPO",
+    "model": "Reno 10 Pro (5G)",
+    "jkt": "--",
+    "sgc": "2.900"
+  },
+  {
+    "id": "145",
+    "brand": "OPPO",
+    "model": "Reno 11 (5G)",
+    "jkt": "--",
+    "sgc": "2.650"
+  },
+  {
+    "id": "146",
+    "brand": "OPPO",
+    "model": "Reno 11 Pro (5G)",
+    "jkt": "--",
+    "sgc": "3.050"
+  },
+  {
+    "id": "147",
+    "brand": "OPPO",
+    "model": "Reno 11F (5G)",
+    "jkt": "--",
+    "sgc": "2.200"
+  },
+  {
+    "id": "148",
+    "brand": "OPPO",
+    "model": "Reno 12 (12/256)",
+    "jkt": "--",
+    "sgc": "3.350"
+  },
+  {
+    "id": "149",
+    "brand": "OPPO",
+    "model": "Reno 12 (12/512)",
+    "jkt": "--",
+    "sgc": "3.550"
+  },
+  {
+    "id": "150",
+    "brand": "OPPO",
+    "model": "Reno 12F (8/256 4G)",
+    "jkt": "--",
+    "sgc": "2.200"
+  },
+  {
+    "id": "151",
+    "brand": "OPPO",
+    "model": "Reno 12F (12/256 5G)",
+    "jkt": "--",
+    "sgc": "2.400"
+  },
+  {
+    "id": "152",
+    "brand": "OPPO",
+    "model": "Reno 12F (12/512 5G)",
+    "jkt": "--",
+    "sgc": "2.550"
+  },
+  {
+    "id": "153",
+    "brand": "OPPO",
+    "model": "Reno 13 (12/256)",
+    "jkt": "--",
+    "sgc": "4.200"
+  },
+  {
+    "id": "154",
+    "brand": "OPPO",
+    "model": "Reno 13 (12/512)",
+    "jkt": "--",
+    "sgc": "4.450"
+  },
+  {
+    "id": "155",
+    "brand": "OPPO",
+    "model": "Reno 13F (8/256 4G)",
+    "jkt": "--",
+    "sgc": "2.550"
+  },
+  {
+    "id": "156",
+    "brand": "OPPO",
+    "model": "Reno 13F (8/256 5G)",
+    "jkt": "--",
+    "sgc": "2.900"
+  },
+  {
+    "id": "157",
+    "brand": "OPPO",
+    "model": "Reno 13F (12/256 5G)",
+    "jkt": "--",
+    "sgc": "3.100"
+  },
+  {
+    "id": "158",
+    "brand": "OPPO",
+    "model": "Reno 14 (8/256)",
+    "jkt": "--",
+    "sgc": "4.600"
+  },
+  {
+    "id": "159",
+    "brand": "OPPO",
+    "model": "Reno 14 (12/256 5G)",
+    "jkt": "--",
+    "sgc": "5.200"
+  },
+  {
+    "id": "160",
+    "brand": "OPPO",
+    "model": "Reno 14 (5G 12/512)",
+    "jkt": "--",
+    "sgc": "5.500"
+  },
+  {
+    "id": "161",
+    "brand": "OPPO",
+    "model": "Reno 14F (8/256 5G)",
+    "jkt": "--",
+    "sgc": "3.450"
+  },
+  {
+    "id": "162",
+    "brand": "OPPO",
+    "model": "Reno 14F (12/256 5G)",
+    "jkt": "--",
+    "sgc": "3.850"
+  },
+  {
+    "id": "163",
+    "brand": "OPPO",
+    "model": "Reno 14F (12/512 5G)",
+    "jkt": "--",
+    "sgc": "4.100"
+  },
+  {
+    "id": "164",
+    "brand": "OPPO",
+    "model": "Reno 15 (8/256)",
+    "jkt": "--",
+    "sgc": "5.100"
+  },
+  {
+    "id": "165",
+    "brand": "OPPO",
+    "model": "Reno 15 (12/256)",
+    "jkt": "--",
+    "sgc": "6.000"
+  },
+  {
+    "id": "166",
+    "brand": "OPPO",
+    "model": "Reno 15 (12/512)",
+    "jkt": "--",
+    "sgc": "6.400"
+  },
+  {
+    "id": "167",
+    "brand": "OPPO",
+    "model": "Reno 15F (5G 8/128)",
+    "jkt": "--",
+    "sgc": "3.750"
+  },
+  {
+    "id": "168",
+    "brand": "OPPO",
+    "model": "Reno 15F (5G 8/256)",
+    "jkt": "--",
+    "sgc": "4.000"
+  },
+  {
+    "id": "169",
+    "brand": "OPPO",
+    "model": "Reno 15F (5G 12/256)",
+    "jkt": "--",
+    "sgc": "4.600"
+  },
+  {
+    "id": "170",
+    "brand": "OPPO",
+    "model": "Reno 15 Promax (256)",
+    "jkt": "--",
+    "sgc": "7.400"
+  },
+  {
+    "id": "171",
+    "brand": "OPPO",
+    "model": "Reno 15 Promax (512)",
+    "jkt": "--",
+    "sgc": "8.000"
+  },
+  {
+    "id": "172",
+    "brand": "POCO",
+    "model": "Poco C65 (6/128)",
+    "jkt": "1.050 / 1.250",
+    "sgc": "1.050 / 1.250"
+  },
+  {
+    "id": "173",
+    "brand": "POCO",
+    "model": "Poco C65 (8/256)",
+    "jkt": "1.250 / 1.400",
+    "sgc": "1.250 / 1.400"
+  },
+  {
+    "id": "174",
+    "brand": "POCO",
+    "model": "Poco C71 (4/128)",
+    "jkt": "1.200",
+    "sgc": "1.200"
+  },
+  {
+    "id": "175",
+    "brand": "POCO",
+    "model": "Poco C75 (6/128)",
+    "jkt": "1.350 / 1.400",
+    "sgc": "1.350 / 1.400"
+  },
+  {
+    "id": "176",
+    "brand": "POCO",
+    "model": "Poco C75 (8/256)",
+    "jkt": "1.450 / 1.500",
+    "sgc": "1.450 / 1.500"
+  },
+  {
+    "id": "177",
+    "brand": "POCO",
+    "model": "Poco C81 Pro (4/64)",
+    "jkt": "1.300",
+    "sgc": "1.300"
+  },
+  {
+    "id": "178",
+    "brand": "POCO",
+    "model": "Poco C81 Pro (4/128)",
+    "jkt": "1.300 / 1.400",
+    "sgc": "1.300 / 1.400"
+  },
+  {
+    "id": "179",
+    "brand": "POCO",
+    "model": "Poco C85 (6/128)",
+    "jkt": "1.450 / 1.600",
+    "sgc": "1.450 / 1.600"
+  },
+  {
+    "id": "180",
+    "brand": "POCO",
+    "model": "Poco C85 (8/256)",
+    "jkt": "1.600 / 1.850 / 1.950",
+    "sgc": "1.600 / 1.850 / 1.950"
+  },
+  {
+    "id": "181",
+    "brand": "POCO",
+    "model": "Poco M4 Pro (6/128)",
+    "jkt": "1.150",
+    "sgc": "1.150"
+  },
+  {
+    "id": "182",
+    "brand": "POCO",
+    "model": "Poco M4 Pro (8/256)",
+    "jkt": "1.350",
+    "sgc": "1.350"
+  },
+  {
+    "id": "183",
+    "brand": "POCO",
+    "model": "Poco M5 (4/64)",
+    "jkt": "950",
+    "sgc": "950"
+  },
+  {
+    "id": "184",
+    "brand": "POCO",
+    "model": "Poco M5 (4/128)",
+    "jkt": "1.050",
+    "sgc": "1.050"
+  },
+  {
+    "id": "185",
+    "brand": "POCO",
+    "model": "Poco M5s (4/64)",
+    "jkt": "950",
+    "sgc": "950"
+  },
+  {
+    "id": "186",
+    "brand": "POCO",
+    "model": "Poco M5s (6/128)",
+    "jkt": "1.150",
+    "sgc": "1.150"
+  },
+  {
+    "id": "187",
+    "brand": "POCO",
+    "model": "Poco M6 (8/256)",
+    "jkt": "1.700",
+    "sgc": "1.700"
+  },
+  {
+    "id": "188",
+    "brand": "POCO",
+    "model": "Poco M6 Pro (8/256)",
+    "jkt": "1.900 / 2.050 / 2.100",
+    "sgc": "1.900 / 2.050 / 2.100"
+  },
+  {
+    "id": "189",
+    "brand": "POCO",
+    "model": "Poco M7 (8/256)",
+    "jkt": "2.100 / 2.200",
+    "sgc": "2.100 / 2.200"
+  },
+  {
+    "id": "190",
+    "brand": "POCO",
+    "model": "Poco M7 Pro (8/256)",
+    "jkt": "2.350 / 2.500",
+    "sgc": "2.350 / 2.500"
+  },
+  {
+    "id": "191",
+    "brand": "POCO",
+    "model": "Poco X5 5G (6/128)",
+    "jkt": "1.650",
+    "sgc": "1.650"
+  },
+  {
+    "id": "192",
+    "brand": "POCO",
+    "model": "Poco X5 5G (8/256)",
+    "jkt": "1.800",
+    "sgc": "1.800"
+  },
+  {
+    "id": "193",
+    "brand": "POCO",
+    "model": "Poco X6 (12/256)",
+    "jkt": "2.600",
+    "sgc": "2.600"
+  },
+  {
+    "id": "194",
+    "brand": "POCO",
+    "model": "Poco X6 Pro (12/256)",
+    "jkt": "3.400",
+    "sgc": "3.400"
+  },
+  {
+    "id": "195",
+    "brand": "POCO",
+    "model": "Poco X6 Pro (12/512)",
+    "jkt": "3.400",
+    "sgc": "3.400"
+  },
+  {
+    "id": "196",
+    "brand": "POCO",
+    "model": "Poco X7 5G (8/256)",
+    "jkt": "2.800 / 2.900",
+    "sgc": "2.800 / 2.900"
+  },
+  {
+    "id": "197",
+    "brand": "POCO",
+    "model": "Poco X7 5G (12/256)",
+    "jkt": "3.200",
+    "sgc": "3.200"
+  },
+  {
+    "id": "198",
+    "brand": "POCO",
+    "model": "Poco X7 5G (12/512)",
+    "jkt": "3.100 / 3.400",
+    "sgc": "3.100 / 3.400"
+  },
+  {
+    "id": "199",
+    "brand": "POCO",
+    "model": "Poco X7 Pro (12/512)",
+    "jkt": "4.175 / 4.200",
+    "sgc": "4.175 / 4.200"
+  },
+  {
+    "id": "200",
+    "brand": "POCO",
+    "model": "Poco F6 5G (8/256)",
+    "jkt": "3.200",
+    "sgc": "3.200"
+  },
+  {
+    "id": "201",
+    "brand": "POCO",
+    "model": "Poco F6 5G (12/512)",
+    "jkt": "3.700",
+    "sgc": "3.700"
+  },
+  {
+    "id": "202",
+    "brand": "POCO",
+    "model": "Poco F7 (12/512)",
+    "jkt": "5.075",
+    "sgc": "5.075"
+  },
+  {
+    "id": "203",
+    "brand": "REALME",
+    "model": "Realme 11 (8/256)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "204",
+    "brand": "REALME",
+    "model": "Realme 12 (5G 8/256)",
+    "jkt": "--",
+    "sgc": "1.600"
+  },
+  {
+    "id": "205",
+    "brand": "REALME",
+    "model": "Realme 12 plus (8/256 5G)",
+    "jkt": "--",
+    "sgc": "1.950"
+  },
+  {
+    "id": "206",
+    "brand": "REALME",
+    "model": "Realme 13 (8/128)",
+    "jkt": "--",
+    "sgc": "1.650"
+  },
+  {
+    "id": "207",
+    "brand": "REALME",
+    "model": "Realme 13 (8/256)",
+    "jkt": "--",
+    "sgc": "1.800"
+  },
+  {
+    "id": "208",
+    "brand": "REALME",
+    "model": "Realme 13 plus (12/256)",
+    "jkt": "--",
+    "sgc": "2.300"
+  },
+  {
+    "id": "209",
+    "brand": "REALME",
+    "model": "Realme 13 Pro (12/256)",
+    "jkt": "--",
+    "sgc": "2.500"
+  },
+  {
+    "id": "210",
+    "brand": "REALME",
+    "model": "Realme 14 (5G 8/256)",
+    "jkt": "--",
+    "sgc": "2.300"
+  },
+  {
+    "id": "211",
+    "brand": "REALME",
+    "model": "Realme 14T (8/128 5G)",
+    "jkt": "--",
+    "sgc": "2.100"
+  },
+  {
+    "id": "212",
+    "brand": "REALME",
+    "model": "Realme 14T (8/256 5G)",
+    "jkt": "--",
+    "sgc": "2.250"
+  },
+  {
+    "id": "213",
+    "brand": "REALME",
+    "model": "Realme 15 (5G 8/256)",
+    "jkt": "--",
+    "sgc": "2.500"
+  },
+  {
+    "id": "214",
+    "brand": "REALME",
+    "model": "Realme 15 (5G 12/256)",
+    "jkt": "--",
+    "sgc": "2.900"
+  },
+  {
+    "id": "215",
+    "brand": "REALME",
+    "model": "Realme 15 Pro (12/256)",
+    "jkt": "--",
+    "sgc": "4.000"
+  },
+  {
+    "id": "216",
+    "brand": "REALME",
+    "model": "Realme 15 Pro (12/512)",
+    "jkt": "--",
+    "sgc": "4.350"
+  },
+  {
+    "id": "217",
+    "brand": "REALME",
+    "model": "Realme 15T (8/128 5G)",
+    "jkt": "--",
+    "sgc": "2.300"
+  },
+  {
+    "id": "218",
+    "brand": "REALME",
+    "model": "Realme 15T (8/256 5G)",
+    "jkt": "--",
+    "sgc": "2.700"
+  },
+  {
+    "id": "219",
+    "brand": "REALME",
+    "model": "Realme C51S (6/128)",
+    "jkt": "--",
+    "sgc": "1.250"
+  },
+  {
+    "id": "220",
+    "brand": "REALME",
+    "model": "Realme C53 (6/128)",
+    "jkt": "--",
+    "sgc": "1.250"
+  },
+  {
+    "id": "221",
+    "brand": "REALME",
+    "model": "Realme C53 (8/256)",
+    "jkt": "--",
+    "sgc": "1.450"
+  },
+  {
+    "id": "222",
+    "brand": "REALME",
+    "model": "Realme C55 (6/128)",
+    "jkt": "--",
+    "sgc": "1.200"
+  },
+  {
+    "id": "223",
+    "brand": "REALME",
+    "model": "Realme C55 (8/256)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "224",
+    "brand": "REALME",
+    "model": "Realme C61 (8/128)",
+    "jkt": "--",
+    "sgc": "1.400"
+  },
+  {
+    "id": "225",
+    "brand": "REALME",
+    "model": "Realme C63 (6/128)",
+    "jkt": "--",
+    "sgc": "1.300"
+  },
+  {
+    "id": "226",
+    "brand": "REALME",
+    "model": "Realme C63 (8/128)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "227",
+    "brand": "REALME",
+    "model": "Realme C65 (8/128)",
+    "jkt": "--",
+    "sgc": "1.450"
+  },
+  {
+    "id": "228",
+    "brand": "REALME",
+    "model": "Realme C65 (8/256)",
+    "jkt": "--",
+    "sgc": "1.550"
+  },
+  {
+    "id": "229",
+    "brand": "REALME",
+    "model": "Realme C67 (8/128)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "230",
+    "brand": "REALME",
+    "model": "Realme C67 (8/256)",
+    "jkt": "--",
+    "sgc": "1.700"
+  },
+  {
+    "id": "231",
+    "brand": "REALME",
+    "model": "Realme C71 (4/128)",
+    "jkt": "1.550",
+    "sgc": "1.250"
+  },
+  {
+    "id": "232",
+    "brand": "REALME",
+    "model": "Realme C71 (6/128)",
+    "jkt": "1.700",
+    "sgc": "1.500"
+  },
+  {
+    "id": "233",
+    "brand": "REALME",
+    "model": "Realme C71 (8/128)",
+    "jkt": "--",
+    "sgc": "1.650"
+  },
+  {
+    "id": "234",
+    "brand": "REALME",
+    "model": "Realme C75 (8/128)",
+    "jkt": "--",
+    "sgc": "1.700"
+  },
+  {
+    "id": "235",
+    "brand": "REALME",
+    "model": "Realme C75 (8/256)",
+    "jkt": "--",
+    "sgc": "1.900"
+  },
+  {
+    "id": "236",
+    "brand": "REALME",
+    "model": "Realme C75X (8/128)",
+    "jkt": "--",
+    "sgc": "1.700"
+  },
+  {
+    "id": "237",
+    "brand": "REALME",
+    "model": "Realme C85 (6/128)",
+    "jkt": "1.800",
+    "sgc": "--"
+  },
+  {
+    "id": "238",
+    "brand": "REALME",
+    "model": "Realme C85 5G (8/256)",
+    "jkt": "--",
+    "sgc": "2.250"
+  },
+  {
+    "id": "239",
+    "brand": "REALME",
+    "model": "Realme C85 NFC (6/128 4G)",
+    "jkt": "--",
+    "sgc": "1.600"
+  },
+  {
+    "id": "240",
+    "brand": "REALME",
+    "model": "Realme C85 NFC (8/128 4G)",
+    "jkt": "--",
+    "sgc": "1.900"
+  },
+  {
+    "id": "241",
+    "brand": "REALME",
+    "model": "Realme C85 NFC (8/256 4G)",
+    "jkt": "--",
+    "sgc": "2.050"
+  },
+  {
+    "id": "242",
+    "brand": "REALME",
+    "model": "Realme C85 Pro (8/128)",
+    "jkt": "--",
+    "sgc": "2.250"
+  },
+  {
+    "id": "243",
+    "brand": "REALME",
+    "model": "Realme C85 Pro (8/256)",
+    "jkt": "--",
+    "sgc": "2.400"
+  },
+  {
+    "id": "244",
+    "brand": "REALME",
+    "model": "Realme C100 (6/128)",
+    "jkt": "--",
+    "sgc": "1.900"
+  },
+  {
+    "id": "245",
+    "brand": "REALME",
+    "model": "Realme C100 (8/256)",
+    "jkt": "--",
+    "sgc": "220"
+  },
+  {
+    "id": "246",
+    "brand": "REALME",
+    "model": "Realme C100I (4/128)",
+    "jkt": "1.700",
+    "sgc": "1.500"
+  },
+  {
+    "id": "247",
+    "brand": "REALME",
+    "model": "Realme C100I (6/128)",
+    "jkt": "--",
+    "sgc": "1.750"
+  },
+  {
+    "id": "248",
+    "brand": "REALME",
+    "model": "Realme Note 50 (4/128)",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "249",
+    "brand": "REALME",
+    "model": "Realme Note 60 (4/64)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "250",
+    "brand": "REALME",
+    "model": "Realme Note 60 (6/128)",
+    "jkt": "--",
+    "sgc": "1.300"
+  },
+  {
+    "id": "251",
+    "brand": "REALME",
+    "model": "Realme Note 60X (4/64)",
+    "jkt": "1.050",
+    "sgc": "950"
+  },
+  {
+    "id": "252",
+    "brand": "REALME",
+    "model": "Realme Note 60X (4/128)",
+    "jkt": "--",
+    "sgc": "1.050"
+  },
+  {
+    "id": "253",
+    "brand": "REALME",
+    "model": "Realme Note 70 (4/64)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "254",
+    "brand": "REALME",
+    "model": "Realme Note 70 (4/128)",
+    "jkt": "1.400",
+    "sgc": "1.200"
+  },
+  {
+    "id": "255",
+    "brand": "REALME",
+    "model": "Realme Note 70 (6/128)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "256",
+    "brand": "REALME",
+    "model": "Realme Note 80 (4/64)",
+    "jkt": "--",
+    "sgc": "1.150"
+  },
+  {
+    "id": "257",
+    "brand": "REALME",
+    "model": "Realme Note 80 (4/128)",
+    "jkt": "1.500",
+    "sgc": "1.350"
+  },
+  {
+    "id": "258",
+    "brand": "REALME",
+    "model": "Realme P3 Lite (4/128)",
+    "jkt": "1.400",
+    "sgc": "1.100"
+  },
+  {
+    "id": "259",
+    "brand": "REDMI",
+    "model": "Redmi 10 (4/64)",
+    "jkt": "750",
+    "sgc": "--"
+  },
+  {
+    "id": "260",
+    "brand": "REDMI",
+    "model": "Redmi 10 (6/128)",
+    "jkt": "950",
+    "sgc": "--"
+  },
+  {
+    "id": "261",
+    "brand": "REDMI",
+    "model": "Redmi 10 5G (6/128)",
+    "jkt": "1.150",
+    "sgc": "--"
+  },
+  {
+    "id": "262",
+    "brand": "REDMI",
+    "model": "Redmi 12 (8/128)",
+    "jkt": "1.250",
+    "sgc": "1.350"
+  },
+  {
+    "id": "263",
+    "brand": "REDMI",
+    "model": "Redmi 12 (8/256)",
+    "jkt": "1.350",
+    "sgc": "1.550"
+  },
+  {
+    "id": "264",
+    "brand": "REDMI",
+    "model": "Redmi 13 (8/128)",
+    "jkt": "1.450",
+    "sgc": "1.550"
+  },
+  {
+    "id": "265",
+    "brand": "REDMI",
+    "model": "Redmi 13 (8/256)",
+    "jkt": "1.500 / 1.550",
+    "sgc": "1.750"
+  },
+  {
+    "id": "266",
+    "brand": "REDMI",
+    "model": "Redmi 13C (6/128)",
+    "jkt": "--",
+    "sgc": "1.200"
+  },
+  {
+    "id": "267",
+    "brand": "REDMI",
+    "model": "Redmi 13C (8/256)",
+    "jkt": "--",
+    "sgc": "1.400"
+  },
+  {
+    "id": "268",
+    "brand": "REDMI",
+    "model": "Redmi 13X (8/128)",
+    "jkt": "1.400 / 1.500",
+    "sgc": "1.500"
+  },
+  {
+    "id": "269",
+    "brand": "REDMI",
+    "model": "Redmi 13X (8/256)",
+    "jkt": "1.600",
+    "sgc": "1.700"
+  },
+  {
+    "id": "270",
+    "brand": "REDMI",
+    "model": "Redmi 14C (6/128)",
+    "jkt": "1.400",
+    "sgc": "1.250"
+  },
+  {
+    "id": "271",
+    "brand": "REDMI",
+    "model": "Redmi 14C (8/256)",
+    "jkt": "1.500",
+    "sgc": "1.550"
+  },
+  {
+    "id": "272",
+    "brand": "REDMI",
+    "model": "Redmi 15 (8/128)",
+    "jkt": "1.800 / 1.900",
+    "sgc": "1.700"
+  },
+  {
+    "id": "273",
+    "brand": "REDMI",
+    "model": "Redmi 15 (8/256)",
+    "jkt": "2.000 / 2.150",
+    "sgc": "1.850"
+  },
+  {
+    "id": "274",
+    "brand": "REDMI",
+    "model": "Redmi 15C (6/128)",
+    "jkt": "1.650",
+    "sgc": "1.450"
+  },
+  {
+    "id": "275",
+    "brand": "REDMI",
+    "model": "Redmi 15C (8/256)",
+    "jkt": "1.850",
+    "sgc": "1.750"
+  },
+  {
+    "id": "276",
+    "brand": "REDMI",
+    "model": "Redmi A3 (4/128)",
+    "jkt": "--",
+    "sgc": "900"
+  },
+  {
+    "id": "277",
+    "brand": "REDMI",
+    "model": "Redmi A5 (4/128)",
+    "jkt": "1.300",
+    "sgc": "1.050"
+  },
+  {
+    "id": "278",
+    "brand": "REDMI",
+    "model": "Redmi A7 Pro (4/64)",
+    "jkt": "--",
+    "sgc": "1.100"
+  },
+  {
+    "id": "279",
+    "brand": "REDMI",
+    "model": "Redmi A7 Pro (4/128)",
+    "jkt": "1.450",
+    "sgc": "1.250"
+  },
+  {
+    "id": "280",
+    "brand": "REDMI",
+    "model": "Redmi Note 10 5G (4/128)",
+    "jkt": "950",
+    "sgc": "--"
+  },
+  {
+    "id": "281",
+    "brand": "REDMI",
+    "model": "Redmi Note 10 5G (8/128)",
+    "jkt": "1.050",
+    "sgc": "--"
+  },
+  {
+    "id": "282",
+    "brand": "REDMI",
+    "model": "Redmi Note 10 Pro (6/64)",
+    "jkt": "1.150",
+    "sgc": "--"
+  },
+  {
+    "id": "283",
+    "brand": "REDMI",
+    "model": "Redmi Note 10 Pro (6/128)",
+    "jkt": "1.250",
+    "sgc": "--"
+  },
+  {
+    "id": "284",
+    "brand": "REDMI",
+    "model": "Redmi Note 10 Pro (8/128)",
+    "jkt": "1.450",
+    "sgc": "--"
+  },
+  {
+    "id": "285",
+    "brand": "REDMI",
+    "model": "Redmi Note 10S (6/64)",
+    "jkt": "1.150",
+    "sgc": "--"
+  },
+  {
+    "id": "286",
+    "brand": "REDMI",
+    "model": "Redmi Note 10S (6/128)",
+    "jkt": "1.350",
+    "sgc": "--"
+  },
+  {
+    "id": "287",
+    "brand": "REDMI",
+    "model": "Redmi Note 10S (8/128)",
+    "jkt": "1.550",
+    "sgc": "--"
+  },
+  {
+    "id": "288",
+    "brand": "REDMI",
+    "model": "Redmi Note 11 (4/128)",
+    "jkt": "1.150",
+    "sgc": "--"
+  },
+  {
+    "id": "289",
+    "brand": "REDMI",
+    "model": "Redmi Note 11 (6/128)",
+    "jkt": "1.350",
+    "sgc": "--"
+  },
+  {
+    "id": "290",
+    "brand": "REDMI",
+    "model": "Redmi Note 11 Pro (6/128)",
+    "jkt": "1.450",
+    "sgc": "--"
+  },
+  {
+    "id": "291",
+    "brand": "REDMI",
+    "model": "Redmi Note 11 Pro (8/128)",
+    "jkt": "1.600",
+    "sgc": "--"
+  },
+  {
+    "id": "292",
+    "brand": "REDMI",
+    "model": "Redmi Note 11 Pro 5G (8/128)",
+    "jkt": "1.800",
+    "sgc": "--"
+  },
+  {
+    "id": "293",
+    "brand": "REDMI",
+    "model": "Redmi Note 12 (4/128)",
+    "jkt": "1.150",
+    "sgc": "1.100"
+  },
+  {
+    "id": "294",
+    "brand": "REDMI",
+    "model": "Redmi Note 12 (6/128)",
+    "jkt": "1.350",
+    "sgc": "1.300"
+  },
+  {
+    "id": "295",
+    "brand": "REDMI",
+    "model": "Redmi Note 12 (8/128)",
+    "jkt": "1.550",
+    "sgc": "1.600"
+  },
+  {
+    "id": "296",
+    "brand": "REDMI",
+    "model": "Redmi Note 12 (8/256)",
+    "jkt": "1.650",
+    "sgc": "1.750"
+  },
+  {
+    "id": "297",
+    "brand": "REDMI",
+    "model": "Redmi Note 12 Pro (6/128)",
+    "jkt": "1.700",
+    "sgc": "1.500"
+  },
+  {
+    "id": "298",
+    "brand": "REDMI",
+    "model": "Redmi Note 12 Pro (8/256)",
+    "jkt": "1.900",
+    "sgc": "1.800"
+  },
+  {
+    "id": "299",
+    "brand": "REDMI",
+    "model": "Redmi Note 12 Pro 5G (8/256)",
+    "jkt": "2.100",
+    "sgc": "2.050"
+  },
+  {
+    "id": "300",
+    "brand": "REDMI",
+    "model": "Redmi Note 13 (8/128)",
+    "jkt": "1.750",
+    "sgc": "1.750"
+  },
+  {
+    "id": "301",
+    "brand": "REDMI",
+    "model": "Redmi Note 13 (8/256)",
+    "jkt": "1.850",
+    "sgc": "1.950"
+  },
+  {
+    "id": "302",
+    "brand": "REDMI",
+    "model": "Redmi Note 13 5G (8/256)",
+    "jkt": "2.100",
+    "sgc": "2.100"
+  },
+  {
+    "id": "303",
+    "brand": "REDMI",
+    "model": "Redmi Note 13 Pro 4G (8/256)",
+    "jkt": "2.400",
+    "sgc": "2.250"
+  },
+  {
+    "id": "304",
+    "brand": "REDMI",
+    "model": "Redmi Note 13 Pro 5G (8/256)",
+    "jkt": "2.950",
+    "sgc": "2.550"
+  },
+  {
+    "id": "305",
+    "brand": "REDMI",
+    "model": "Redmi Note 13 Pro 5G (12/512)",
+    "jkt": "--",
+    "sgc": "3.050"
+  },
+  {
+    "id": "306",
+    "brand": "REDMI",
+    "model": "Redmi Note 13 Pro+ 5G (12/512)",
+    "jkt": "3.200",
+    "sgc": "3.400"
+  },
+  {
+    "id": "307",
+    "brand": "REDMI",
+    "model": "Redmi Note 14 (8/128)",
+    "jkt": "2.100",
+    "sgc": "1.850"
+  },
+  {
+    "id": "308",
+    "brand": "REDMI",
+    "model": "Redmi Note 14 (8/256)",
+    "jkt": "2.300",
+    "sgc": "2.000"
+  },
+  {
+    "id": "309",
+    "brand": "REDMI",
+    "model": "Redmi Note 14 5G (8/256)",
+    "jkt": "2.500",
+    "sgc": "2.400"
+  },
+  {
+    "id": "310",
+    "brand": "REDMI",
+    "model": "Redmi Note 14 5G (12/512)",
+    "jkt": "2.900",
+    "sgc": "2.800"
+  },
+  {
+    "id": "311",
+    "brand": "REDMI",
+    "model": "Redmi Note 14 Pro (8/256)",
+    "jkt": "3.000",
+    "sgc": "2.950"
+  },
+  {
+    "id": "312",
+    "brand": "REDMI",
+    "model": "Redmi Note 14 Pro (12/512)",
+    "jkt": "3.200 / 3.450",
+    "sgc": "3.350"
+  },
+  {
+    "id": "313",
+    "brand": "REDMI",
+    "model": "Redmi Note 14 Pro+ 5G (8/256)",
+    "jkt": "3.400",
+    "sgc": "3.450"
+  },
+  {
+    "id": "314",
+    "brand": "REDMI",
+    "model": "Redmi Note 14 Pro+ 5G (12/512)",
+    "jkt": "3.700",
+    "sgc": "4.000"
+  },
+  {
+    "id": "315",
+    "brand": "REDMI",
+    "model": "Redmi Note 15 (6/128 4G)",
+    "jkt": "2.000 / 2.200",
+    "sgc": "1.850"
+  },
+  {
+    "id": "316",
+    "brand": "REDMI",
+    "model": "Redmi Note 15 (8/128 4G)",
+    "jkt": "2.300 / 2.500",
+    "sgc": "2.150"
+  },
+  {
+    "id": "317",
+    "brand": "REDMI",
+    "model": "Redmi Note 15 (8/256 4G)",
+    "jkt": "2.500 / 2.700",
+    "sgc": "2.350"
+  },
+  {
+    "id": "318",
+    "brand": "REDMI",
+    "model": "Redmi Note 15 5G (6/128)",
+    "jkt": "2.500 / 2.600",
+    "sgc": "2.050"
+  },
+  {
+    "id": "319",
+    "brand": "REDMI",
+    "model": "Redmi Note 15 5G (8/128)",
+    "jkt": "--",
+    "sgc": "2.350"
+  },
+  {
+    "id": "320",
+    "brand": "REDMI",
+    "model": "Redmi Note 15 5G (8/256)",
+    "jkt": "2.900 / 3.100",
+    "sgc": "2.800"
+  },
+  {
+    "id": "321",
+    "brand": "REDMI",
+    "model": "Redmi Note 15 5G (12/512)",
+    "jkt": "3.400",
+    "sgc": "3.200"
+  },
+  {
+    "id": "322",
+    "brand": "REDMI",
+    "model": "Redmi Note 15 Pro 5G (8/256)",
+    "jkt": "3.500 / 3.700",
+    "sgc": "3.500"
+  },
+  {
+    "id": "323",
+    "brand": "REDMI",
+    "model": "Redmi Note 15 Pro 5G (12/512)",
+    "jkt": "4.000",
+    "sgc": "3.900"
+  },
+  {
+    "id": "324",
+    "brand": "REDMI",
+    "model": "Redmi Note 15 Pro Plus 5G (8/256)",
+    "jkt": "4.400 / 4.600",
+    "sgc": "3.800"
+  },
+  {
+    "id": "325",
+    "brand": "REDMI",
+    "model": "Redmi Note 15 Pro Plus 5G (12/512)",
+    "jkt": "4.900",
+    "sgc": "4.500"
+  },
+  {
+    "id": "326",
+    "brand": "REDMI",
+    "model": "Redmi Pad 2 (4/128)",
+    "jkt": "--",
+    "sgc": "1.600"
+  },
+  {
+    "id": "327",
+    "brand": "REDMI",
+    "model": "Redmi Pad SE (4/128 SIM)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "328",
+    "brand": "REDMI",
+    "model": "Redmi Pad SE (4/128 WiFi)",
+    "jkt": "--",
+    "sgc": "1.300"
+  },
+  {
+    "id": "329",
+    "brand": "REDMI",
+    "model": "Redmi Pad SE (8.7 Inch)",
+    "jkt": "--",
+    "sgc": "1.100"
+  },
+  {
+    "id": "330",
+    "brand": "SAMSUNG",
+    "model": "Samsung A05 (4/64)",
+    "jkt": "--",
+    "sgc": "850"
+  },
+  {
+    "id": "331",
+    "brand": "SAMSUNG",
+    "model": "Samsung A05 (4/128)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "332",
+    "brand": "SAMSUNG",
+    "model": "Samsung A05 (6/128)",
+    "jkt": "--",
+    "sgc": "1.200"
+  },
+  {
+    "id": "333",
+    "brand": "SAMSUNG",
+    "model": "Samsung A05S (6/128)",
+    "jkt": "--",
+    "sgc": "1.400"
+  },
+  {
+    "id": "334",
+    "brand": "SAMSUNG",
+    "model": "Samsung A06 (4/64)",
+    "jkt": "--",
+    "sgc": "950"
+  },
+  {
+    "id": "335",
+    "brand": "SAMSUNG",
+    "model": "Samsung A06 (4/128)",
+    "jkt": "--",
+    "sgc": "1.100"
+  },
+  {
+    "id": "336",
+    "brand": "SAMSUNG",
+    "model": "Samsung A06 (6/128 4G)",
+    "jkt": "--",
+    "sgc": "1.300"
+  },
+  {
+    "id": "337",
+    "brand": "SAMSUNG",
+    "model": "Samsung A06 (6/128 5G)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "338",
+    "brand": "SAMSUNG",
+    "model": "Samsung A07 (4/64)",
+    "jkt": "1.300",
+    "sgc": "1.200"
+  },
+  {
+    "id": "339",
+    "brand": "SAMSUNG",
+    "model": "Samsung A07 (4/128)",
+    "jkt": "1.500",
+    "sgc": "1.450"
+  },
+  {
+    "id": "340",
+    "brand": "SAMSUNG",
+    "model": "Samsung A07 (6/128)",
+    "jkt": "1.700",
+    "sgc": "1.700"
+  },
+  {
+    "id": "341",
+    "brand": "SAMSUNG",
+    "model": "Samsung A07 (6/128 5G)",
+    "jkt": "--",
+    "sgc": "1.950"
+  },
+  {
+    "id": "342",
+    "brand": "SAMSUNG",
+    "model": "Samsung A07 (8/256)",
+    "jkt": "1.900",
+    "sgc": "2.200"
+  },
+  {
+    "id": "343",
+    "brand": "SAMSUNG",
+    "model": "Samsung A15 (8/128)",
+    "jkt": "1.850",
+    "sgc": "1.650"
+  },
+  {
+    "id": "344",
+    "brand": "SAMSUNG",
+    "model": "Samsung A15 (8/256)",
+    "jkt": "2.000",
+    "sgc": "1.800"
+  },
+  {
+    "id": "345",
+    "brand": "SAMSUNG",
+    "model": "Samsung A15 (8/256 5G)",
+    "jkt": "2.150 / 2.200",
+    "sgc": "2.100"
+  },
+  {
+    "id": "346",
+    "brand": "SAMSUNG",
+    "model": "Samsung A16 (8/128)",
+    "jkt": "2.000",
+    "sgc": "1.900"
+  },
+  {
+    "id": "347",
+    "brand": "SAMSUNG",
+    "model": "Samsung A16 (8/128 5G)",
+    "jkt": "--",
+    "sgc": "2.050"
+  },
+  {
+    "id": "348",
+    "brand": "SAMSUNG",
+    "model": "Samsung A16 (8/256)",
+    "jkt": "2.100 / 2.250",
+    "sgc": "2.150"
+  },
+  {
+    "id": "349",
+    "brand": "SAMSUNG",
+    "model": "Samsung A16 (8/256 5G)",
+    "jkt": "2.400",
+    "sgc": "2.350"
+  },
+  {
+    "id": "350",
+    "brand": "SAMSUNG",
+    "model": "Samsung A17 4G (4/128)",
+    "jkt": "2.100",
+    "sgc": "--"
+  },
+  {
+    "id": "351",
+    "brand": "SAMSUNG",
+    "model": "Samsung A17 (8/128)",
+    "jkt": "2.350 / 2.400",
+    "sgc": "2.350"
+  },
+  {
+    "id": "352",
+    "brand": "SAMSUNG",
+    "model": "Samsung A17 (8/256)",
+    "jkt": "2.600",
+    "sgc": "2.600"
+  },
+  {
+    "id": "353",
+    "brand": "SAMSUNG",
+    "model": "Samsung A17 (5G 8/256)",
+    "jkt": "--",
+    "sgc": "3.000"
+  },
+  {
+    "id": "354",
+    "brand": "SAMSUNG",
+    "model": "Samsung A24 (8/128)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "355",
+    "brand": "SAMSUNG",
+    "model": "Samsung A25 (8/128)",
+    "jkt": "--",
+    "sgc": "2.100"
+  },
+  {
+    "id": "356",
+    "brand": "SAMSUNG",
+    "model": "Samsung A25 (8/256)",
+    "jkt": "--",
+    "sgc": "2.350"
+  },
+  {
+    "id": "357",
+    "brand": "SAMSUNG",
+    "model": "Samsung A26 (8/128)",
+    "jkt": "--",
+    "sgc": "2.500"
+  },
+  {
+    "id": "358",
+    "brand": "SAMSUNG",
+    "model": "Samsung A26 (8/256)",
+    "jkt": "3.200",
+    "sgc": "3.000"
+  },
+  {
+    "id": "359",
+    "brand": "SAMSUNG",
+    "model": "Samsung A27 (6/128 5G)",
+    "jkt": "--",
+    "sgc": "3.000"
+  },
+  {
+    "id": "360",
+    "brand": "SAMSUNG",
+    "model": "Samsung A27 (8/256 5G)",
+    "jkt": "--",
+    "sgc": "3.500"
+  },
+  {
+    "id": "361",
+    "brand": "SAMSUNG",
+    "model": "Samsung A35 (8/128)",
+    "jkt": "2.900",
+    "sgc": "3.000"
+  },
+  {
+    "id": "362",
+    "brand": "SAMSUNG",
+    "model": "Samsung A35 (8/256)",
+    "jkt": "3.300",
+    "sgc": "3.200"
+  },
+  {
+    "id": "363",
+    "brand": "SAMSUNG",
+    "model": "Samsung A36 (8/256)",
+    "jkt": "3.600",
+    "sgc": "3.550"
+  },
+  {
+    "id": "364",
+    "brand": "SAMSUNG",
+    "model": "Samsung A36 (12/256)",
+    "jkt": "--",
+    "sgc": "3.900"
+  },
+  {
+    "id": "365",
+    "brand": "SAMSUNG",
+    "model": "Samsung A37 (8/128)",
+    "jkt": "--",
+    "sgc": "3.600"
+  },
+  {
+    "id": "366",
+    "brand": "SAMSUNG",
+    "model": "Samsung A37 (8/256)",
+    "jkt": "--",
+    "sgc": "4.000"
+  },
+  {
+    "id": "367",
+    "brand": "SAMSUNG",
+    "model": "Samsung A37 (12/256)",
+    "jkt": "--",
+    "sgc": "4.400"
+  },
+  {
+    "id": "368",
+    "brand": "SAMSUNG",
+    "model": "Samsung A55 (8/128)",
+    "jkt": "--",
+    "sgc": "3.300"
+  },
+  {
+    "id": "369",
+    "brand": "SAMSUNG",
+    "model": "Samsung A55 (8/256)",
+    "jkt": "--",
+    "sgc": "3.750"
+  },
+  {
+    "id": "370",
+    "brand": "SAMSUNG",
+    "model": "Samsung A55 (12/256)",
+    "jkt": "--",
+    "sgc": "4.100"
+  },
+  {
+    "id": "371",
+    "brand": "SAMSUNG",
+    "model": "Samsung A56 (8/256)",
+    "jkt": "--",
+    "sgc": "4.450"
+  },
+  {
+    "id": "372",
+    "brand": "SAMSUNG",
+    "model": "Samsung A56 (12/256)",
+    "jkt": "--",
+    "sgc": "4.850"
+  },
+  {
+    "id": "373",
+    "brand": "SAMSUNG",
+    "model": "Samsung A57 (8/128)",
+    "jkt": "--",
+    "sgc": "4.500"
+  },
+  {
+    "id": "374",
+    "brand": "SAMSUNG",
+    "model": "Samsung A57 (8/256)",
+    "jkt": "--",
+    "sgc": "5.000"
+  },
+  {
+    "id": "375",
+    "brand": "SAMSUNG",
+    "model": "Samsung A57 (12/256)",
+    "jkt": "--",
+    "sgc": "5.500"
+  },
+  {
+    "id": "376",
+    "brand": "SAMSUNG",
+    "model": "Samsung M15 5G (6/128)",
+    "jkt": "1.900",
+    "sgc": "--"
+  },
+  {
+    "id": "377",
+    "brand": "SAMSUNG",
+    "model": "Samsung S23 (8/256)",
+    "jkt": "--",
+    "sgc": "5.200"
+  },
+  {
+    "id": "378",
+    "brand": "SAMSUNG",
+    "model": "Samsung S23 FE (8/256)",
+    "jkt": "--",
+    "sgc": "4.300"
+  },
+  {
+    "id": "379",
+    "brand": "SAMSUNG",
+    "model": "Samsung S24 (8/256)",
+    "jkt": "--",
+    "sgc": "6.200"
+  },
+  {
+    "id": "380",
+    "brand": "SAMSUNG",
+    "model": "Samsung S24 (8/512)",
+    "jkt": "--",
+    "sgc": "6.600"
+  },
+  {
+    "id": "381",
+    "brand": "SAMSUNG",
+    "model": "Samsung S24 FE (8/128)",
+    "jkt": "--",
+    "sgc": "4.700"
+  },
+  {
+    "id": "382",
+    "brand": "SAMSUNG",
+    "model": "Samsung S24 FE (8/256)",
+    "jkt": "--",
+    "sgc": "5.500"
+  },
+  {
+    "id": "383",
+    "brand": "SAMSUNG",
+    "model": "Samsung S25 (12/256)",
+    "jkt": "--",
+    "sgc": "8.000"
+  },
+  {
+    "id": "384",
+    "brand": "SAMSUNG",
+    "model": "Samsung S25 (12/512)",
+    "jkt": "--",
+    "sgc": "8.500"
+  },
+  {
+    "id": "385",
+    "brand": "SAMSUNG",
+    "model": "Samsung S25 FE (8/256)",
+    "jkt": "--",
+    "sgc": "6.900"
+  },
+  {
+    "id": "386",
+    "brand": "SAMSUNG",
+    "model": "Samsung S25 Ultra (12/256)",
+    "jkt": "--",
+    "sgc": "12.300"
+  },
+  {
+    "id": "387",
+    "brand": "SAMSUNG",
+    "model": "Samsung S25 Ultra (12/512)",
+    "jkt": "--",
+    "sgc": "13.500"
+  },
+  {
+    "id": "388",
+    "brand": "SAMSUNG",
+    "model": "Samsung S25 Ultra (1TB)",
+    "jkt": "--",
+    "sgc": "14.700"
+  },
+  {
+    "id": "389",
+    "brand": "SAMSUNG",
+    "model": "Samsung S26 (12/256)",
+    "jkt": "--",
+    "sgc": "9.200"
+  },
+  {
+    "id": "390",
+    "brand": "SAMSUNG",
+    "model": "Samsung Tab A9 plus (4/64)",
+    "jkt": "--",
+    "sgc": "1.450"
+  },
+  {
+    "id": "391",
+    "brand": "SAMSUNG",
+    "model": "Samsung Tab A9 plus (8/128)",
+    "jkt": "--",
+    "sgc": "2.000"
+  },
+  {
+    "id": "392",
+    "brand": "SAMSUNG",
+    "model": "Samsung Tab A11 (4/64 WiFi Only)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "393",
+    "brand": "SAMSUNG",
+    "model": "Samsung Tab A11 plus (6/128 5G)",
+    "jkt": "--",
+    "sgc": "2.300"
+  },
+  {
+    "id": "394",
+    "brand": "TECNO",
+    "model": "Tecno Camon 40 (8/128)",
+    "jkt": "2.100",
+    "sgc": "1.750"
+  },
+  {
+    "id": "395",
+    "brand": "TECNO",
+    "model": "Tecno Camon 40 (8/256)",
+    "jkt": "2.350",
+    "sgc": "1.950"
+  },
+  {
+    "id": "396",
+    "brand": "TECNO",
+    "model": "Tecno Camon 40 Pro",
+    "jkt": "--",
+    "sgc": "2.300"
+  },
+  {
+    "id": "397",
+    "brand": "TECNO",
+    "model": "Tecno Camon 40 Pro (8/256)",
+    "jkt": "3.450",
+    "sgc": "--"
+  },
+  {
+    "id": "398",
+    "brand": "TECNO",
+    "model": "Tecno Camon 40 Pro (12/256)",
+    "jkt": "3.700",
+    "sgc": "--"
+  },
+  {
+    "id": "399",
+    "brand": "TECNO",
+    "model": "Tecno Camon 50 (8/128)",
+    "jkt": "--",
+    "sgc": "2.100"
+  },
+  {
+    "id": "400",
+    "brand": "TECNO",
+    "model": "Tecno Camon 50 (8/256)",
+    "jkt": "--",
+    "sgc": "2.300"
+  },
+  {
+    "id": "401",
+    "brand": "TECNO",
+    "model": "Tecno Camon 50 (12/256)",
+    "jkt": "--",
+    "sgc": "2.750"
+  },
+  {
+    "id": "402",
+    "brand": "TECNO",
+    "model": "Tecno Camon 50 Pro (8/256)",
+    "jkt": "--",
+    "sgc": "3.300"
+  },
+  {
+    "id": "403",
+    "brand": "TECNO",
+    "model": "Tecno Pova 5 (8/256)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "404",
+    "brand": "TECNO",
+    "model": "Tecno Pova 5 Pro (8/256)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "405",
+    "brand": "TECNO",
+    "model": "Tecno Pova 6 (6/128)",
+    "jkt": "--",
+    "sgc": "1.700"
+  },
+  {
+    "id": "406",
+    "brand": "TECNO",
+    "model": "Tecno Pova 6 (8/256)",
+    "jkt": "1.900 / 2.050",
+    "sgc": "--"
+  },
+  {
+    "id": "407",
+    "brand": "TECNO",
+    "model": "Tecno Pova 6 (12/256)",
+    "jkt": "2.100 / 2.150",
+    "sgc": "2.100"
+  },
+  {
+    "id": "408",
+    "brand": "TECNO",
+    "model": "Tecno Pova 6 Pro (12/256)",
+    "jkt": "2.400",
+    "sgc": "2.350"
+  },
+  {
+    "id": "409",
+    "brand": "TECNO",
+    "model": "Tecno Pova 7 (8/128)",
+    "jkt": "1.900 / 1.975",
+    "sgc": "1.850"
+  },
+  {
+    "id": "410",
+    "brand": "TECNO",
+    "model": "Tecno Pova 7 (8/256)",
+    "jkt": "2.150",
+    "sgc": "2.000"
+  },
+  {
+    "id": "411",
+    "brand": "TECNO",
+    "model": "Tecno Pova 7 (5G 8/128)",
+    "jkt": "2.300 / 2.450",
+    "sgc": "2.200"
+  },
+  {
+    "id": "412",
+    "brand": "TECNO",
+    "model": "Tecno Pova 7 (5G 8/256)",
+    "jkt": "2.500 / 2.600",
+    "sgc": "2.300"
+  },
+  {
+    "id": "413",
+    "brand": "TECNO",
+    "model": "Tecno Pova 7 Curve / Curved (5G)",
+    "jkt": "2.700",
+    "sgc": "2.400"
+  },
+  {
+    "id": "414",
+    "brand": "TECNO",
+    "model": "Tecno Pova 7 Ultra 5G",
+    "jkt": "4.000",
+    "sgc": "--"
+  },
+  {
+    "id": "415",
+    "brand": "TECNO",
+    "model": "Tecno Spark 20 (8/128)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "416",
+    "brand": "TECNO",
+    "model": "Tecno Spark 20 (8/256)",
+    "jkt": "--",
+    "sgc": "1.450"
+  },
+  {
+    "id": "417",
+    "brand": "TECNO",
+    "model": "Tecno Spark 20 Pro (8/256)",
+    "jkt": "--",
+    "sgc": "1.250"
+  },
+  {
+    "id": "418",
+    "brand": "TECNO",
+    "model": "Tecno Spark 20 Pro (12/256)",
+    "jkt": "--",
+    "sgc": "1.650"
+  },
+  {
+    "id": "419",
+    "brand": "TECNO",
+    "model": "Tecno Spark 20 Pro plus",
+    "jkt": "--",
+    "sgc": "1.650"
+  },
+  {
+    "id": "420",
+    "brand": "TECNO",
+    "model": "Tecno Spark 30 (8/128)",
+    "jkt": "--",
+    "sgc": "1.450"
+  },
+  {
+    "id": "421",
+    "brand": "TECNO",
+    "model": "Tecno Spark 30 (8/256)",
+    "jkt": "--",
+    "sgc": "1.650"
+  },
+  {
+    "id": "422",
+    "brand": "TECNO",
+    "model": "Tecno Spark 40 (8/128)",
+    "jkt": "--",
+    "sgc": "1.550"
+  },
+  {
+    "id": "423",
+    "brand": "TECNO",
+    "model": "Tecno Spark 40 Pro plus (8/256)",
+    "jkt": "--",
+    "sgc": "1.900"
+  },
+  {
+    "id": "424",
+    "brand": "TECNO",
+    "model": "Tecno Spark 50 (4/128)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "425",
+    "brand": "TECNO",
+    "model": "Tecno Spark 50 (6/128)",
+    "jkt": "--",
+    "sgc": "1.600"
+  },
+  {
+    "id": "426",
+    "brand": "TECNO",
+    "model": "Tecno Spark 50 (8/128)",
+    "jkt": "--",
+    "sgc": "1.950"
+  },
+  {
+    "id": "427",
+    "brand": "TECNO",
+    "model": "Tecno Spark Go 1 (4/64)",
+    "jkt": "900",
+    "sgc": "--"
+  },
+  {
+    "id": "428",
+    "brand": "TECNO",
+    "model": "Tecno Spark Go 1 (4/128)",
+    "jkt": "1.050",
+    "sgc": "--"
+  },
+  {
+    "id": "429",
+    "brand": "TECNO",
+    "model": "Tecno Spark Go 2 (3/64)",
+    "jkt": "--",
+    "sgc": "750"
+  },
+  {
+    "id": "430",
+    "brand": "TECNO",
+    "model": "Tecno Spark Go 2 (4/64)",
+    "jkt": "950",
+    "sgc": "850"
+  },
+  {
+    "id": "431",
+    "brand": "TECNO",
+    "model": "Tecno Spark Go 2 (4/128)",
+    "jkt": "1.100",
+    "sgc": "1.000"
+  },
+  {
+    "id": "432",
+    "brand": "VIVO",
+    "model": "Vivo V27 (5G)",
+    "jkt": "--",
+    "sgc": "2.650"
+  },
+  {
+    "id": "433",
+    "brand": "VIVO",
+    "model": "Vivo V27E (8/256)",
+    "jkt": "--",
+    "sgc": "1.800"
+  },
+  {
+    "id": "434",
+    "brand": "VIVO",
+    "model": "Vivo V27E (12/256)",
+    "jkt": "--",
+    "sgc": "2.150"
+  },
+  {
+    "id": "435",
+    "brand": "VIVO",
+    "model": "Vivo V29 (5G 8/256)",
+    "jkt": "--",
+    "sgc": "2.950"
+  },
+  {
+    "id": "436",
+    "brand": "VIVO",
+    "model": "Vivo V29 (12/256)",
+    "jkt": "--",
+    "sgc": "3.200"
+  },
+  {
+    "id": "437",
+    "brand": "VIVO",
+    "model": "Vivo V29E (8/256)",
+    "jkt": "--",
+    "sgc": "2.000"
+  },
+  {
+    "id": "438",
+    "brand": "VIVO",
+    "model": "Vivo V30 (8/256)",
+    "jkt": "--",
+    "sgc": "3.000"
+  },
+  {
+    "id": "439",
+    "brand": "VIVO",
+    "model": "Vivo V30 (12/256)",
+    "jkt": "--",
+    "sgc": "3.300"
+  },
+  {
+    "id": "440",
+    "brand": "VIVO",
+    "model": "Vivo V30E (8/128)",
+    "jkt": "--",
+    "sgc": "2.150"
+  },
+  {
+    "id": "441",
+    "brand": "VIVO",
+    "model": "Vivo V30E (8/256)",
+    "jkt": "--",
+    "sgc": "2.300"
+  },
+  {
+    "id": "442",
+    "brand": "VIVO",
+    "model": "Vivo V40 (12/256)",
+    "jkt": "--",
+    "sgc": "3.850"
+  },
+  {
+    "id": "443",
+    "brand": "VIVO",
+    "model": "Vivo V40 (12/512)",
+    "jkt": "--",
+    "sgc": "4.050"
+  },
+  {
+    "id": "444",
+    "brand": "VIVO",
+    "model": "Vivo V40 Lite (8/128)",
+    "jkt": "--",
+    "sgc": "2.000"
+  },
+  {
+    "id": "445",
+    "brand": "VIVO",
+    "model": "Vivo V40 Lite (8/256)",
+    "jkt": "--",
+    "sgc": "2.150"
+  },
+  {
+    "id": "446",
+    "brand": "VIVO",
+    "model": "Vivo V40 Lite 5G (8/256)",
+    "jkt": "--",
+    "sgc": "2.000"
+  },
+  {
+    "id": "447",
+    "brand": "VIVO",
+    "model": "Vivo V40 Lite 5G (12/512)",
+    "jkt": "--",
+    "sgc": "2.500"
+  },
+  {
+    "id": "448",
+    "brand": "VIVO",
+    "model": "Vivo V50 (8/255)",
+    "jkt": "--",
+    "sgc": "5.000"
+  },
+  {
+    "id": "449",
+    "brand": "VIVO",
+    "model": "Vivo V50 (8/256)",
+    "jkt": "--",
+    "sgc": "3.650"
+  },
+  {
+    "id": "450",
+    "brand": "VIVO",
+    "model": "Vivo V50 (12/256)",
+    "jkt": "--",
+    "sgc": "4.200"
+  },
+  {
+    "id": "451",
+    "brand": "VIVO",
+    "model": "Vivo V50 (12/512)",
+    "jkt": "--",
+    "sgc": "4.400"
+  },
+  {
+    "id": "452",
+    "brand": "VIVO",
+    "model": "Vivo V50 Lite (8/128)",
+    "jkt": "--",
+    "sgc": "2.250"
+  },
+  {
+    "id": "453",
+    "brand": "VIVO",
+    "model": "Vivo V50 Lite (8/256)",
+    "jkt": "--",
+    "sgc": "2.400"
+  },
+  {
+    "id": "454",
+    "brand": "VIVO",
+    "model": "Vivo V50 Lite 5G (8/256)",
+    "jkt": "--",
+    "sgc": "2.650"
+  },
+  {
+    "id": "455",
+    "brand": "VIVO",
+    "model": "Vivo V50 Lite 5G (12/256)",
+    "jkt": "--",
+    "sgc": "2.950"
+  },
+  {
+    "id": "456",
+    "brand": "VIVO",
+    "model": "Vivo V60 (8/256)",
+    "jkt": "--",
+    "sgc": "4.700"
+  },
+  {
+    "id": "457",
+    "brand": "VIVO",
+    "model": "Vivo V60 (12/256)",
+    "jkt": "--",
+    "sgc": "5.200"
+  },
+  {
+    "id": "458",
+    "brand": "VIVO",
+    "model": "Vivo V60 (12/512)",
+    "jkt": "--",
+    "sgc": "5.500"
+  },
+  {
+    "id": "459",
+    "brand": "VIVO",
+    "model": "Vivo V60 Lite (8/128 4G)",
+    "jkt": "--",
+    "sgc": "2.400"
+  },
+  {
+    "id": "460",
+    "brand": "VIVO",
+    "model": "Vivo V60 Lite (8/256 4G)",
+    "jkt": "--",
+    "sgc": "2.600"
+  },
+  {
+    "id": "461",
+    "brand": "VIVO",
+    "model": "Vivo V60 Lite (8/256 5G)",
+    "jkt": "--",
+    "sgc": "3.000"
+  },
+  {
+    "id": "462",
+    "brand": "VIVO",
+    "model": "Vivo V60 Lite (12/512 5G)",
+    "jkt": "--",
+    "sgc": "3.450"
+  },
+  {
+    "id": "463",
+    "brand": "VIVO",
+    "model": "Vivo V70 (12/256)",
+    "jkt": "--",
+    "sgc": "5.900"
+  },
+  {
+    "id": "464",
+    "brand": "VIVO",
+    "model": "Vivo V70 (12/512)",
+    "jkt": "--",
+    "sgc": "6.300"
+  },
+  {
+    "id": "465",
+    "brand": "VIVO",
+    "model": "Vivo V70E (8/256)",
+    "jkt": "--",
+    "sgc": "4.000"
+  },
+  {
+    "id": "466",
+    "brand": "VIVO",
+    "model": "Vivo V70E (12/512)",
+    "jkt": "--",
+    "sgc": "4.600"
+  },
+  {
+    "id": "467",
+    "brand": "VIVO",
+    "model": "Vivo Y03 (4/64)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "468",
+    "brand": "VIVO",
+    "model": "Vivo Y03 (4/128)",
+    "jkt": "--",
+    "sgc": "1.100"
+  },
+  {
+    "id": "469",
+    "brand": "VIVO",
+    "model": "Vivo Y03T (4/32)",
+    "jkt": "--",
+    "sgc": "900"
+  },
+  {
+    "id": "470",
+    "brand": "VIVO",
+    "model": "Vivo Y03T (4/64)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "471",
+    "brand": "VIVO",
+    "model": "Vivo Y04S (4/64)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "472",
+    "brand": "VIVO",
+    "model": "Vivo Y04S (4/128)",
+    "jkt": "--",
+    "sgc": "1.200"
+  },
+  {
+    "id": "473",
+    "brand": "VIVO",
+    "model": "Vivo Y05 (4/64)",
+    "jkt": "--",
+    "sgc": "1.250"
+  },
+  {
+    "id": "474",
+    "brand": "VIVO",
+    "model": "Vivo Y05 (4/128)",
+    "jkt": "--",
+    "sgc": "1.450"
+  },
+  {
+    "id": "475",
+    "brand": "VIVO",
+    "model": "Vivo Y100 (8/128)",
+    "jkt": "--",
+    "sgc": "1.750"
+  },
+  {
+    "id": "476",
+    "brand": "VIVO",
+    "model": "Vivo Y100 (8/256)",
+    "jkt": "--",
+    "sgc": "1.900"
+  },
+  {
+    "id": "477",
+    "brand": "VIVO",
+    "model": "Vivo Y100 5G (8/128)",
+    "jkt": "--",
+    "sgc": "1.950"
+  },
+  {
+    "id": "478",
+    "brand": "VIVO",
+    "model": "Vivo Y100 5G (8/256)",
+    "jkt": "--",
+    "sgc": "2.100"
+  },
+  {
+    "id": "479",
+    "brand": "VIVO",
+    "model": "Vivo Y11D (4/64)",
+    "jkt": "--",
+    "sgc": "1.400"
+  },
+  {
+    "id": "480",
+    "brand": "VIVO",
+    "model": "Vivo Y11D (4/128)",
+    "jkt": "--",
+    "sgc": "1.650"
+  },
+  {
+    "id": "481",
+    "brand": "VIVO",
+    "model": "Vivo Y17S (4/64)",
+    "jkt": "--",
+    "sgc": "950"
+  },
+  {
+    "id": "482",
+    "brand": "VIVO",
+    "model": "Vivo Y17S (4/128)",
+    "jkt": "--",
+    "sgc": "1.100"
+  },
+  {
+    "id": "483",
+    "brand": "VIVO",
+    "model": "Vivo Y17S (6/128)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "484",
+    "brand": "VIVO",
+    "model": "Vivo Y18 (4/64)",
+    "jkt": "--",
+    "sgc": "1.000"
+  },
+  {
+    "id": "485",
+    "brand": "VIVO",
+    "model": "Vivo Y18 (4/128)",
+    "jkt": "--",
+    "sgc": "1.150"
+  },
+  {
+    "id": "486",
+    "brand": "VIVO",
+    "model": "Vivo Y18 (6/128)",
+    "jkt": "--",
+    "sgc": "1.400"
+  },
+  {
+    "id": "487",
+    "brand": "VIVO",
+    "model": "Vivo Y19S (4/64)",
+    "jkt": "--",
+    "sgc": "1.050"
+  },
+  {
+    "id": "488",
+    "brand": "VIVO",
+    "model": "Vivo Y19S (4/128)",
+    "jkt": "--",
+    "sgc": "1.200"
+  },
+  {
+    "id": "489",
+    "brand": "VIVO",
+    "model": "Vivo Y19S (6/128)",
+    "jkt": "--",
+    "sgc": "1.450"
+  },
+  {
+    "id": "490",
+    "brand": "VIVO",
+    "model": "Vivo Y19S GT 5G (6/128)",
+    "jkt": "--",
+    "sgc": "1.600"
+  },
+  {
+    "id": "491",
+    "brand": "VIVO",
+    "model": "Vivo Y19S GT 5G (8/128)",
+    "jkt": "--",
+    "sgc": "1.800"
+  },
+  {
+    "id": "492",
+    "brand": "VIVO",
+    "model": "Vivo Y19S GT 5G (8/256)",
+    "jkt": "--",
+    "sgc": "2.000"
+  },
+  {
+    "id": "493",
+    "brand": "VIVO",
+    "model": "Vivo Y19S Pro (4/64)",
+    "jkt": "--",
+    "sgc": "1.200"
+  },
+  {
+    "id": "494",
+    "brand": "VIVO",
+    "model": "Vivo Y19S Pro (4/128)",
+    "jkt": "--",
+    "sgc": "1.400"
+  },
+  {
+    "id": "495",
+    "brand": "VIVO",
+    "model": "Vivo Y19S Pro (6/128)",
+    "jkt": "--",
+    "sgc": "1.650"
+  },
+  {
+    "id": "496",
+    "brand": "VIVO",
+    "model": "Vivo Y21D (4/128)",
+    "jkt": "--",
+    "sgc": "1.450"
+  },
+  {
+    "id": "497",
+    "brand": "VIVO",
+    "model": "Vivo Y21D (6/128)",
+    "jkt": "--",
+    "sgc": "1.700"
+  },
+  {
+    "id": "498",
+    "brand": "VIVO",
+    "model": "Vivo Y21D (8/128)",
+    "jkt": "--",
+    "sgc": "1.950"
+  },
+  {
+    "id": "499",
+    "brand": "VIVO",
+    "model": "Vivo Y27 (4G)",
+    "jkt": "--",
+    "sgc": "1.250"
+  },
+  {
+    "id": "500",
+    "brand": "VIVO",
+    "model": "Vivo Y27 (5G)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "501",
+    "brand": "VIVO",
+    "model": "Vivo Y27S (8/128)",
+    "jkt": "--",
+    "sgc": "1.400"
+  },
+  {
+    "id": "502",
+    "brand": "VIVO",
+    "model": "Vivo Y27S (8/256)",
+    "jkt": "--",
+    "sgc": "1.550"
+  },
+  {
+    "id": "503",
+    "brand": "VIVO",
+    "model": "Vivo Y28 (6/128)",
+    "jkt": "--",
+    "sgc": "1.350"
+  },
+  {
+    "id": "504",
+    "brand": "VIVO",
+    "model": "Vivo Y28 (8/128)",
+    "jkt": "--",
+    "sgc": "1.550"
+  },
+  {
+    "id": "505",
+    "brand": "VIVO",
+    "model": "Vivo Y28 (8/256)",
+    "jkt": "--",
+    "sgc": "1.750"
+  },
+  {
+    "id": "506",
+    "brand": "VIVO",
+    "model": "Vivo Y29 (6/128)",
+    "jkt": "--",
+    "sgc": "1.450"
+  },
+  {
+    "id": "507",
+    "brand": "VIVO",
+    "model": "Vivo Y29 (8/128)",
+    "jkt": "--",
+    "sgc": "1.750"
+  },
+  {
+    "id": "508",
+    "brand": "VIVO",
+    "model": "Vivo Y29 (8/256)",
+    "jkt": "--",
+    "sgc": "1.900"
+  },
+  {
+    "id": "509",
+    "brand": "VIVO",
+    "model": "Vivo Y31D Pro (6/128)",
+    "jkt": "--",
+    "sgc": "2.300"
+  },
+  {
+    "id": "510",
+    "brand": "VIVO",
+    "model": "Vivo Y31D Pro (8/256)",
+    "jkt": "--",
+    "sgc": "3.250"
+  },
+  {
+    "id": "511",
+    "brand": "VIVO",
+    "model": "Vivo Y35 (8/128)",
+    "jkt": "--",
+    "sgc": "1.300"
+  },
+  {
+    "id": "512",
+    "brand": "VIVO",
+    "model": "Vivo Y36 (4G)",
+    "jkt": "--",
+    "sgc": "1.500"
+  },
+  {
+    "id": "513",
+    "brand": "VIVO",
+    "model": "Vivo Y36 (5G)",
+    "jkt": "--",
+    "sgc": "1.650"
+  },
+  {
+    "id": "514",
+    "brand": "VIVO",
+    "model": "Vivo Y400 (8/128)",
+    "jkt": "--",
+    "sgc": "2.100"
+  },
+  {
+    "id": "515",
+    "brand": "VIVO",
+    "model": "Vivo Y400 (8/256)",
+    "jkt": "--",
+    "sgc": "2.200"
+  },
+  {
+    "id": "516",
+    "brand": "VIVO",
+    "model": "Vivo Y400 5G (8/128)",
+    "jkt": "--",
+    "sgc": "2.200"
+  },
+  {
+    "id": "517",
+    "brand": "VIVO",
+    "model": "Vivo Y400 5G (8/256)",
+    "jkt": "--",
+    "sgc": "2.400"
+  },
+  {
+    "id": "518",
+    "brand": "XIAOMI",
+    "model": "Xiaomi Mi 13T (12/256)",
+    "jkt": "--",
+    "sgc": "3.600"
+  },
+  {
+    "id": "519",
+    "brand": "XIAOMI",
+    "model": "Xiaomi 14T / Mi 14T (12/256)",
+    "jkt": "--",
+    "sgc": "4.000"
+  },
+  {
+    "id": "520",
+    "brand": "XIAOMI",
+    "model": "Xiaomi 14T / Mi 14T (12/512)",
+    "jkt": "--",
+    "sgc": "4.500"
+  },
+  {
+    "id": "521",
+    "brand": "XIAOMI",
+    "model": "Xiaomi Mi 14T Pro (12/256)",
+    "jkt": "--",
+    "sgc": "5.800"
+  },
+  {
+    "id": "522",
+    "brand": "XIAOMI",
+    "model": "Xiaomi Mi 14T Pro (12/512)",
+    "jkt": "--",
+    "sgc": "6.100"
+  },
+  {
+    "id": "523",
+    "brand": "XIAOMI",
+    "model": "Xiaomi Mi 15T (12/256)",
+    "jkt": "--",
+    "sgc": "5.000"
+  },
+  {
+    "id": "524",
+    "brand": "XIAOMI",
+    "model": "Xiaomi Mi 15T (12/512)",
+    "jkt": "--",
+    "sgc": "5.500"
+  },
+  {
+    "id": "525",
+    "brand": "XIAOMI",
+    "model": "Xiaomi Mi 15T Pro (12/512)",
+    "jkt": "--",
+    "sgc": "8.700"
+  }
+]
