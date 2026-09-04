@@ -80,10 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const isLoggedIn = localStorage.getItem('npgalery_logged_in');
     const authModal = document.getElementById('auth-modal');
     if (authModal) {
-        if (isLoggedIn === 'false') authModal.classList.remove('hidden');
-        else {
-            localStorage.setItem('npgalery_logged_in', 'true');
+        if (isLoggedIn === 'true') {
             authModal.classList.add('hidden');
+        } else {
+            authModal.classList.remove('hidden');
         }
     }
 
@@ -740,15 +740,32 @@ function toggleTheme() {
     localStorage.setItem('npgalery_theme', isDark ? 'dark' : 'light');
 }
 function handleLogout() {
-    showCustomConfirm("Keluar", "Yakin ingin keluar?", () => { localStorage.setItem('npgalery_logged_in', 'false'); document.getElementById('auth-modal')?.classList.remove('hidden'); });
+    showCustomConfirm("Keluar", "Yakin ingin keluar?", () => { 
+        localStorage.setItem('npgalery_logged_in', 'false'); 
+        document.getElementById('auth-modal')?.classList.remove('hidden'); 
+    });
 }
+
 function handleLogin(e) {
     e.preventDefault();
-    if (document.getElementById('auth-username').value && document.getElementById('auth-password').value) {
+    const userVal = document.getElementById('auth-username')?.value.trim();
+    const passVal = document.getElementById('auth-password')?.value.trim();
+
+    // Kredensial login tetap
+    const validUser = "Helboy";
+    const validPass = "J1eguhh_";
+
+    if (userVal === validUser && passVal === validPass) {
         localStorage.setItem('npgalery_logged_in', 'true');
         document.getElementById('auth-modal')?.classList.add('hidden');
+        if (document.getElementById('auth-username')) document.getElementById('auth-username').value = '';
+        if (document.getElementById('auth-password')) document.getElementById('auth-password').value = '';
+        showToast('Login Berhasil', 'Selamat datang, Helboy!');
+    } else {
+        showToast('Akses Ditolak', 'Username atau Password salah!', false);
     }
 }
+
 function switchTab(tabId, el) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
