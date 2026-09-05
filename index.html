@@ -6,6 +6,8 @@
     <title>NPGalery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <!-- Supabase JS Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Library Render Dokumen & Barcode Scanner HP Real-Time -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -16,26 +18,26 @@
         <div class="auth-card">
             <div class="auth-header">
                 <img src="logo-np.jpg" alt="Logo NPGalery" class="auth-logo">
-                <h2>Masuk ke NPGalery</h2>
-                <p>Silakan masukkan kredensial untuk melanjutkan</p>
+                <h2>NPGalery</h2>
+                <p>Login Dulu Boyy</p>
             </div>
             <form id="auth-form" onsubmit="handleLogin(event)">
                 <div class="form-group">
                     <label for="auth-username">Username</label>
                     <div class="input-icon-wrap">
                         <i class="fa-solid fa-user"></i>
-                        <input type="text" id="auth-username" placeholder="Masukkan username" required>
+                        <input type="text" id="auth-username" placeholder="Username" required>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="auth-password">Password</label>
                     <div class="input-icon-wrap">
                         <i class="fa-solid fa-lock"></i>
-                        <input type="password" id="auth-password" placeholder="Masukkan password" required>
+                        <input type="password" id="auth-password" placeholder="Password" required>
                     </div>
                 </div>
                 <button type="submit" class="auth-btn">
-                    <span>Masuk</span>
+                    <span>Login</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
@@ -46,7 +48,7 @@
         <div class="floating-header">
             <div class="header-brand">
                 <img src="logo-np.jpg" alt="Logo NPGalery" class="app-logo">
-                <h1 class="title">NP - Galery</h1>
+                <h1 class="title">Not - Project</h1>
             </div>
 
             <div class="header-actions">
@@ -121,7 +123,7 @@
                     <button id="btn-toggle-form" class="toggle-form-btn" onclick="toggleStokForm()">
                         <div class="toggle-btn-left">
                             <i class="fa-solid fa-circle-plus"></i>
-                            <span>Tambah Unit Masuk</span>
+                            <span>Tambah Stok</span>
                         </div>
                         <i class="fa-solid fa-chevron-down toggle-icon" id="icon-toggle-form"></i>
                     </button>
@@ -130,61 +132,61 @@
                         <div class="add-product-card glass-form">
                             
                             <div class="add-form-group position-relative">
-                                <label>Pilih Tipe HP (Ketik minimal 2 huruf)</label>
+                                <label>Pilih Tipe HP</label>
                                 <div class="autocomplete-wrapper">
                                     <i class="fa-solid fa-magnifying-glass icon-search-glass"></i>
-                                    <input type="text" id="stok-produk-input" placeholder="Cari tipe HP di sini..." autocomplete="off" onkeyup="handleAutocomplete(this.value)" onfocus="handleAutocomplete(this.value)">
+                                    <input type="text" id="stok-produk-input" placeholder="Cari tipe HP" autocomplete="off" onkeyup="handleAutocomplete(this.value)" onfocus="handleAutocomplete(this.value)">
                                     <ul id="stok-autocomplete-list" class="autocomplete-list hidden"></ul>
                                 </div>
                             </div>
                             
                             <div class="add-price-row">
                                 <div class="add-form-group half-width">
-                                    <label>Kondisi Unit</label>
+                                    <label>Status Unit</label>
                                     <select id="stok-kondisi" class="form-select-glass">
-                                        <option value="New">Baru (New)</option>
-                                        <option value="Second">Bekas (Second)</option>
+                                        <option value="New">New</option>
+                                        <option value="Second">Second</option>
                                     </select>
                                 </div>
                                 <div class="add-form-group half-width">
                                     <label>Kelengkapan</label>
                                     <select id="stok-kelengkapan" class="form-select-glass">
-                                        <option value="Fullset">Fullset Lengkap</option>
-                                        <option value="Unit + Charger">Batangan + Cas</option>
+                                        <option value="Fullset">Fullset</option>
+                                        <option value="Unit + Charger">Unit + Charger</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="add-price-row">
                                 <div class="add-form-group half-width">
-                                    <label>Nomor IMEI / SN</label>
+                                    <label>IMEI / SN</label>
                                     <div class="imei-scan-wrapper">
-                                        <input type="text" id="stok-imei" placeholder="Ketik atau scan barcode">
+                                        <input type="text" id="stok-imei" placeholder="Ketik / Scan">
                                         <button type="button" id="btn-scan-imei" onclick="startImeiScanner()" title="Scan Barcode/QR Real-Time">
                                             <i class="fa-solid fa-camera"></i>
                                         </button>
                                     </div>
                                 </div>
                                 <div class="add-form-group half-width">
-                                    <label>Jumlah Unit</label>
+                                    <label>Qty</label>
                                     <input type="number" id="stok-qty" placeholder="1" min="1" value="1">
                                 </div>
                             </div>
 
                             <div class="add-price-row">
                                 <div class="add-form-group half-width">
-                                    <label>Modal Ambil (Rp)</label>
-                                    <input type="text" id="stok-harga" placeholder="Contoh: 1.500.000">
+                                    <label>Modal (Rp)</label>
+                                    <input type="text" id="stok-harga" placeholder="">
                                 </div>
                                 <div class="add-form-group half-width">
-                                    <label>Tanggal Barang Masuk</label>
+                                    <label>Tanggal</label>
                                     <input type="date" id="stok-tanggal">
                                 </div>
                             </div>
 
-                            <div class="add-action-row">
+                            <div class="add-action-row align-right">
                                 <button class="add-submit-btn compact-btn" onclick="simpanStokBaru()">
-                                    <i class="fa-solid fa-floppy-disk"></i> Masukkan ke Gudang
+                                    <i class="fa-solid fa-floppy-disk"></i> Simpan
                                 </button>
                             </div>
                         </div>
@@ -193,11 +195,11 @@
                     <div class="promo-action-bar">
                         <button class="promo-btn btn-broadcast-wa" onclick="broadcastStokWA()" title="Salin dan buka format broadcast WhatsApp">
                             <i class="fa-brands fa-whatsapp"></i>
-                            <span>Broadcast WA</span>
+                            <span>Broadcast</span>
                         </button>
                         <button class="promo-btn btn-story-banner" onclick="previewStoryBanner()" title="Lihat pratinjau banner katalog story">
                             <i class="fa-solid fa-image"></i>
-                            <span>Banner Story</span>
+                            <span>Story</span>
                         </button>
                     </div>
 
@@ -205,13 +207,13 @@
                         <div class="stok-masuk-header">
                             <div class="header-left">
                                 <i class="fa-solid fa-clipboard-list"></i>
-                                <h4>Daftar Stok Masuk</h4>
+                                <h4>Daftar Stok</h4>
                             </div>
                             <span id="badge-stok-count" class="badge-count">0 Unit</span>
                         </div>
                         <div id="stok-masuk-container" class="stok-masuk-container">
                             <div id="empty-stok-msg" class="empty-stok-msg">
-                                Belum ada unit yang dicatat hari ini.
+                                Empety.
                             </div>
                         </div>
                     </div>
@@ -222,16 +224,16 @@
                     <div class="add-product-card compact-diagnosis-card" style="margin-top: 0;">
                         <div class="add-header compact-header" style="margin-bottom: 12px;">
                             <i class="fa-solid fa-stethoscope" style="font-size: 16px; color: var(--azure-primary);"></i>
-                            <h3>Diagnosis Hardware HP</h3>
+                            <h3>System check</h3>
                         </div>
                         
                         <div class="diagnosis-search-stack">
                             <div class="autocomplete-wrapper" style="flex: 1;">
                                 <i class="fa-solid fa-magnifying-glass icon-search-glass"></i>
-                                <input type="text" id="diagnosis-input-model" placeholder="Cari merek / model HP..." autocomplete="off">
+                                <input type="text" id="diagnosis-input-model" placeholder="Cari merk HP" autocomplete="off">
                             </div>
                             <button class="add-submit-btn compact-btn" onclick="triggerDiagnosisCheck()" style="width: 100% !important; margin-top: 0;">
-                                <i class="fa-solid fa-clipboard-check"></i> Buka Menu & Ceklis
+                                <i class="fa-solid fa-clipboard-check"></i> Tampilkan
                             </button>
                         </div>
                     </div>
@@ -240,7 +242,7 @@
                         <div class="stok-masuk-header" style="margin-bottom: 8px;">
                             <div class="header-left">
                                 <i class="fa-solid fa-list-check"></i>
-                                <h4>Shortcut Brand</h4>
+                                <h4>Brand</h4>
                             </div>
                         </div>
                         <div class="stok-masuk-container" style="padding: 10px; display: flex; flex-direction: row; gap: 8px; flex-wrap: wrap;">
@@ -262,7 +264,7 @@
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('sub-banding-harga', this)">
                         <i class="fa-solid fa-code-compare"></i>
-                        <span>Perbandingan Harga</span>
+                        <span>List Harga</span>
                     </button>
                     <button class="sub-tab-btn" onclick="switchSubTab('sub-tambah-produk', this)">
                         <i class="fa-solid fa-circle-plus"></i>
@@ -287,7 +289,7 @@
                     <div class="pricelist-quick-bar">
                         <button type="button" class="btn-quick-wa" onclick="openDirectWaModal()" title="Kirim Pesan WA ke Kontak/Supplier">
                             <i class="fa-brands fa-whatsapp"></i>
-                            <span>Chat Nomor WA</span>
+                            <span>Whatsapp</span>
                         </button>
                     </div>
 
@@ -321,6 +323,11 @@
                                 <label>Harga Cikarang</label>
                                 <input type="text" id="add-input-sgc" placeholder="Contoh: 1.450">
                             </div>
+                        </div>
+
+                        <div class="add-form-group">
+                            <label>Harga BNIB</label>
+                            <input type="text" id="add-input-bnib" placeholder="Contoh: 1.600">
                         </div>
 
                         <div class="add-action-row">
