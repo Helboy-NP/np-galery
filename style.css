@@ -283,6 +283,33 @@ body.dark-mode .price-card { border: 1px solid rgba(255,255,255,0.1); }
 .action-btn { background: var(--bg-page); border: 1px solid var(--border-subtle); color: var(--text-secondary); width: 25px; height: 25px; border-radius: 7px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 10px; }
 .price-compare-stack { display: flex; flex-direction: column; gap: 4px; }
 
+/* BADGE HARGA BNIB (MINIMALIS & RINGKAS TANPA MERAMAIKAN KOTAK) */
+.price-card-top-badge {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: -2px;
+    margin-bottom: 2px;
+}
+.badge-bnib-tag {
+    font-size: 10.5px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: #047857;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 1.5px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+body.dark-mode .badge-bnib-tag {
+    color: #A7F3D0;
+    background: rgba(52, 211, 153, 0.12);
+    border-color: rgba(52, 211, 153, 0.3);
+}
+
 /* KOTAK HARGA DASAR (LAYOUT ATAS-BAWAH, KONTEN HORIZONTAL MENYAMPING) */
 .price-box { 
     border-radius: 7px; 
@@ -448,6 +475,10 @@ body.dark-mode .edit-input-group input { background: rgba(0,0,0,0.25); color: #f
 body.dark-mode .add-form-group input { background: rgba(0,0,0,0.2); color: #fff; }
 .add-price-row { display: flex; gap: 10px; }
 .add-price-row .half-width { flex: 1; margin-bottom: 14px; position: relative; }
+
+/* ROW AKSI TOMBOL FORM */
+.add-action-row { display: flex; justify-content: flex-start; margin-top: 6px; }
+.add-action-row.align-right { justify-content: flex-end; }
 
 .position-relative { position: relative; }
 .autocomplete-wrapper { position: relative; display: flex; align-items: center; }
