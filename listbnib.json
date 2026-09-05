@@ -1,0 +1,1258 @@
+[
+  {
+    "id": "inf-1",
+    "brand": "INFINIX",
+    "model": "Hot 50i (4/64)",
+    "bnib": "1.450.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "inf-2",
+    "brand": "INFINIX",
+    "model": "Hot 50i (4/128)",
+    "bnib": "1.600.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "inf-3",
+    "brand": "INFINIX",
+    "model": "Hot 50 (6/128)",
+    "bnib": "1.950.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "inf-4",
+    "brand": "INFINIX",
+    "model": "Hot 50 (8/128)",
+    "bnib": "2.200.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "inf-5",
+    "brand": "INFINIX",
+    "model": "Hot 50 Pro (8/256)",
+    "bnib": "2.650.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "inf-6",
+    "brand": "INFINIX",
+    "model": "Note 50 (8/256)",
+    "bnib": "2.850.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "inf-7",
+    "brand": "INFINIX",
+    "model": "Note 50 Pro (8/256)",
+    "bnib": "3.350.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "inf-8",
+    "brand": "INFINIX",
+    "model": "Note 50 Pro (12/512)",
+    "bnib": "3.850.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "tec-1",
+    "brand": "TECNO",
+    "model": "Spark Go 3 (4/64)",
+    "bnib": "1.500.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "tec-2",
+    "brand": "TECNO",
+    "model": "Spark Go 3 (4/128)",
+    "bnib": "1.650.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "tec-3",
+    "brand": "TECNO",
+    "model": "Spark 50 (4/128)",
+    "bnib": "2.150.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "tec-4",
+    "brand": "TECNO",
+    "model": "Spark 50 (6/128)",
+    "bnib": "2.450.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "tec-5",
+    "brand": "TECNO",
+    "model": "Spark 50 (8/128)",
+    "bnib": "2.750.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "tec-6",
+    "brand": "TECNO",
+    "model": "Camon 50 (8/128)",
+    "bnib": "3.350.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "tec-7",
+    "brand": "TECNO",
+    "model": "Camon 50 (8/256)",
+    "bnib": "3.500.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "tec-8",
+    "brand": "TECNO",
+    "model": "Camon 50 (12/256)",
+    "bnib": "3.700.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "tec-9",
+    "brand": "TECNO",
+    "model": "Camon 50 Pro (8/256)",
+    "bnib": "4.700.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "tec-10",
+    "brand": "TECNO",
+    "model": "Camon 50 Pro (12/256)",
+    "bnib": "5.000.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "tec-11",
+    "brand": "TECNO",
+    "model": "Camon 50 Pro (12/512)",
+    "bnib": "5.500.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "itl-1",
+    "brand": "ITEL",
+    "model": "A100CS (3/64)",
+    "bnib": "1.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "itl-2",
+    "brand": "ITEL",
+    "model": "A100C (3/64)",
+    "bnib": "1.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "itl-3",
+    "brand": "ITEL",
+    "model": "A100C (4/64)",
+    "bnib": "1.450.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "itl-4",
+    "brand": "ITEL",
+    "model": "A200 (4/64)",
+    "bnib": "1.450.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "itl-5",
+    "brand": "ITEL",
+    "model": "A200 (3/128)",
+    "bnib": "1.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "itl-6",
+    "brand": "ITEL",
+    "model": "City 100 (4/128)",
+    "bnib": "1.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "itl-7",
+    "brand": "ITEL",
+    "model": "City 200 (4/128)",
+    "bnib": "1.550.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "itl-8",
+    "brand": "ITEL",
+    "model": "S26 Ultra (8/128)",
+    "bnib": "2.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "itl-9",
+    "brand": "ITEL",
+    "model": "S26 Ultra (8/256)",
+    "bnib": "2.700.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-1",
+    "brand": "REDMI",
+    "model": "A7 Pro (4/64)",
+    "bnib": "--",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-2",
+    "brand": "REDMI",
+    "model": "A7 Pro (4/128)",
+    "bnib": "1.650.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-3",
+    "brand": "REDMI",
+    "model": "A5 (4/128)",
+    "bnib": "1.750.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-4",
+    "brand": "REDMI",
+    "model": "15C (6/128)",
+    "bnib": "2.150.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-5",
+    "brand": "REDMI",
+    "model": "15C (8/256)",
+    "bnib": "2.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-6",
+    "brand": "REDMI",
+    "model": "Redmi 15 (8/128)",
+    "bnib": "2.450.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-7",
+    "brand": "REDMI",
+    "model": "Redmi 15 (8/256)",
+    "bnib": "2.600.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-8",
+    "brand": "REDMI",
+    "model": "Note 15 (6/128)",
+    "bnib": "2.450.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-9",
+    "brand": "REDMI",
+    "model": "Note 15 (8/128)",
+    "bnib": "2.700.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-10",
+    "brand": "REDMI",
+    "model": "Note 15 (8/256)",
+    "bnib": "2.900.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-11",
+    "brand": "REDMI",
+    "model": "Note 15 5G (8/256)",
+    "bnib": "3.550.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-12",
+    "brand": "REDMI",
+    "model": "Note 15 5G (12/512)",
+    "bnib": "4.000.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-13",
+    "brand": "REDMI",
+    "model": "Note 15 5G (6/128)",
+    "bnib": "2.900.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-14",
+    "brand": "REDMI",
+    "model": "Note 15 Pro 5G (8/256)",
+    "bnib": "4.200.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-15",
+    "brand": "REDMI",
+    "model": "Note 15 Pro 5G (12/512)",
+    "bnib": "5.200.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-16",
+    "brand": "REDMI",
+    "model": "Note 15 Pro Plus (8/256)",
+    "bnib": "--",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-17",
+    "brand": "REDMI",
+    "model": "Note 15 Pro Plus (12/512)",
+    "bnib": "--",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-18",
+    "brand": "REDMI",
+    "model": "Redmi Pad 2 (4/128)",
+    "bnib": "2.300.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-19",
+    "brand": "REDMI",
+    "model": "Redmi Pad 2 (4/64)",
+    "bnib": "1.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-20",
+    "brand": "REDMI",
+    "model": "Note 14 5G (8/256)",
+    "bnib": "3.050.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-21",
+    "brand": "REDMI",
+    "model": "Note 14 Pro (8/256)",
+    "bnib": "3.500.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "xmi-22",
+    "brand": "REDMI",
+    "model": "Note 14 Pro (12/512)",
+    "bnib": "3.750.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-1",
+    "brand": "VIVO",
+    "model": "Y03T (4/64)",
+    "bnib": "1.700.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-2",
+    "brand": "VIVO",
+    "model": "Y03T (4/128)",
+    "bnib": "1.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-3",
+    "brand": "VIVO",
+    "model": "Y19S Pro (4/64)",
+    "bnib": "1.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-4",
+    "brand": "VIVO",
+    "model": "Y19S Pro (4/128)",
+    "bnib": "2.000.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-5",
+    "brand": "VIVO",
+    "model": "Y19S Pro (6/128)",
+    "bnib": "2.150.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-6",
+    "brand": "VIVO",
+    "model": "Y05 (4/64)",
+    "bnib": "1.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-7",
+    "brand": "VIVO",
+    "model": "Y05 (4/128)",
+    "bnib": "1.950.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-8",
+    "brand": "VIVO",
+    "model": "Y19S GT (6/128)",
+    "bnib": "2.600.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-9",
+    "brand": "VIVO",
+    "model": "Y19S GT (8/128)",
+    "bnib": "2.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-10",
+    "brand": "VIVO",
+    "model": "Y19S GT (8/256)",
+    "bnib": "3.000.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-11",
+    "brand": "VIVO",
+    "model": "Y21D (4/128)",
+    "bnib": "2.200.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-12",
+    "brand": "VIVO",
+    "model": "Y21D (6/128)",
+    "bnib": "2.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-13",
+    "brand": "VIVO",
+    "model": "Y21D (8/128)",
+    "bnib": "2.650.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-14",
+    "brand": "VIVO",
+    "model": "Y29 (6/128)",
+    "bnib": "2.250.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-15",
+    "brand": "VIVO",
+    "model": "Y29 (8/128)",
+    "bnib": "2.650.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-16",
+    "brand": "VIVO",
+    "model": "Y29 (8/256)",
+    "bnib": "2.950.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-17",
+    "brand": "VIVO",
+    "model": "V50 Lite (8/128)",
+    "bnib": "3.050.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-18",
+    "brand": "VIVO",
+    "model": "V50 Lite (8/256)",
+    "bnib": "3.300.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-19",
+    "brand": "VIVO",
+    "model": "V50 Lite 5G (8/256)",
+    "bnib": "3.650.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-20",
+    "brand": "VIVO",
+    "model": "V40 Lite (8/128)",
+    "bnib": "2.600.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-21",
+    "brand": "VIVO",
+    "model": "V40 Lite (8/256)",
+    "bnib": "2.900.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-22",
+    "brand": "VIVO",
+    "model": "V60 Lite (8/128)",
+    "bnib": "3.300.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-23",
+    "brand": "VIVO",
+    "model": "V60 Lite (8/256)",
+    "bnib": "3.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "viv-24",
+    "brand": "VIVO",
+    "model": "V60 Lite 5G (8/256)",
+    "bnib": "4.200.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-1",
+    "brand": "REALME",
+    "model": "Note 80 (4/64)",
+    "bnib": "1.650.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-2",
+    "brand": "REALME",
+    "model": "Note 80 (4/128)",
+    "bnib": "1.900.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-3",
+    "brand": "REALME",
+    "model": "C100i (4/128)",
+    "bnib": "2.050.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-4",
+    "brand": "REALME",
+    "model": "C100i (4/256)",
+    "bnib": "2.300.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-5",
+    "brand": "REALME",
+    "model": "C100X (6/128)",
+    "bnib": "2.600.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-6",
+    "brand": "REALME",
+    "model": "P4 Lite (4/64)",
+    "bnib": "1.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-7",
+    "brand": "REALME",
+    "model": "P4 Lite (4/128)",
+    "bnib": "1.950.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-8",
+    "brand": "REALME",
+    "model": "P4 Lite (4/256)",
+    "bnib": "2.100.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-9",
+    "brand": "REALME",
+    "model": "C71 (4/128)",
+    "bnib": "1.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-10",
+    "brand": "REALME",
+    "model": "C71 (4/128 - Alt)",
+    "bnib": "2.000.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-11",
+    "brand": "REALME",
+    "model": "C71 (6/128)",
+    "bnib": "2.150.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-12",
+    "brand": "REALME",
+    "model": "C85 Pro (8/128)",
+    "bnib": "2.950.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-13",
+    "brand": "REALME",
+    "model": "C85 Pro (8/256)",
+    "bnib": "3.300.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-14",
+    "brand": "REALME",
+    "model": "C85 (6/128)",
+    "bnib": "2.550.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-15",
+    "brand": "REALME",
+    "model": "C85 (8/256)",
+    "bnib": "2.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-16",
+    "brand": "REALME",
+    "model": "P4X (4/128)",
+    "bnib": "2.100.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-17",
+    "brand": "REALME",
+    "model": "P4X (4/256)",
+    "bnib": "2.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "rlm-18",
+    "brand": "REALME",
+    "model": "P4X (6/128)",
+    "bnib": "2.600.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-1",
+    "brand": "POCO",
+    "model": "C81 Pro (4/64)",
+    "bnib": "1.650.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-2",
+    "brand": "POCO",
+    "model": "C81 Pro (4/128)",
+    "bnib": "1.750.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-3",
+    "brand": "POCO",
+    "model": "C71 (4/128)",
+    "bnib": "1.750.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-4",
+    "brand": "POCO",
+    "model": "C85 (6/128)",
+    "bnib": "2.025.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-5",
+    "brand": "POCO",
+    "model": "C85 (8/256)",
+    "bnib": "2.325.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-6",
+    "brand": "POCO",
+    "model": "M7 (8/256)",
+    "bnib": "2.600.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-7",
+    "brand": "POCO",
+    "model": "M7 Pro (8/256)",
+    "bnib": "3.150.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-8",
+    "brand": "POCO",
+    "model": "X7 (8/256)",
+    "bnib": "3.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-9",
+    "brand": "POCO",
+    "model": "X7 (12/512)",
+    "bnib": "4.000.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-10",
+    "brand": "POCO",
+    "model": "X7 Pro (12/512)",
+    "bnib": "5.050.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-11",
+    "brand": "POCO",
+    "model": "X8 Pro (8/256)",
+    "bnib": "5.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-12",
+    "brand": "POCO",
+    "model": "X8 Pro (8/512)",
+    "bnib": "5.700.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-13",
+    "brand": "POCO",
+    "model": "X8 Pro (12/512)",
+    "bnib": "5.950.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-14",
+    "brand": "POCO",
+    "model": "X8 Pro Max (12/256)",
+    "bnib": "6.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "poc-15",
+    "brand": "POCO",
+    "model": "X8 Pro Max (12/512)",
+    "bnib": "7.350.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-1",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A07 (4/64)",
+    "bnib": "1.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-2",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A07 (4/128)",
+    "bnib": "2.050.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-3",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A07 (6/128)",
+    "bnib": "2.500.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-4",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A07 (8/256)",
+    "bnib": "2.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-5",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A07 5G (6/128)",
+    "bnib": "2.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-6",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A06 5G (6/128)",
+    "bnib": "2.150.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-7",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A17 (4/128)",
+    "bnib": "2.550.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-8",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A17 (8/128)",
+    "bnib": "3.150.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-9",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A17 (8/256)",
+    "bnib": "3.450.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-10",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A17 5G (8/256)",
+    "bnib": "4.050.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-11",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A26 (8/256)",
+    "bnib": "4.200.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-12",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A36 (8/256)",
+    "bnib": "4.600.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-13",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A36 (12/256)",
+    "bnib": "4.900.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-14",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A56 (8/256)",
+    "bnib": "5.550.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-15",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A56 (12/256)",
+    "bnib": "5.900.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-16",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A37 (8/128)",
+    "bnib": "4.500.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-17",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A37 (8/256)",
+    "bnib": "4.850.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-18",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A57 (8/256)",
+    "bnib": "5.850.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-19",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A57 (12/256)",
+    "bnib": "6.250.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-20",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A57 (8/128)",
+    "bnib": "5.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-21",
+    "brand": "SAMSUNG",
+    "model": "Galaxy S25 FE (8/256)",
+    "bnib": "8.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-22",
+    "brand": "SAMSUNG",
+    "model": "Galaxy S25 FE (8/512)",
+    "bnib": "9.500.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-23",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A16 (8/128)",
+    "bnib": "2.850.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-24",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A27 (8/128)",
+    "bnib": "3.900.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "sam-25",
+    "brand": "SAMSUNG",
+    "model": "Galaxy A27 (8/256)",
+    "bnib": "4.700.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-1",
+    "brand": "OPPO",
+    "model": "A6T (4/64)",
+    "bnib": "2.150.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-2",
+    "brand": "OPPO",
+    "model": "A6T (4/128)",
+    "bnib": "2.300.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-3",
+    "brand": "OPPO",
+    "model": "A6T (6/128)",
+    "bnib": "2.450.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-4",
+    "brand": "OPPO",
+    "model": "A6X (4/64)",
+    "bnib": "2.150.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-5",
+    "brand": "OPPO",
+    "model": "A6X (4/128)",
+    "bnib": "2.350.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-6",
+    "brand": "OPPO",
+    "model": "A6X (6/128)",
+    "bnib": "2.500.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-7",
+    "brand": "OPPO",
+    "model": "A6X (8/128)",
+    "bnib": "2.750.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-8",
+    "brand": "OPPO",
+    "model": "A6 (6/128 - Opt 1)",
+    "bnib": "2.650.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-9",
+    "brand": "OPPO",
+    "model": "A6 (6/128 - Opt 2)",
+    "bnib": "3.000.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-10",
+    "brand": "OPPO",
+    "model": "A6 (6/256)",
+    "bnib": "3.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-11",
+    "brand": "OPPO",
+    "model": "A6 Pro (8/128)",
+    "bnib": "3.800.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-12",
+    "brand": "OPPO",
+    "model": "A6 Pro (8/256)",
+    "bnib": "4.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-13",
+    "brand": "OPPO",
+    "model": "A6 Pro 5G (8/256)",
+    "bnib": "--",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-14",
+    "brand": "OPPO",
+    "model": "A6T Pro (8/128)",
+    "bnib": "3.000.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-15",
+    "brand": "OPPO",
+    "model": "A6T Pro 5G (8/256)",
+    "bnib": "4.200.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-16",
+    "brand": "OPPO",
+    "model": "Reno 15F (8/128)",
+    "bnib": "5.400.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-17",
+    "brand": "OPPO",
+    "model": "Reno 15F (8/256)",
+    "bnib": "5.850.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-18",
+    "brand": "OPPO",
+    "model": "Reno 15F (12/256)",
+    "bnib": "6.200.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-19",
+    "brand": "OPPO",
+    "model": "Reno 15 (8/256)",
+    "bnib": "7.000.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-20",
+    "brand": "OPPO",
+    "model": "Reno 15 (12/256)",
+    "bnib": "7.500.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-21",
+    "brand": "OPPO",
+    "model": "Reno 16F (8/128)",
+    "bnib": "6.000.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-22",
+    "brand": "OPPO",
+    "model": "Reno 16F (8/256)",
+    "bnib": "7.500.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-23",
+    "brand": "OPPO",
+    "model": "Reno 16 (8/256)",
+    "bnib": "8.900.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-24",
+    "brand": "OPPO",
+    "model": "A6C (4/64)",
+    "bnib": "2.300.000",
+    "jkt": "--",
+    "sgc": "--"
+  },
+  {
+    "id": "opp-25",
+    "brand": "OPPO",
+    "model": "A6C (4/128)",
+    "bnib": "2.500.000",
+    "jkt": "--",
+    "sgc": "--"
+  }
+]
