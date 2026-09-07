@@ -1,7 +1,7 @@
 /**
  * NPGALERY - CORE SCRIPT & PRICE LIST PERBANDINGAN HARGA
  * TERINTEGRASI PENUH DENGAN SUPABASE & FITUR BNIB BADGE
- * DILENGKAPI SISTEM SUPABASE AUTH, RLS, & DATA ENCRYPTION
+ * DILENGKAPI SISTEM SUPABASE AUTH, RLS, NOTES & REALTIME SYNC
  */
 
 // KONFIGURASI KONEKSI SUPABASE
@@ -31,6 +31,7 @@ let isReportAccordionOpen = false;
 let daftarStokMasuk = JSON.parse(localStorage.getItem('npgalery_stok_masuk')) || [];
 let daftarTerjual = JSON.parse(localStorage.getItem('npgalery_stok_terjual')) || [];
 let daftarKasPribadi = JSON.parse(localStorage.getItem('npgalery_kas_pribadi')) || [];
+let daftarNotes = JSON.parse(localStorage.getItem('npgalery_notes')) || [];
 
 let activeInvoiceData = null;
 
@@ -48,82 +49,151 @@ let calcEquation = "";
 async function syncFromSupabase() {
     if (!supabaseClient) return;
     try {
-        // 1. Ambil Data Produk (Stok Ready)
-        const { data: prods, error: errProds } = await supabaseClient
-            .from('products')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (!errProds && prods && prods.length > 0) {
-            daftarStokMasuk = prods.filter(p => p.status === 'ready' || !p.status).map(p => ({
-                id: p.id,
-                produk: p.name,
-                kondisi: p.condition || 'Second',
-                kelengkapan: p.completeness || 'Fullset',
-                imei: p.imei || '-',
-                qty: String(p.qty || 1),
-                hargaModal: String(p.buy_price || 0),
-                hargaJual: String(p.sell_price || ''),
-                pembeli: p.buyer || '',
-                tanggal: p.date || (p.created_at ? p.created_at.slice(0, 10) : '')
-            }));
-            saveStokToStorage();
-        }
+        // 1. Ambil Data Produk (Stok Ready) dari tabel 'product'
+        await syncProductsFromSupabaseOnly();
 
         // 2. Ambil Data Penjualan (Transactions)
-        const { data: trx, error: errTrx } = await supabaseClient
-            .from('transactions')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (!errTrx && trx && trx.length > 0) {
-            daftarTerjual = trx.map(t => ({
-                id: t.id,
-                produk: t.product_name,
-                kondisi: t.condition || 'Second',
-                kelengkapan: t.completeness || 'Fullset',
-                imei: t.imei || '-',
-                qty: String(t.qty || 1),
-                hargaModal: String(t.buy_price || 0),
-                hargaJual: String(t.sell_price || 0),
-                pembeli: t.customer_name || '',
-                tanggal: t.date || (t.created_at ? t.created_at.slice(0, 10) : ''),
-                tanggalTerjualRaw: t.sold_date || (t.created_at ? t.created_at.slice(0, 10) : ''),
-                modalStatus: t.modal_status || 'belum'
-            }));
-            saveTerjualToStorage();
-        }
+        await syncTransactionsFromSupabaseOnly();
 
         // 3. Ambil Mutasi Kas
-        const { data: mutasi, error: errMutasi } = await supabaseClient
-            .from('cash_mutations')
-            .select('*')
-            .order('created_at', { ascending: false });
+        await syncCashFromSupabaseOnly();
 
-        if (!errMutasi && mutasi && mutasi.length > 0) {
-            daftarKasPribadi = mutasi.map(m => ({
-                id: m.id,
-                keterangan: m.description,
-                kategori: m.type,
-                nominal: parseFloat(m.amount) || 0,
-                tanggal: m.date || (m.created_at ? m.created_at.slice(0, 10) : '')
-            }));
-            saveKasToStorage();
-        }
-
-        renderDaftarStokMasuk();
-        renderDaftarTerjual();
-        renderDaftarModal();
-        renderManajemenKas();
-        updateDashboardStats();
-        updatePribadiStats();
-        renderLaporanKeuangan();
+        // 4. Ambil Data Notes / Catatan
+        await syncNotesFromSupabaseOnly();
     } catch (err) {
         console.warn('Gagal sinkronisasi data dari Supabase:', err);
     }
 }
 
-// FUNGSI MEMUAT DATA DARI PRICELIST.JSON DAN LISTBNIB.JSON (MERGE OTOMATIS)
+// FUNGSI SINKRONISASI PARSIAL
+async function syncProductsFromSupabaseOnly() {
+    if (!supabaseClient) return;
+    const { data: prods, error: errProds } = await supabaseClient
+        .from('product')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (!errProds && prods && prods.length > 0) {
+        daftarStokMasuk = prods.filter(p => p.status === 'ready' || !p.status).map(p => ({
+            id: p.id,
+            produk: p.name,
+            kondisi: p.condition || 'Second',
+            kelengkapan: p.completeness || 'Fullset',
+            imei: p.imei || '-',
+            qty: String(p.qty || 1),
+            hargaModal: String(p.buy_price || 0),
+            hargaJual: String(p.sell_price || ''),
+            pembeli: p.buyer || '',
+            tanggal: p.date || (p.created_at ? p.created_at.slice(0, 10) : '')
+        }));
+        saveStokToStorage();
+        renderDaftarStokMasuk();
+        updateDashboardStats();
+        renderLaporanKeuangan();
+    }
+}
+
+async function syncTransactionsFromSupabaseOnly() {
+    if (!supabaseClient) return;
+    const { data: trx, error: errTrx } = await supabaseClient
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (!errTrx && trx && trx.length > 0) {
+        daftarTerjual = trx.map(t => ({
+            id: t.id,
+            produk: t.product_name,
+            kondisi: t.condition || 'Second',
+            kelengkapan: t.completeness || 'Fullset',
+            imei: t.imei || '-',
+            qty: String(t.qty || 1),
+            hargaModal: String(t.buy_price || 0),
+            hargaJual: String(t.sell_price || 0),
+            pembeli: t.customer_name || '',
+            tanggal: t.date || (t.created_at ? t.created_at.slice(0, 10) : ''),
+            tanggalTerjualRaw: t.sold_date || (t.created_at ? t.created_at.slice(0, 10) : ''),
+            modalStatus: t.modal_status || 'belum'
+        }));
+        saveTerjualToStorage();
+        renderDaftarTerjual();
+        renderDaftarModal();
+        updateDashboardStats();
+        renderLaporanKeuangan();
+    }
+}
+
+async function syncCashFromSupabaseOnly() {
+    if (!supabaseClient) return;
+    const { data: mutasi, error: errMutasi } = await supabaseClient
+        .from('cash_mutations')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (!errMutasi && mutasi && mutasi.length > 0) {
+        daftarKasPribadi = mutasi.map(m => ({
+            id: m.id,
+            keterangan: m.description,
+            kategori: m.type,
+            nominal: parseFloat(m.amount) || 0,
+            tanggal: m.date || (m.created_at ? m.created_at.slice(0, 10) : '')
+        }));
+        saveKasToStorage();
+        renderManajemenKas();
+        updatePribadiStats();
+        renderLaporanKeuangan();
+    }
+}
+
+async function syncNotesFromSupabaseOnly() {
+    if (!supabaseClient) return;
+    try {
+        const { data: notesData, error: errNotes } = await supabaseClient
+            .from('notes')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (!errNotes && notesData) {
+            daftarNotes = notesData.map(n => ({
+                id: n.id,
+                title: n.title || 'Catatan',
+                content: n.content || '',
+                date: n.date || (n.created_at ? n.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10))
+            }));
+            saveNotesToStorage();
+            renderDaftarNotes();
+        }
+    } catch (e) {
+        console.warn('Gagal memuat tabel notes:', e);
+    }
+}
+
+// SETUP SUPABASE REALTIME MULTI-DEVICE
+function setupSupabaseRealtime() {
+    if (!supabaseClient) return;
+
+    supabaseClient
+        .channel('npgalery-realtime-channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'product' }, () => {
+            syncProductsFromSupabaseOnly();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+            syncTransactionsFromSupabaseOnly();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'cash_mutations' }, () => {
+            syncCashFromSupabaseOnly();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, () => {
+            syncNotesFromSupabaseOnly();
+        })
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                console.log('Realtime listener aktif untuk semua tabel NPGalery.');
+            }
+        });
+}
+
+// FUNGSI MEMUAT DATA DARI PRICELIST.JSON DAN LISTBNIB.JSON
 async function loadPriceListData() {
     try {
         let oldData = [];
@@ -144,7 +214,6 @@ async function loadPriceListData() {
 
         let mergedMap = new Map();
 
-        // 1. Masukkan data master lama
         oldData.forEach(item => {
             let key = `${item.brand.trim().toUpperCase()} - ${item.model.trim().toUpperCase()}`;
             mergedMap.set(key, {
@@ -157,7 +226,6 @@ async function loadPriceListData() {
             });
         });
 
-        // 2. Gabungkan data BNIB baru: jika model sudah ada perbarui nilai bnib, jika belum ada tambahkan baru
         bnibData.forEach(item => {
             let key = `${item.brand.trim().toUpperCase()} - ${item.model.trim().toUpperCase()}`;
             if (mergedMap.has(key)) {
@@ -185,7 +253,7 @@ async function loadPriceListData() {
         filterPriceList();
         renderLaporanKeuangan();
     } catch (error) {
-        console.warn('Memuat pricelist.json/listbnib.json gagal atau berjalan di protokol file:/// :', error);
+        console.warn('Memuat pricelist gagal:', error);
         rawPriceListData = [];
         initBrandDropdown();
         initReportBrandDropdown();
@@ -194,7 +262,6 @@ async function loadPriceListData() {
     }
 }
 
-// FUNGSI MEMUAT DATA DARI DIAGNOSIS.JSON
 async function loadDiagnosisData() {
     try {
         const response = await fetch('diagnosis.json');
@@ -202,7 +269,7 @@ async function loadDiagnosisData() {
         const data = await response.json();
         rawDiagnosisData = data.diagnosis_data || [];
     } catch (error) {
-        console.warn('Memuat diagnosis.json gagal atau berjalan di protokol file:/// :', error);
+        console.warn('Memuat diagnosis.json gagal:', error);
         rawDiagnosisData = [];
     }
 }
@@ -218,7 +285,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const authModal = document.getElementById('auth-modal');
     
-    // Verifikasi sesi login aktif via Supabase Auth
     if (supabaseClient) {
         const { data: sessionData } = await supabaseClient.auth.getSession();
         if (sessionData && sessionData.session) {
@@ -257,22 +323,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Muat data master price list & diagnosis
     loadPriceListData();
     loadDiagnosisData();
     
-    // Render cache awal
     renderDaftarStokMasuk(); 
     renderDaftarTerjual();
     renderDaftarModal(); 
     renderManajemenKas();
+    renderDaftarNotes();
     updateDashboardStats();
     updatePribadiStats();
 
     initAllCustomDropdowns();
 
-    // Panggil sinkronisasi online Supabase
-    syncFromSupabase();
+    // Panggil sinkronisasi awal dan aktifkan Realtime listener
+    await syncFromSupabase();
+    setupSupabaseRealtime();
 
     document.addEventListener('click', (e) => {
         const inputElem = document.getElementById('stok-produk-input');
@@ -286,6 +352,103 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 });
+
+/* ========================================================== */
+/* FITUR MANAJEMEN NOTES (CATATAN)                            */
+/* ========================================================== */
+window.toggleNoteForm = function() {
+    document.getElementById('note-form-collapse')?.classList.toggle('collapsed');
+    document.getElementById('icon-toggle-note-form')?.classList.toggle('rotated');
+};
+
+function saveNotesToStorage() {
+    localStorage.setItem('npgalery_notes', JSON.stringify(daftarNotes));
+}
+
+window.simpanCatatanBaru = async function() {
+    const titleInput = document.getElementById('note-title-input');
+    const contentInput = document.getElementById('note-content-input');
+
+    const title = titleInput.value.trim();
+    const content = contentInput.value.trim();
+
+    if (!title && !content) {
+        showToast('Peringatan', 'Judul atau isi catatan tidak boleh kosong!', false);
+        return;
+    }
+
+    const newNote = {
+        id: 'note-' + Date.now(),
+        title: title || 'Catatan Baru',
+        content: content,
+        date: new Date().toISOString().slice(0, 10)
+    };
+
+    daftarNotes.unshift(newNote);
+    saveNotesToStorage();
+    renderDaftarNotes();
+    showToast('Tersimpan', 'Catatan berhasil ditambahkan.');
+
+    titleInput.value = '';
+    contentInput.value = '';
+    toggleNoteForm();
+
+    if (supabaseClient) {
+        try {
+            await supabaseClient.from('notes').insert([{
+                id: newNote.id,
+                title: newNote.title,
+                content: newNote.content,
+                date: newNote.date
+            }]);
+        } catch (e) {
+            console.warn('Gagal menyimpan catatan ke Supabase:', e);
+        }
+    }
+};
+
+window.hapusCatatan = function(id) {
+    showCustomConfirm("Hapus Catatan", "Yakin ingin menghapus catatan ini?", async () => {
+        daftarNotes = daftarNotes.filter(n => n.id !== id);
+        saveNotesToStorage();
+        renderDaftarNotes();
+        showToast('Berhasil', 'Catatan telah dihapus.', false);
+
+        if (supabaseClient) {
+            try {
+                await supabaseClient.from('notes').delete().eq('id', id);
+            } catch (e) {
+                console.warn('Gagal menghapus catatan di Supabase:', e);
+            }
+        }
+    });
+};
+
+function renderDaftarNotes() {
+    const container = document.getElementById('notes-container');
+    const badge = document.getElementById('badge-notes-count');
+    if (!container) return;
+
+    if (badge) badge.textContent = `${daftarNotes.length} Catatan`;
+
+    if (daftarNotes.length === 0) {
+        container.innerHTML = `<div class="empty-stok-msg">Belum ada catatan tersimpan.</div>`;
+        return;
+    }
+
+    container.innerHTML = daftarNotes.map(n => `
+        <div class="note-item-card">
+            <div class="stok-item-top">
+                <span class="stok-item-title">${n.title}</span>
+                <button onclick="hapusCatatan('${n.id}')" class="action-btn delete-btn" title="Hapus Catatan"><i class="fa-solid fa-trash"></i></button>
+            </div>
+            <div class="note-item-content">${n.content}</div>
+            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 4px;">
+                <i class="fa-regular fa-clock"></i> ${formatTanggalID(n.date)}
+            </div>
+        </div>
+    `).join('');
+}
 
 /* ========================================================== */
 /* SCANNER KAMERA HP (HTML5-QRCODE)                           */
@@ -866,7 +1029,6 @@ function filterPriceList() {
     currentPage = 1; renderPage();
 }
 
-// RENDER KARTU: 2 KOTAK HARGA (JKT & SGC) + BADGE HARGA MINIMALIS DI ATAS KOTAK
 function renderPage() {
     const container = document.getElementById('pricelist-container');
     const badgeCount = document.getElementById('pricelist-count-badge');
@@ -891,7 +1053,6 @@ function renderPage() {
             diffHtml = `<div class="price-card-footer"><span class="selisih-badge ${cls}">${txt}</span></div>`;
         }
 
-        // Tampilkan badge harga BNIB jika datanya ada dan bukan '--'
         let bnibBadgeHtml = '';
         if (item.bnib && item.bnib.trim() !== '--' && item.bnib.trim() !== '') {
             bnibBadgeHtml = `
@@ -966,7 +1127,6 @@ async function handleLogin(e) {
     }
 
     try {
-        // Otentikasi resmi Supabase Auth untuk membuka akses tabel RLS
         const { data, error } = await supabaseClient.auth.signInWithPassword({
             email: userVal,
             password: passVal
@@ -981,8 +1141,7 @@ async function handleLogin(e) {
         
         showToast('Login Berhasil', 'Selamat datang, Admin NPGalery!');
         
-        // Tarik data terbaru dari Supabase
-        syncFromSupabase();
+        await syncFromSupabase();
     } catch (err) {
         console.error("Login Error:", err);
         showToast('Akses Ditolak', 'Email atau Password salah!', false);
@@ -1044,7 +1203,7 @@ window.selectStokKatalog = function(val) {
     document.getElementById('stok-autocomplete-list')?.classList.add('hidden');
 };
 
-// SIMPAN STOK (SUPABASE INTEGRATED)
+// SIMPAN STOK (SUPABASE INTEGRATED KE TABEL 'product')
 window.simpanStokBaru = async function() {
     let produk = document.getElementById('stok-produk-input').value.trim();
     let imei = document.getElementById('stok-imei').value.trim();
@@ -1074,10 +1233,9 @@ window.simpanStokBaru = async function() {
     document.getElementById('stok-produk-input').value = '';
     document.getElementById('stok-imei').value = '';
 
-    // Kirim ke Supabase
     if (supabaseClient) {
         try {
-            await supabaseClient.from('products').insert([{
+            await supabaseClient.from('product').insert([{
                 id: newStockItem.id,
                 name: newStockItem.produk,
                 condition: newStockItem.kondisi,
@@ -1169,7 +1327,7 @@ window.updateHargaJualLive = function(val) {
         item.hargaJual = val;
         saveStokToStorage();
         if (supabaseClient) {
-            supabaseClient.from('products').update({ sell_price: parseRawToNumeric(val) || 0 }).eq('id', item.id).then();
+            supabaseClient.from('product').update({ sell_price: parseRawToNumeric(val) || 0 }).eq('id', item.id).then();
         }
     }
 };
@@ -1180,7 +1338,7 @@ window.updatePembeliLive = function(val) {
         item.pembeli = val;
         saveStokToStorage();
         if (supabaseClient) {
-            supabaseClient.from('products').update({ buyer: val }).eq('id', item.id).then();
+            supabaseClient.from('product').update({ buyer: val }).eq('id', item.id).then();
         }
     }
 };
@@ -1211,13 +1369,10 @@ window.jualStokItem = function(id) {
             showToast('Berhasil', 'Unit terjual & laba masuk kas.');
             openInvoiceModal(item);
 
-            // Sinkron ke Supabase
             if (supabaseClient) {
                 try {
-                    // Update status produk menjadi sold
-                    await supabaseClient.from('products').update({ status: 'sold' }).eq('id', item.id);
+                    await supabaseClient.from('product').update({ status: 'sold' }).eq('id', item.id);
 
-                    // Catat riwayat transaksi
                     await supabaseClient.from('transactions').insert([{
                         id: item.id,
                         product_name: item.produk,
@@ -1233,7 +1388,6 @@ window.jualStokItem = function(id) {
                         modal_status: 'belum'
                     }]);
 
-                    // Jika ada profit, catat mutasi kas
                     if (profit > 0) {
                         await supabaseClient.from('cash_mutations').insert([{
                             id: kasId,
@@ -1390,7 +1544,7 @@ window.hapusStokItem = function(id) {
         daftarStokMasuk = daftarStokMasuk.filter(s => s.id !== id);
         saveStokToStorage(); renderDaftarStokMasuk(); updateDashboardStats(); renderLaporanKeuangan();
         if (supabaseClient) {
-            try { await supabaseClient.from('products').delete().eq('id', id); } catch (e) {}
+            try { await supabaseClient.from('product').delete().eq('id', id); } catch (e) {}
         }
     });
 };
