@@ -358,7 +358,7 @@
                     </div>
                 </div>
 
-                <div class="sub-tab-container sub-tab-grid-3">
+                <div class="sub-tab-container sub-tab-grid-4">
                     <button class="sub-tab-btn active" onclick="switchSubTab('sub-kas', this)">
                         <i class="fa-solid fa-cash-register"></i>
                         <span>Kas</span>
@@ -370,6 +370,10 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('sub-rjual', this)">
                         <i class="fa-solid fa-clock-rotate-left"></i>
                         <span>R.Jual</span>
+                    </button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('sub-notes', this)">
+                        <i class="fa-solid fa-note-sticky"></i>
+                        <span>Notes</span>
                     </button>
                 </div>
 
@@ -542,6 +546,55 @@
                         <i class="fa-solid fa-clock-rotate-left icon-placeholder"></i>
                         <h2>Riwayat Penjualan</h2>
                         <p>Daftar riwayat transaksi barang yang telah terjual.</p>
+                    </div>
+                </div>
+
+                <!-- SUB-TAB NOTES / CATATAN -->
+                <div id="sub-notes" class="sub-content">
+                    <button id="btn-toggle-note-form" class="toggle-form-btn" onclick="toggleNoteForm()">
+                        <div class="toggle-btn-left">
+                            <i class="fa-solid fa-circle-plus"></i>
+                            <span>Tambah Catatan Baru</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down toggle-icon" id="icon-toggle-note-form"></i>
+                    </button>
+
+                    <div id="note-form-collapse" class="stok-form-collapse collapsed">
+                        <div class="add-product-card glass-form">
+                            <div class="add-header compact-header">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                                <h3>Buat Catatan Toko</h3>
+                            </div>
+
+                            <div class="add-form-group">
+                                <label>Judul Catatan</label>
+                                <input type="text" id="note-title-input" placeholder="Misal: Daftar Belanja / Pengingat Servis">
+                            </div>
+
+                            <div class="add-form-group">
+                                <label>Isi Catatan</label>
+                                <textarea id="note-content-input" class="notes-textarea-glass" placeholder="Tuliskan catatan detail Anda di sini..." rows="4"></textarea>
+                            </div>
+
+                            <div class="add-action-row align-right">
+                                <button class="add-submit-btn compact-btn" onclick="simpanCatatanBaru()">
+                                    <i class="fa-solid fa-floppy-disk"></i> Simpan Catatan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stok-masuk-section" style="margin-top: 16px;">
+                        <div class="stok-masuk-header">
+                            <div class="header-left">
+                                <i class="fa-solid fa-note-sticky"></i>
+                                <h4>Daftar Catatan</h4>
+                            </div>
+                            <span id="badge-notes-count" class="badge-count">0 Catatan</span>
+                        </div>
+                        <div id="notes-container" class="stok-masuk-container" style="max-height: 450px;">
+                            <div class="empty-stok-msg">Belum ada catatan tersimpan.</div>
+                        </div>
                     </div>
                 </div>
 
