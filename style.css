@@ -231,7 +231,8 @@ body.dark-mode .card-saldo { background: linear-gradient(135deg, #1E293B 0%, #0F
 
 .sub-tab-container { display: flex; gap: 8px; margin-bottom: 16px; }
 .sub-tab-grid-3 { gap: 6px; }
-.sub-tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 8px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 12px; font-family: var(--font-main); font-size: 12px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+.sub-tab-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.sub-tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 6px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 12px; font-family: var(--font-main); font-size: 11.5px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
 .sub-tab-btn.active { background: var(--card-bg); border-color: var(--azure-primary); color: var(--azure-primary); box-shadow: 0 4px 12px rgba(0, 119, 182, 0.08); }
 .sub-content { display: none; animation: fadeIn 0.25s ease; }
 .sub-content.active { display: block; }
@@ -711,6 +712,49 @@ body.dark-mode .add-form-group input { background: rgba(0,0,0,0.2); color: #fff;
 .story-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #CBD5E1; padding-top: 14px; margin-top: 4px; }
 .story-footer-info { font-size: 10.5px; color: #64748B; font-weight: 600; }
 .story-contact-badge { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; }
+
+/* STYLING KHUSUS NOTES */
+.notes-textarea-glass {
+    width: 100%;
+    padding: 11px 14px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    font-size: 13px;
+    font-family: var(--font-main);
+    color: var(--text-primary);
+    outline: none;
+    resize: vertical;
+    transition: all 0.2s ease;
+}
+body.dark-mode .notes-textarea-glass {
+    background: rgba(0, 0, 0, 0.2);
+    color: #fff;
+}
+.notes-textarea-glass:focus {
+    border-color: var(--azure-primary);
+    box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.12);
+}
+.note-item-card {
+    background: var(--bg-page);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+.note-item-card:hover {
+    border-color: var(--azure-primary);
+}
+.note-item-content {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spinRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
