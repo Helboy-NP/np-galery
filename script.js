@@ -2435,7 +2435,7 @@ function processFileDownload(format) {
                     th { background-color: #0077B6; color: #FFFFFF; padding: 8px; border: 1px solid #0077B6; }
                     td { padding: 8px; border: 1px solid #CBD5E1; font-size: 10pt; }
                 </style>
-    </head>
+            </head>
             <body>
                 <div class="Section1">
                     ${bodyHtml}
@@ -2480,4 +2480,181 @@ function downloadFileBlob(blob, filename) {
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(url);
     showToast('Berhasil', `File ${filename} diunduh.`);
+}
+
+/* ========================================================== */
+/* FITUR ASISTEN AI CERDAS (GAYA OBROLAN AKU & KAMU)           */
+/* ========================================================== */
+
+window.toggleAiAssistantModal = function() {
+    const modal = document.getElementById('ai-assistant-modal');
+    if (!modal) return;
+    const isShowing = modal.classList.toggle('show');
+    if (isShowing) {
+        setTimeout(() => {
+            const input = document.getElementById('ai-user-input');
+            if (input) input.focus();
+            scrollAiChatToBottom();
+        }, 150);
+    }
+};
+
+window.clearAiChatHistory = function() {
+    const container = document.getElementById('ai-chat-messages');
+    if (!container) return;
+    aiConversationHistory = [];
+    container.innerHTML = `
+        <div class="ai-msg ai-msg-bot">
+            <div class="ai-msg-bubble">
+                Halo! Aku asisten NPGalery. Mau ngobrolin apa nih? Mau nanya soal stok toko, spesifikasi HP, atau sekadar konsultasi hal lain juga boleh banget!
+            </div>
+        </div>
+    `;
+    showToast('Info', 'Riwayat percakapan telah dibersihkan.');
+};
+
+function scrollAiChatToBottom() {
+    const container = document.getElementById('ai-chat-messages');
+    if (container) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+function appendAiMessage(sender, text) {
+    const container = document.getElementById('ai-chat-messages');
+    if (!container) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `ai-msg ai-msg-${sender}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'ai-msg-bubble';
+    bubble.textContent = text;
+
+    msgDiv.appendChild(bubble);
+    container.appendChild(msgDiv);
+    scrollAiChatToBottom();
+}
+
+function appendAiTypingIndicator() {
+    const container = document.getElementById('ai-chat-messages');
+    if (!container) return null;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'ai-msg ai-msg-bot';
+    msgDiv.id = 'ai-active-typing-indicator';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'ai-msg-bubble';
+    bubble.innerHTML = `<div class="ai-typing-indicator"><span></span><span></span><span></span></div>`;
+
+    msgDiv.appendChild(bubble);
+    container.appendChild(msgDiv);
+    scrollAiChatToBottom();
+    return msgDiv;
+}
+
+function removeAiTypingIndicator() {
+    const indicator = document.getElementById('ai-active-typing-indicator');
+    if (indicator) indicator.remove();
+}
+
+window.sendAiQuickPrompt = function(promptText) {
+    const input = document.getElementById('ai-user-input');
+    if (input) {
+        input.value = promptText;
+        document.getElementById('ai-chat-form')?.dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+};
+
+window.handleAiSendMessage = async function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const input = document.getElementById('ai-user-input');
+    if (!input) return;
+
+    const userText = input.value.trim();
+    if (!userText) return;
+
+    appendAiMessage('user', userText);
+    input.value = '';
+
+    appendAiTypingIndicator();
+
+    try {
+        const reply = await queryAiEngine(userText);
+        removeAiTypingIndicator();
+        appendAiMessage('bot', reply);
+    } catch (err) {
+        removeAiTypingIndicator();
+        appendAiMessage('bot', 'Duh, koneksi aku lagi agak terganggu nih. Coba tanya sekali lagi ya!');
+        console.error('AI Error:', err);
+    }
+};
+
+// Ganti dengan Gemini API Key milikmu dari Google AI Studio
+const GEMINI_API_KEY = "MASUKKAN_API_KEY_GEMINI_DI_SINI";
+let aiConversationHistory = [];
+
+async function queryAiEngine(userPrompt) {
+    const p = userPrompt.toLowerCase();
+
+    // Jika kamu menanyakan rekap atau data toko, kita selipkan data real-time langsung ke percakapan
+    let shopContextData = "";
+    if (p.includes('rekap') || p.includes('stok') || p.includes('keuntungan') || p.includes('saldo') || p.includes('omset')) {
+        let sumStok = daftarStokMasuk.reduce((sum, item) => sum + parseInt(item.qty || 1), 0);
+        let sumTerjual = daftarTerjual.reduce((sum, item) => sum + parseInt(item.qty || 1), 0);
+        let totalProfit = 0;
+        let totalOmset = 0;
+        
+        daftarTerjual.forEach(item => {
+            let qty = parseInt(item.qty || 1);
+            let hj = parseRawToNumeric(item.hargaJual) || 0;
+            let hm = parseRawToNumeric(item.hargaModal) || 0;
+            totalOmset += (hj * qty);
+            totalProfit += ((hj - hm) * qty);
+        });
+
+        let totalMasuk = 0, totalKeluar = 0;
+        daftarKasPribadi.forEach(i => {
+            if (i.kategori === 'masuk') totalMasuk += i.nominal;
+            else if (i.kategori === 'keluar') totalKeluar += i.nominal;
+        });
+        let saldoKas = totalMasuk - totalKeluar;
+
+        shopContextData = `\n\n[Data Toko Saat Ini: Stok ready ${sumStok} unit, unit terjual ${sumTerjual}, keuntungan bersih ${formatRupiah(totalProfit)}, saldo kas aktif ${formatRupiah(saldoKas)}]`;
+    }
+
+    aiConversationHistory.push({
+        role: "user",
+        parts: [{ text: userPrompt + shopContextData }]
+    });
+
+    const systemInstruction = `Kamu adalah teman ngobrol sekaligus asisten pribadi yang ramah untuk aplikasi NPGalery. 
+Gunakan gaya bahasa obrolan santai, akrab, dan natural dengan sapaan "aku dan kamu" (seperti layaknya dua orang teman yang sedang mengobrol akrab). 
+Kamu bisa menjawab apa saja secara cerdas—mulai dari spesifikasi handphone, tips servis, ide promosi, hingga ngobrol santai tentang apa pun. Jangan kaku!`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            systemInstruction: {
+                parts: [{ text: systemInstruction }]
+            },
+            contents: aiConversationHistory
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const botReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Duh, aku lagi blank nih. Coba tanyakan lagi ya!";
+
+    aiConversationHistory.push({
+        role: "model",
+        parts: [{ text: botReply }]
+    });
+
+    return botReply;
 }
