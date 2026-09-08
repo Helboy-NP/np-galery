@@ -103,6 +103,18 @@
                     </div>
                 </div>
 
+                <!-- BARIS TOMBOL PINTASAN DI HALAMAN UTAMA TRANSAKSI -->
+                <div class="transaksi-quick-actions-bar">
+                    <button type="button" class="btn-quick-shortcut btn-quick-shortcut-wa" onclick="openDirectWaModal()" title="Kirim Pesan WhatsApp Cepat">
+                        <i class="fa-brands fa-whatsapp"></i>
+                        <span>WhatsApp</span>
+                    </button>
+                    <button type="button" class="btn-quick-shortcut btn-quick-shortcut-imei" onclick="openImeiCheckModal()" title="Cek Garansi & Keaslian IMEI Resmi Brand">
+                        <i class="fa-solid fa-shield-virus"></i>
+                        <span>Cek IMEI</span>
+                    </button>
+                </div>
+
                 <div class="sub-tab-container sub-tab-grid-3" style="display: flex;">
                     <button class="sub-tab-btn active" onclick="switchSubTab('sub-stok-jual', this)">
                         <i class="fa-solid fa-boxes-stacked"></i>
@@ -283,14 +295,6 @@
                                 <option value="ALL">Semua Merk</option>
                             </select>
                         </div>
-                    </div>
-
-                    <!-- TOMBOL PINTASAN WA KE SUPPLIER/KONTAK DI BAWAH PENCARIAN -->
-                    <div class="pricelist-quick-bar">
-                        <button type="button" class="btn-quick-wa" onclick="openDirectWaModal()" title="Kirim Pesan WA ke Kontak/Supplier">
-                            <i class="fa-brands fa-whatsapp"></i>
-                            <span>Whatsapp</span>
-                        </button>
                     </div>
 
                     <div class="pricelist-summary">
@@ -621,6 +625,67 @@
             </button>
         </div>
     </nav>
+
+    <!-- MODAL POP-UP PILIHAN BRAND CEK IMEI (DIUBAH MENJADI WINDOW.OPEN DI LUAR WEBVIEW) -->
+    <div class="custom-modal-overlay" id="imei-check-modal">
+        <div class="custom-modal-card" style="max-width: 380px;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                <h3 style="font-size: 15px; font-weight: 800;">
+                    <i class="fa-solid fa-shield-virus" style="color: var(--azure-primary); margin-right: 6px;"></i> Cek IMEI & Garansi
+                </h3>
+                <p style="font-size: 11px; color: var(--text-secondary);">Pilih merek untuk membuka portal pengecekan resmi</p>
+            </div>
+            
+            <div class="imei-brand-grid">
+                <button type="button" class="btn-imei-brand brand-samsung" onclick="window.open('https://imeicheck.com/id/samsung-imei-check', '_blank'); closeImeiCheckModal();">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                    <span>Samsung</span>
+                </button>
+                <button type="button" class="btn-imei-brand brand-oppo" onclick="window.open('https://support.oppo.com/id/check/', '_blank'); closeImeiCheckModal();">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                    <span>Oppo</span>
+                </button>
+                <button type="button" class="btn-imei-brand brand-xiaomi" onclick="window.open('https://www.mi.com/global/verify', '_blank'); closeImeiCheckModal();">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                    <span>Xiaomi / Poco</span>
+                </button>
+                <button type="button" class="btn-imei-brand brand-carlcare" onclick="window.open('https://www.carlcare.com/id/warranty-check/', '_blank'); closeImeiCheckModal();">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    <span>Infinix / Tecno / Itel</span>
+                </button>
+                <button type="button" class="btn-imei-brand brand-realme" onclick="window.open('https://www.realme.com/id/support/phonecheck', '_blank'); closeImeiCheckModal();">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                    <span>Realme</span>
+                </button>
+                <button type="button" class="btn-imei-brand brand-asus" onclick="window.open('https://www.asus.com/id/support/warranty-status-inquiry/', '_blank'); closeImeiCheckModal();">
+                    <i class="fa-solid fa-laptop"></i>
+                    <span>Asus</span>
+                </button>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 14px;">
+                <button type="button" class="btn-cancel" onclick="closeImeiCheckModal()" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL WEB VIEWER IN-APP (TETAP AMAN JIKA DIGUNAKAN BRAND LAIN) -->
+    <div class="custom-modal-overlay" id="imei-web-modal">
+        <div class="custom-modal-card inapp-webview-card">
+            <div class="inapp-webview-header">
+                <div class="inapp-webview-title-wrap">
+                    <i class="fa-solid fa-globe" style="color: var(--azure-primary);"></i>
+                    <span id="inapp-webview-title">Portal Pengecekan</span>
+                </div>
+                <button type="button" class="btn-close-webview" onclick="closeImeiWebModal()" title="Tutup Portal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="inapp-webview-body">
+                <iframe id="imei-webview-frame" src="about:blank" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL POP-UP SCANNER KAMERA HP SUNGGUHAN (HTML5-QRCODE) -->
     <div class="custom-modal-overlay" id="scanner-modal">
