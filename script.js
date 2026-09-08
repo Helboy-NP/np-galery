@@ -440,7 +440,10 @@ function renderDaftarNotes() {
         <div class="note-item-card">
             <div class="stok-item-top">
                 <span class="stok-item-title">${n.title}</span>
-                <button onclick="hapusCatatan('${n.id}')" class="action-btn delete-btn" title="Hapus Catatan"><i class="fa-solid fa-trash"></i></button>
+                <div style="display: flex; gap: 4px;">
+                    <button onclick="bukaEditCatatan('${n.id}')" class="action-btn edit-btn" title="Edit Catatan"><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="hapusCatatan('${n.id}')" class="action-btn delete-btn" title="Hapus Catatan"><i class="fa-solid fa-trash"></i></button>
+                </div>
             </div>
             <div class="note-item-content">${n.content}</div>
             <div style="font-size: 10px; color: var(--text-secondary); margin-top: 4px;">
@@ -449,6 +452,116 @@ function renderDaftarNotes() {
         </div>
     `).join('');
 }
+
+// MODAL & FUNGSI EDIT CATATAN
+let activeEditNoteId = null;
+
+function createEditNoteModalDOM() {
+    if (document.getElementById('edit-note-modal')) return;
+    document.body.insertAdjacentHTML('beforeend', `
+        <div class="custom-modal-overlay" id="edit-note-modal">
+            <div class="custom-modal-card">
+                <div class="edit-modal-header">
+                    <h3>Edit Catatan</h3>
+                    <p style="font-size:12px; color:var(--azure-primary);">Perbarui Judul atau Isi Catatan</p>
+                </div>
+                <div class="edit-input-group">
+                    <label>Judul Catatan</label>
+                    <input type="text" id="edit-note-title-input">
+                </div>
+                <div class="edit-input-group" style="margin-top: 10px;">
+                    <label>Isi Catatan</label>
+                    <textarea id="edit-note-content-input" rows="4" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid var(--border-subtle); background:var(--bg-card); color:var(--text-primary); font-family:inherit; font-size:12px; resize:vertical; box-sizing:border-box; outline:none;"></textarea>
+                </div>
+                <div class="edit-modal-actions" style="margin-top: 14px;">
+                    <button class="btn-cancel" onclick="closeEditNoteModal()">Batal</button>
+                    <button class="btn-save" onclick="simpanPerubahanCatatan()">Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
+    `);
+}
+
+window.bukaEditCatatan = function(id) {
+    createEditNoteModalDOM();
+    const note = daftarNotes.find(n => n.id === id);
+    if (!note) return;
+
+    activeEditNoteId = id;
+    document.getElementById('edit-note-title-input').value = note.title;
+    document.getElementById('edit-note-content-input').value = note.content;
+    document.getElementById('edit-note-modal').classList.add('show');
+};
+
+window.closeEditNoteModal = function() {
+    document.getElementById('edit-note-modal')?.classList.remove('show');
+    activeEditNoteId = null;
+};
+
+window.simpanPerubahanCatatan = async function() {
+    if (!activeEditNoteId) return;
+
+    const newTitle = document.getElementById('edit-note-title-input').value.trim();
+    const newContent = document.getElementById('edit-note-content-input').value.trim();
+
+    if (!newTitle && !newContent) {
+        showToast('Peringatan', 'Judul atau isi catatan tidak boleh kosong!', false);
+        return;
+    }
+
+    const note = daftarNotes.find(n => n.id === activeEditNoteId);
+    if (note) {
+        note.title = newTitle || 'Catatan Baru';
+        note.content = newContent;
+
+        saveNotesToStorage();
+        renderDaftarNotes();
+        closeEditNoteModal();
+        showToast('Berhasil', 'Catatan berhasil diperbarui.');
+
+        if (supabaseClient) {
+            try {
+                await supabaseClient.from('notes').update({
+                    title: note.title,
+                    content: note.content
+                }).eq('id', activeEditNoteId);
+            } catch (e) {
+                console.warn('Gagal memperbarui catatan di Supabase:', e);
+            }
+        }
+    }
+};
+
+/* ========================================================== */
+/* FITUR CEK IMEI & PORTAL WEBVIEW IN-APP                      */
+/* ========================================================== */
+window.openImeiCheckModal = function() {
+    const modal = document.getElementById('imei-check-modal');
+    if (modal) modal.classList.add('show');
+};
+
+window.closeImeiCheckModal = function() {
+    const modal = document.getElementById('imei-check-modal');
+    if (modal) modal.classList.remove('show');
+};
+
+window.openImeiPortal = function(url, brandTitle) {
+    closeImeiCheckModal();
+    const webModal = document.getElementById('imei-web-modal');
+    const iframe = document.getElementById('imei-webview-frame');
+    const titleElem = document.getElementById('inapp-webview-title');
+
+    if (titleElem) titleElem.textContent = brandTitle;
+    if (iframe) iframe.src = url;
+    if (webModal) webModal.classList.add('show');
+};
+
+window.closeImeiWebModal = function() {
+    const webModal = document.getElementById('imei-web-modal');
+    const iframe = document.getElementById('imei-webview-frame');
+    if (iframe) iframe.src = 'about:blank';
+    if (webModal) webModal.classList.remove('show');
+};
 
 /* ========================================================== */
 /* SCANNER KAMERA HP (HTML5-QRCODE)                           */
@@ -1312,7 +1425,11 @@ window.openStokDetail = function(id) {
     document.getElementById('modal-detail-kelengkapan').textContent = item.kelengkapan;
     document.getElementById('modal-detail-tanggal').textContent = formatTanggalID(item.tanggal);
     document.getElementById('modal-detail-qty').textContent = `${item.qty} unit`;
-    document.getElementById('modal-detail-harga').textContent = item.hargaModal || '-';
+
+    // PENYESUAIAN FORMAT NOMINAL RUPIAH BERBENTUK TITIK RIBUAN
+    let numericModal = parseRawToNumeric(item.hargaModal);
+    document.getElementById('modal-detail-harga').textContent = numericModal !== null ? formatRupiah(numericModal) : '-';
+
     document.getElementById('modal-input-customer').value = item.pembeli || '';
     document.getElementById('modal-input-harga-jual').value = item.hargaJual || '';
 
@@ -1581,7 +1698,9 @@ function renderDaftarTerjual() {
         <div class="stok-masuk-header"><div class="header-left"><i class="fa-solid fa-clock-rotate-left"></i><h4>Riwayat Terjual</h4></div><span class="badge-count">${daftarTerjual.length} Unit</span></div>
         <div class="stok-masuk-container" style="max-height:550px;">
             ${daftarTerjual.map(i => {
-                let p = (parseRawToNumeric(i.hargaJual) || 0) - (parseRawToNumeric(i.hargaModal) || 0);
+                let numericModal = parseRawToNumeric(i.hargaModal) || 0;
+                let numericJual = parseRawToNumeric(i.hargaJual) || 0;
+                let p = numericJual - numericModal;
                 let namaPembeliText = i.pembeli && i.pembeli.trim() !== '' ? ` • Pembeli: <b>${i.pembeli}</b>` : '';
                 return `
                     <div class="stok-item-card" style="cursor:default;">
@@ -1600,7 +1719,7 @@ function renderDaftarTerjual() {
                             <span class="detail-badge" style="font-size: 10px; color: var(--text-secondary);">${namaPembeliText}</span>
                         </div>
                         <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px; font-weight:700;">
-                            <span>Modal: ${i.hargaModal || 'Rp 0'} | Jual: ${i.hargaJual || 'Rp 0'}</span>
+                            <span>Modal: ${formatRupiah(numericModal)} | Jual: ${formatRupiah(numericJual)}</span>
                             <span style="color:${p>=0?'var(--status-safe)':'var(--status-unsafe)'}">${p>=0?'+ ':''}${formatRupiah(p)}</span>
                         </div>
                     </div>
@@ -2316,7 +2435,7 @@ function processFileDownload(format) {
                     th { background-color: #0077B6; color: #FFFFFF; padding: 8px; border: 1px solid #0077B6; }
                     td { padding: 8px; border: 1px solid #CBD5E1; font-size: 10pt; }
                 </style>
-            </head>
+    </head>
             <body>
                 <div class="Section1">
                     ${bodyHtml}
