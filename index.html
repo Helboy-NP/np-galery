@@ -113,6 +113,10 @@
                         <i class="fa-solid fa-shield-virus"></i>
                         <span>Cek IMEI</span>
                     </button>
+                    <button type="button" class="btn-quick-shortcut btn-quick-shortcut-ai" onclick="window.open('https://www.google.com/search?udm=50&q=', '_blank')" title="Buka Mode AI Google Search">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Tanya AI</span>
+                    </button>
                 </div>
 
                 <div class="sub-tab-container sub-tab-grid-3" style="display: flex;">
@@ -607,11 +611,6 @@
         </div>
     </main>
 
-    <!-- TOMBOL MELAYANG ASISTEN AI (FLOATING ACTION BUTTON) -->
-    <button id="btn-floating-ai" class="floating-ai-trigger-btn" onclick="toggleAiAssistantModal()" title="Buka Asisten AI">
-        <i class="fa-solid fa-wand-magic-sparkles"></i>
-    </button>
-
     <nav class="floating-nav-container">
         <div class="floating-nav">
             <button class="nav-item active" onclick="switchTab('section-transaksi', this)">
@@ -630,55 +629,6 @@
             </button>
         </div>
     </nav>
-
-    <!-- MODAL POP-UP ASISTEN AI CERDAS (TANYA JAWAB PERCAKAPAN) -->
-    <div class="custom-modal-overlay" id="ai-assistant-modal">
-        <div class="custom-modal-card ai-assistant-card">
-            <div class="ai-assistant-header">
-                <div class="ai-header-left">
-                    <div class="ai-avatar-badge">
-                        <i class="fa-solid fa-robot"></i>
-                    </div>
-                    <div>
-                        <h3 class="ai-title">NPGalery AI</h3>
-                        <span class="ai-status"><span class="ai-status-dot"></span> Online</span>
-                    </div>
-                </div>
-                <div class="ai-header-right">
-                    <button type="button" class="ai-icon-action-btn" onclick="clearAiChatHistory()" title="Bersihkan Percakapan">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                    <button type="button" class="ai-icon-action-btn" onclick="toggleAiAssistantModal()" title="Tutup Asisten">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Area Daftar Pesan Chat -->
-            <div id="ai-chat-messages" class="ai-messages-container">
-                <div class="ai-msg ai-msg-bot">
-                    <div class="ai-msg-bubble">
-                        Halo! Saya asisten NPGalery. Tanyakan apa saja: spesifikasi & harga HP, alamat, strategi promosi, atau rekap toko Anda!
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Suggestions / Prompt Cepat -->
-            <div class="ai-quick-suggestions">
-                <button type="button" class="ai-chip-btn" onclick="sendAiQuickPrompt('Rekap keuntungan dan stok ready saat ini')">📊 Rekap Toko</button>
-                <button type="button" class="ai-chip-btn" onclick="sendAiQuickPrompt('Bagaimana cara membedakan layar LCD original dan OEM?')">🔍 Cek LCD HP</button>
-                <button type="button" class="ai-chip-btn" onclick="sendAiQuickPrompt('Buatkan kata-kata promosi stok HP untuk status WhatsApp')">✍️ Teks Promosi</button>
-            </div>
-
-            <!-- Form Input & Pengiriman Pesan -->
-            <form id="ai-chat-form" class="ai-input-form" onsubmit="handleAiSendMessage(event)">
-                <input type="text" id="ai-user-input" class="ai-input-field" placeholder="Ketik pertanyaan apa saja..." autocomplete="off" required>
-                <button type="submit" id="ai-submit-btn" class="ai-send-btn" title="Kirim Pesan">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </button>
-            </form>
-        </div>
-    </div>
 
     <!-- MODAL POP-UP PILIHAN BRAND CEK IMEI -->
     <div class="custom-modal-overlay" id="imei-check-modal">
@@ -741,18 +691,22 @@
         </div>
     </div>
 
-    <!-- MODAL POP-UP SCANNER KAMERA HP SUNGGUHAN (HTML5-QRCODE) -->
+    <!-- MODAL POP-UP SCANNER KAMERA HP SUNGGUHAN (HTML5-QRCODE DILENGKAPI FITUR SNAPSHOT & FOTO) -->
     <div class="custom-modal-overlay" id="scanner-modal">
         <div class="custom-modal-card scanner-modal-card">
             <div class="edit-modal-header">
                 <h3><i class="fa-solid fa-camera" style="color: var(--azure-primary); margin-right: 6px;"></i> Scan IMEI / Barcode</h3>
-                <p style="font-size: 11px; color: var(--text-secondary);">Arahkan kamera ke barcode/QR pada dus HP</p>
+                <p style="font-size: 11px; color: var(--text-secondary);">Arahkan kamera atau gunakan tombol potret jika buram</p>
             </div>
             <div class="scanner-viewfinder-wrap">
                 <div id="scanner-reader"></div>
                 <div class="scanner-target-laser"></div>
             </div>
-            <div class="edit-modal-actions" style="margin-top: 14px;">
+            <div class="edit-modal-actions" style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+                <input type="file" id="scanner-photo-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoScan(this)">
+                <button type="button" class="btn-save" onclick="document.getElementById('scanner-photo-input').click()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fa-solid fa-camera-retro"></i> Ambil Foto & Scan
+                </button>
                 <button type="button" class="btn-cancel" onclick="stopImeiScanner()" style="width: 100%;">
                     <i class="fa-solid fa-xmark"></i> Tutup Kamera
                 </button>
