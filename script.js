@@ -602,7 +602,6 @@ window.startImeiScanner = function() {
         // Deteksi ID kamera belakang secara eksplisit agar video tidak layar hitam
         Html5Qrcode.getCameras().then(devices => {
             if (devices && devices.length > 0) {
-                // Cari kamera yang memiliki label 'back', 'rear', atau gunakan kamera terakhir
                 let backCamera = devices.find(device => 
                     device.label.toLowerCase().includes('back') || 
                     device.label.toLowerCase().includes('rear') ||
@@ -630,7 +629,6 @@ window.startImeiScanner = function() {
                     });
                 });
             } else {
-                // Fallback jika daftar kamera kosong
                 html5QrScannerInstance.start(
                     { facingMode: "environment" },
                     qrConfig,
@@ -677,6 +675,48 @@ window.stopImeiScanner = function() {
         });
     }
 };
+
+/* ========================================================== */
+/* PEMROSES FOTO LANGSUNG (SNAPSHOT / SCAN DARI GAMBAR)       */
+/* ========================================================== */
+window.handlePhotoScan = function(inputElement) {
+    if (!inputElement.files || inputElement.files.length === 0) return;
+
+    const imageFile = inputElement.files[0];
+    showToast('Memproses', 'Menganalisis foto barcode...');
+
+    // Hentikan video live sementara agar resource kamera dialihkan ke pemrosesan gambar
+    if (html5QrScannerInstance && html5QrScannerInstance.isScanning) {
+        html5QrScannerInstance.stop().then(() => {
+            processImageScan(imageFile);
+        }).catch(() => {
+            processImageScan(imageFile);
+        });
+    } else {
+        processImageScan(imageFile);
+    }
+};
+
+function processImageScan(imageFile) {
+    if (!html5QrScannerInstance) {
+        html5QrScannerInstance = new Html5Qrcode("scanner-reader");
+    }
+
+    html5QrScannerInstance.scanFile(imageFile, true)
+        .then(decodedText => {
+            document.getElementById('stok-imei').value = decodedText.trim();
+            showToast('Berhasil', `IMEI Terbaca: ${decodedText}`);
+            stopImeiScanner();
+            const photoInput = document.getElementById('scanner-photo-input');
+            if (photoInput) photoInput.value = '';
+        })
+        .catch(err => {
+            console.warn("Gagal membaca barcode dari foto:", err);
+            showToast('Scan Gagal', 'Barcode tidak terdeteksi. Pastikan foto tegak dan jelas!', false);
+            const photoInput = document.getElementById('scanner-photo-input');
+            if (photoInput) photoInput.value = '';
+        });
+}
 
 /* ========================================================== */
 /* POP-UP CHAT WHATSAPP LANGSUNG                              */
@@ -1458,7 +1498,7 @@ function createStokDetailModalDOM() {
                 <div class="stok-modal-header"><span class="modal-brand-tag" id="modal-detail-brand"></span><h3 id="modal-detail-title"></h3><p id="modal-detail-imei"></p></div>
                 <div class="stok-modal-body">
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">Kondisi</span><span class="stok-modal-info-val" id="modal-detail-kondisi"></span></div>
-                    <div class="stok-modal-info-row"><span class="stok-modal-info-label">Kelengkapan</span><span class="stok-modal-info-val" id="modal-detail-kelengkapan"></span></div>
+                    <div class="stok-modal-info-label">Kelengkapan</span><span class="stok-modal-info-val" id="modal-detail-kelengkapan"></span></div>
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">Tgl Masuk</span><span class="stok-modal-info-val" id="modal-detail-tanggal"></span></div>
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">QTY</span><span class="stok-modal-info-val" id="modal-detail-qty"></span></div>
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">Modal</span><span class="stok-modal-info-val" id="modal-detail-harga"></span></div>
