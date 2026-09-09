@@ -564,7 +564,7 @@ window.closeImeiWebModal = function() {
 };
 
 /* ========================================================== */
-/* SCANNER KAMERA HP (HTML5-QRCODE) - DIPERBARUI AGAR TIDAK BURAM */
+/* SCANNER KAMERA HP (HTML5-QRCODE) - DETEKSI RESMI KAMERA BELAKANG */
 /* ========================================================== */
 window.startImeiScanner = function() {
     const scannerModal = document.getElementById('scanner-modal');
@@ -579,57 +579,86 @@ window.startImeiScanner = function() {
     scannerModal.classList.add('show');
 
     try {
-        html5QrScannerInstance = new Html5Qrcode("scanner-reader");
-        
-        // Konfigurasi lanjutan untuk memaksa resolusi tinggi dan fokus otomatis/makro dari dekat
+        if (!html5QrScannerInstance) {
+            html5QrScannerInstance = new Html5Qrcode("scanner-reader");
+        }
+
         const qrConfig = {
-            fps: 20, 
-            qrbox: function(viewfinderWidth, viewfinderHeight) {
-                let minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                return {
-                    width: Math.floor(minEdge * 0.85),
-                    height: Math.floor(minEdge * 0.45)
-                };
-            },
+            fps: 15,
+            qrbox: { width: 260, height: 160 },
             aspectRatio: 1.0
         };
 
-        const cameraConstraints = {
-            facingMode: "environment",
-            width: { ideal: 1280, min: 640 },
-            height: { ideal: 720, min: 480 },
-            advanced: [{ focusMode: "continuous" }]
+        const onScanSuccess = (decodedText) => {
+            document.getElementById('stok-imei').value = decodedText.trim();
+            showToast('IMEI Terpindai', `Berhasil memindai: ${decodedText}`);
+            stopImeiScanner();
         };
 
-        html5QrScannerInstance.start(
-            cameraConstraints,
-            qrConfig,
-            (decodedText) => {
-                document.getElementById('stok-imei').value = decodedText.trim();
-                showToast('IMEI Terpindai', `Berhasil memindai: ${decodedText}`);
-                stopImeiScanner();
-            },
-            (errorMessage) => {}
-        ).catch(err => {
-            console.warn("Gagal membuka kamera dengan constraints lanjutan, mencoba mode standar:", err);
-            
+        const onScanFailure = (errorMessage) => {
+            // Mengabaikan frame tanpa barcode saat proses deteksi
+        };
+
+        // Deteksi ID kamera belakang secara eksplisit agar video tidak layar hitam
+        Html5Qrcode.getCameras().then(devices => {
+            if (devices && devices.length > 0) {
+                // Cari kamera yang memiliki label 'back', 'rear', atau gunakan kamera terakhir
+                let backCamera = devices.find(device => 
+                    device.label.toLowerCase().includes('back') || 
+                    device.label.toLowerCase().includes('rear') ||
+                    device.label.toLowerCase().includes('environment')
+                );
+
+                let cameraId = backCamera ? backCamera.id : devices[devices.length - 1].id;
+
+                html5QrScannerInstance.start(
+                    cameraId,
+                    qrConfig,
+                    onScanSuccess,
+                    onScanFailure
+                ).catch(err => {
+                    console.warn("Gagal memulai dengan Camera ID, beralih ke facingMode:", err);
+                    html5QrScannerInstance.start(
+                        { facingMode: "environment" },
+                        qrConfig,
+                        onScanSuccess,
+                        onScanFailure
+                    ).catch(innerErr => {
+                        console.error("Gagal membuka kamera:", innerErr);
+                        showToast('Kamera', 'Tidak dapat mengakses kamera perangkat.', false);
+                        stopImeiScanner();
+                    });
+                });
+            } else {
+                // Fallback jika daftar kamera kosong
+                html5QrScannerInstance.start(
+                    { facingMode: "environment" },
+                    qrConfig,
+                    onScanSuccess,
+                    onScanFailure
+                ).catch(innerErr => {
+                    console.error("Gagal membuka kamera:", innerErr);
+                    showToast('Kamera', 'Tidak dapat mengakses kamera perangkat.', false);
+                    stopImeiScanner();
+                });
+            }
+        }).catch(err => {
+            console.warn("Gagal getCameras, beralih ke facingMode:", err);
             html5QrScannerInstance.start(
                 { facingMode: "environment" },
-                { fps: 15, qrbox: { width: 260, height: 160 } },
-                (decodedText) => {
-                    document.getElementById('stok-imei').value = decodedText.trim();
-                    showToast('IMEI Terpindai', `Berhasil memindai: ${decodedText}`);
-                    stopImeiScanner();
-                },
-                (errorMessage) => {}
+                qrConfig,
+                onScanSuccess,
+                onScanFailure
             ).catch(innerErr => {
-                console.warn("Kamera benar-benar tidak dapat diakses:", innerErr);
+                console.error("Gagal membuka kamera:", innerErr);
                 showToast('Kamera', 'Tidak dapat mengakses kamera perangkat.', false);
                 stopImeiScanner();
             });
         });
+
     } catch (e) {
         console.error("Scanner Error:", e);
+        showToast('Kamera', 'Terjadi kesalahan sistem kamera.', false);
         stopImeiScanner();
     }
 };
@@ -643,6 +672,7 @@ window.stopImeiScanner = function() {
             html5QrScannerInstance.clear();
             html5QrScannerInstance = null;
         }).catch(() => {
+            try { html5QrScannerInstance.clear(); } catch(e) {}
             html5QrScannerInstance = null;
         });
     }
