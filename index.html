@@ -75,48 +75,68 @@
         <div class="content-card">
             
             <section id="section-transaksi" class="tab-content active">
-                <div class="stats-dashboard">
-                    <div class="stat-card stat-main">
-                        <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-label">Keuntungan</span>
-                            <span id="keuntungan-qty">0 Unit</span>
-                            <h3 class="stat-value" id="keuntungan-nominal">Rp 0</h3>
+                <!-- WRAPPER HERO TRANSAKSI: KIRI STATISTIK SEJAJAR RATA, KANAN TOMBOL AKSI BERJAJAR -->
+                <div class="transaksi-hero-wrapper">
+                    <!-- SISI KIRI: 3 KOTAK STATISTIK UKURAN SAMA & SEJAJAR -->
+                    <div class="hero-left-stats">
+                        <div class="stat-card-uniform">
+                            <div class="stat-icon-wrap"><i class="fa-solid fa-wallet"></i></div>
+                            <div class="stat-meta-wrap">
+                                <span class="stat-title-label">Keuntungan</span>
+                                <h4 class="stat-value-text" id="keuntungan-nominal">Rp 0</h4>
+                                <span class="stat-sub-text" id="keuntungan-qty">0 Unit</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card-uniform">
+                            <div class="stat-icon-wrap"><i class="fa-solid fa-box-open"></i></div>
+                            <div class="stat-meta-wrap">
+                                <span class="stat-title-label">Stok Ready</span>
+                                <h4 class="stat-value-text" id="stok-ready-val">0 Unit</h4>
+                                <span class="stat-sub-text">Tersedia</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card-uniform">
+                            <div class="stat-icon-wrap"><i class="fa-solid fa-bag-shopping"></i></div>
+                            <div class="stat-meta-wrap">
+                                <span class="stat-title-label">Terjual</span>
+                                <h4 class="stat-value-text" id="terjual-val">0 Unit</h4>
+                                <span class="stat-sub-text" id="terjual-omset-val">Rp 0</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="stat-side-group">
-                        <div class="stat-card">
-                            <i class="fa-solid fa-box-open stat-icon-small"></i>
-                            <div>
-                                <span class="stat-label-small">Stok Ready</span>
-                                <h4 class="stat-value-small">0</h4>
-                            </div>
+                    <!-- SISI KANAN: TOMBOL AKSI DENGAN BROADCAST & STORY PALING ATAS -->
+                    <div class="hero-right-actions">
+                        <!-- BARIS ATAS: BROADCAST & STORY -->
+                        <div class="right-actions-top-row">
+                            <button type="button" class="promo-btn btn-broadcast-wa" onclick="broadcastStokWA()" title="Salin dan buka format broadcast WhatsApp">
+                                <i class="fa-brands fa-whatsapp"></i>
+                                <span>Broadcast</span>
+                            </button>
+                            <button type="button" class="promo-btn btn-story-banner" onclick="previewStoryBanner()" title="Lihat pratinjau banner katalog story">
+                                <i class="fa-solid fa-image"></i>
+                                <span>Story</span>
+                            </button>
                         </div>
-                        <div class="stat-card">
-                            <i class="fa-solid fa-bag-shopping stat-icon-small"></i>
-                            <div>
-                                <span class="stat-label-small">Terjual</span>
-                                <h4 class="stat-value-small">0</h4>
-                            </div>
+
+                        <!-- BARIS BAWAH: WHATSAPP, CEK IMEI, TANYA AI -->
+                        <div class="right-actions-bottom-row">
+                            <button type="button" class="btn-quick-shortcut btn-quick-shortcut-wa" onclick="openDirectWaModal()" title="Kirim Pesan WhatsApp Cepat">
+                                <i class="fa-brands fa-whatsapp"></i>
+                                <span>WhatsApp</span>
+                            </button>
+                            <button type="button" class="btn-quick-shortcut btn-quick-shortcut-imei" onclick="openImeiCheckModal()" title="Cek Garansi & Keaslian IMEI Resmi Brand">
+                                <i class="fa-solid fa-shield-virus"></i>
+                                <span>Cek IMEI</span>
+                            </button>
+                            <button type="button" class="btn-quick-shortcut btn-quick-shortcut-ai" onclick="window.open('https://www.google.com/search?udm=50&q=', '_blank')" title="Buka Mode AI Google Search">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                <span>Tanya AI</span>
+                            </button>
                         </div>
                     </div>
-                </div>
-
-                <!-- BARIS TOMBOL PINTASAN DI HALAMAN UTAMA TRANSAKSI -->
-                <div class="transaksi-quick-actions-bar">
-                    <button type="button" class="btn-quick-shortcut btn-quick-shortcut-wa" onclick="openDirectWaModal()" title="Kirim Pesan WhatsApp Cepat">
-                        <i class="fa-brands fa-whatsapp"></i>
-                        <span>WhatsApp</span>
-                    </button>
-                    <button type="button" class="btn-quick-shortcut btn-quick-shortcut-imei" onclick="openImeiCheckModal()" title="Cek Garansi & Keaslian IMEI Resmi Brand">
-                        <i class="fa-solid fa-shield-virus"></i>
-                        <span>Cek IMEI</span>
-                    </button>
-                    <button type="button" class="btn-quick-shortcut btn-quick-shortcut-ai" onclick="window.open('https://www.google.com/search?udm=50&q=', '_blank')" title="Buka Mode AI Google Search">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <span>Tanya AI</span>
-                    </button>
                 </div>
 
                 <div class="sub-tab-container sub-tab-grid-3" style="display: flex;">
@@ -135,105 +155,18 @@
                 </div>
 
                 <div id="sub-stok-jual" class="sub-content active">
-                    
-                    <button id="btn-toggle-form" class="toggle-form-btn" onclick="toggleStokForm()">
-                        <div class="toggle-btn-left">
+                    <!-- DUA TOMBOL BERSEBELAHAN DENGAN MODAL POPUP -->
+                    <div class="stok-action-buttons-row">
+                        <button type="button" class="btn-stok-action-pill" onclick="openAddStokModal()" title="Buka Form Tambah Stok">
                             <i class="fa-solid fa-circle-plus"></i>
                             <span>Tambah Stok</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-down toggle-icon" id="icon-toggle-form"></i>
-                    </button>
-
-                    <div id="stok-form-collapse" class="stok-form-collapse collapsed">
-                        <div class="add-product-card glass-form">
-                            
-                            <div class="add-form-group position-relative">
-                                <label>Pilih Tipe HP</label>
-                                <div class="autocomplete-wrapper">
-                                    <i class="fa-solid fa-magnifying-glass icon-search-glass"></i>
-                                    <input type="text" id="stok-produk-input" placeholder="Cari tipe HP" autocomplete="off" onkeyup="handleAutocomplete(this.value)" onfocus="handleAutocomplete(this.value)">
-                                    <ul id="stok-autocomplete-list" class="autocomplete-list hidden"></ul>
-                                </div>
-                            </div>
-                            
-                            <div class="add-price-row">
-                                <div class="add-form-group half-width">
-                                    <label>Status Unit</label>
-                                    <select id="stok-kondisi" class="form-select-glass">
-                                        <option value="New">New</option>
-                                        <option value="Second">Second</option>
-                                    </select>
-                                </div>
-                                <div class="add-form-group half-width">
-                                    <label>Kelengkapan</label>
-                                    <select id="stok-kelengkapan" class="form-select-glass">
-                                        <option value="Fullset">Fullset</option>
-                                        <option value="Unit + Charger">Unit + Charger</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="add-price-row">
-                                <div class="add-form-group half-width">
-                                    <label>IMEI / SN</label>
-                                    <div class="imei-scan-wrapper">
-                                        <input type="text" id="stok-imei" placeholder="Ketik / Scan">
-                                        <button type="button" id="btn-scan-imei" onclick="startImeiScanner()" title="Scan Barcode/QR Real-Time">
-                                            <i class="fa-solid fa-camera"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="add-form-group half-width">
-                                    <label>Qty</label>
-                                    <input type="number" id="stok-qty" placeholder="1" min="1" value="1">
-                                </div>
-                            </div>
-
-                            <div class="add-price-row">
-                                <div class="add-form-group half-width">
-                                    <label>Modal (Rp)</label>
-                                    <input type="text" id="stok-harga" placeholder="">
-                                </div>
-                                <div class="add-form-group half-width">
-                                    <label>Tanggal</label>
-                                    <input type="date" id="stok-tanggal">
-                                </div>
-                            </div>
-
-                            <div class="add-action-row align-right">
-                                <button class="add-submit-btn compact-btn" onclick="simpanStokBaru()">
-                                    <i class="fa-solid fa-floppy-disk"></i> Simpan
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="promo-action-bar">
-                        <button class="promo-btn btn-broadcast-wa" onclick="broadcastStokWA()" title="Salin dan buka format broadcast WhatsApp">
-                            <i class="fa-brands fa-whatsapp"></i>
-                            <span>Broadcast</span>
                         </button>
-                        <button class="promo-btn btn-story-banner" onclick="previewStoryBanner()" title="Lihat pratinjau banner katalog story">
-                            <i class="fa-solid fa-image"></i>
-                            <span>Story</span>
+                        <button type="button" class="btn-stok-action-pill" onclick="openDaftarStokModal()" title="Buka Daftar Semua Stok">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                            <span>Daftar Stok</span>
+                            <span id="badge-stok-count" class="badge-count-pill">0 Unit</span>
                         </button>
                     </div>
-
-                    <div class="stok-masuk-section">
-                        <div class="stok-masuk-header">
-                            <div class="header-left">
-                                <i class="fa-solid fa-clipboard-list"></i>
-                                <h4>Daftar Stok</h4>
-                            </div>
-                            <span id="badge-stok-count" class="badge-count">0 Unit</span>
-                        </div>
-                        <div id="stok-masuk-container" class="stok-masuk-container">
-                            <div id="empty-stok-msg" class="empty-stok-msg">
-                                Empety.
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
 
                 <div id="sub-diagnosis" class="sub-content">
@@ -629,6 +562,105 @@
             </button>
         </div>
     </nav>
+
+    <!-- MODAL POP-UP TAMBAH STOK BARU -->
+    <div class="custom-modal-overlay" id="add-stok-modal">
+        <div class="custom-modal-card" style="max-width: 440px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                <h3 style="font-size: 15px; font-weight: 800;">
+                    <i class="fa-solid fa-circle-plus" style="color: var(--azure-primary); margin-right: 6px;"></i> Tambah Stok Baru
+                </h3>
+                <p style="font-size: 11px; color: var(--text-secondary);">Masukkan rincian unit smartphone yang masuk</p>
+            </div>
+            
+            <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+                <div class="add-form-group position-relative">
+                    <label>Pilih Tipe HP</label>
+                    <div class="autocomplete-wrapper">
+                        <i class="fa-solid fa-magnifying-glass icon-search-glass"></i>
+                        <input type="text" id="stok-produk-input" placeholder="Cari tipe HP" autocomplete="off" onkeyup="handleAutocomplete(this.value)" onfocus="handleAutocomplete(this.value)">
+                        <ul id="stok-autocomplete-list" class="autocomplete-list hidden"></ul>
+                    </div>
+                </div>
+                
+                <div class="add-price-row">
+                    <div class="add-form-group half-width">
+                        <label>Status Unit</label>
+                        <select id="stok-kondisi" class="form-select-glass">
+                            <option value="New">New</option>
+                            <option value="Second">Second</option>
+                        </select>
+                    </div>
+                    <div class="add-form-group half-width">
+                        <label>Kelengkapan</label>
+                        <select id="stok-kelengkapan" class="form-select-glass">
+                            <option value="Fullset">Fullset</option>
+                            <option value="Unit + Charger">Unit + Charger</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="add-price-row">
+                    <div class="add-form-group half-width">
+                        <label>IMEI / SN</label>
+                        <div class="imei-scan-wrapper">
+                            <input type="text" id="stok-imei" placeholder="Ketik / Scan">
+                            <button type="button" id="btn-scan-imei" onclick="startImeiScanner()" title="Scan Barcode/QR Real-Time">
+                                <i class="fa-solid fa-camera"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="add-form-group half-width">
+                        <label>Qty</label>
+                        <input type="number" id="stok-qty" placeholder="1" min="1" value="1">
+                    </div>
+                </div>
+
+                <div class="add-price-row">
+                    <div class="add-form-group half-width">
+                        <label>Modal (Rp)</label>
+                        <input type="text" id="stok-harga" placeholder="Contoh: 1.500.000">
+                    </div>
+                    <div class="add-form-group half-width">
+                        <label>Tanggal</label>
+                        <input type="date" id="stok-tanggal">
+                    </div>
+                </div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeAddStokModal()">Batal</button>
+                <button type="button" class="btn-save" onclick="simpanStokBaru()">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Stok
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DAFTAR SELURUH STOK -->
+    <div class="custom-modal-overlay" id="daftar-stok-modal">
+        <div class="custom-modal-card" style="max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 800;">
+                        <i class="fa-solid fa-clipboard-list" style="color: var(--azure-primary); margin-right: 6px;"></i> Daftar Stok Ready
+                    </h3>
+                    <p style="font-size: 11px; color: var(--text-secondary);">Klik unit untuk melihat detail atau memproses penjualan</p>
+                </div>
+                <span id="modal-badge-stok-count" class="badge-count">0 Unit</span>
+            </div>
+
+            <div id="stok-masuk-container" class="stok-masuk-container" style="flex: 1; max-height: 60vh; overflow-y: auto;">
+                <div id="empty-stok-msg" class="empty-stok-msg">
+                    Belum ada stok unit.
+                </div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeDaftarStokModal()" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL POP-UP PILIHAN BRAND CEK IMEI -->
     <div class="custom-modal-overlay" id="imei-check-modal">
