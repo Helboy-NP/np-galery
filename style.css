@@ -105,42 +105,175 @@ button:active, .nav-item:active, .action-btn:active {
 .tab-content { display: none; animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
 .tab-content.active { display: block; }
 
-.stats-dashboard { display: flex; gap: 6px; margin-bottom: 8px; }
-.stat-main { flex: 1.25; background: var(--bg-page); border: 1px solid var(--border-subtle); padding: 8px 10px; border-radius: 12px; display: flex; align-items: center; gap: 8px; }
-.stat-main .stat-icon { font-size: 14px; background: var(--card-bg); padding: 7px; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: var(--azure-primary) !important; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0, 119, 182, 0.1); }
-.stat-main .stat-info { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; flex: 1; }
-.stat-main .stat-label { color: var(--text-secondary) !important; font-size: 11.5px; font-weight: 800; }
-#keuntungan-qty { display: inline-block !important; font-size: 9.5px !important; font-weight: 700 !important; color: var(--text-secondary) !important; margin-top: 2px !important; background: rgba(0, 0, 0, 0.03); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--border-subtle); width: fit-content; font-family: var(--font-mono); }
-.stat-main .stat-value { color: var(--text-primary) !important; display: block !important; font-size: 15.5px !important; font-weight: 800 !important; margin-top: 2px !important; font-family: var(--font-mono); }
-
-.stat-side-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-.stat-card:not(.stat-main) { background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 6px 8px; display: flex; align-items: center; gap: 7px; }
-.stat-icon-small { font-size: 11.5px; color: var(--azure-primary); background: var(--card-bg); padding: 6px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
-.stat-label-small { font-size: 9.5px; font-weight: 600; color: var(--text-secondary); background: rgba(0, 0, 0, 0.03); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border-subtle); width: fit-content; }
-.stat-value-small { font-size: 12px; font-weight: 800; color: var(--text-primary); background: rgba(0, 119, 182, 0.05); padding: 2px 6px; border-radius: 5px; border: 1px dashed rgba(0, 119, 182, 0.2); width: fit-content; font-family: var(--font-mono); }
-
-/* BARIS TOMBOL PINTASAN DI HALAMAN UTAMA TRANSAKSI */
-.transaksi-quick-actions-bar {
-    display: flex;
-    gap: 8px;
-    margin-top: -2px;
-    margin-bottom: 12px;
+/* ========================================================== */
+/* HERO TRANSAKSI: KIRI (STATISTIK KE BAWAH) & KANAN (TOMBOL) */
+/* ========================================================== */
+.transaksi-hero-wrapper {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: stretch;
 }
-.btn-quick-shortcut {
+
+/* SISI KIRI: 3 KOTAK STATISTIK BERJAJAR KE BAWAH (VERTIKAL) */
+.hero-left-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    justify-content: space-between;
+}
+
+.stat-card-uniform {
     flex: 1;
     background: var(--bg-page);
     border: 1px solid var(--border-subtle);
-    border-radius: 12px;
+    border-radius: 13px;
     padding: 7px 10px;
-    font-family: var(--font-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
+}
+
+.stat-card-uniform:hover {
+    border-color: var(--azure-primary);
+    transform: translateY(-1px);
+}
+
+.stat-icon-wrap {
+    font-size: 13px;
+    background: var(--card-bg);
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    color: var(--azure-primary);
+    box-shadow: 0 2px 6px rgba(0, 119, 182, 0.08);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-meta-wrap {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+}
+
+.stat-title-label {
+    font-size: 8.5px;
+    font-weight: 800;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.stat-value-text {
     font-size: 11.5px;
+    font-weight: 900;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-sub-text {
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--status-safe);
+    font-family: var(--font-mono);
+    margin-top: 1px;
+}
+
+/* SISI KANAN: TOMBOL AKSI & PINTASAN */
+.hero-right-actions {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 7px;
+}
+
+/* BARIS ATAS: BROADCAST & STORY PALING ATAS */
+.right-actions-top-row {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+}
+
+.right-actions-top-row .promo-btn {
+    flex: 1;
+    margin: 0 !important;
+    padding: 8px 6px;
+    border-radius: 11px;
+    font-size: 11px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-broadcast-wa {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-story-banner {
+    background: linear-gradient(135deg, #0077B6 0%, #0284C7 100%);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(0, 119, 182, 0.2);
+}
+
+.promo-btn:hover {
+    transform: translateY(-1.5px);
+    filter: brightness(1.06);
+}
+
+/* BARIS BAWAH: WHATSAPP, CEK IMEI, TANYA AI */
+.right-actions-bottom-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1.4;
+}
+
+.right-actions-bottom-row .btn-quick-shortcut {
+    flex: 1;
+    margin: 0 !important;
+    padding: 6px 8px;
+    font-size: 10.5px;
+    border-radius: 10px;
+    justify-content: flex-start;
+    padding-left: 10px;
+}
+
+.right-actions-bottom-row .btn-quick-shortcut i {
+    width: 14px;
+    text-align: center;
+}
+
+/* TOMBOL PINTASAN CEPAT */
+.btn-quick-shortcut {
+    background: var(--bg-page);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    font-family: var(--font-main);
     font-weight: 700;
     color: var(--text-primary);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
+    gap: 6px;
     transition: all 0.2s ease;
     box-shadow: 0 2px 6px rgba(0,0,0,0.02);
 }
@@ -148,32 +281,62 @@ button:active, .nav-item:active, .action-btn:active {
     transform: translateY(-1px);
     box-shadow: 0 4px 10px rgba(0,0,0,0.06);
 }
-.btn-quick-shortcut-wa i {
-    color: #10B981;
+.btn-quick-shortcut-wa i { color: #10B981; font-size: 13.5px; }
+.btn-quick-shortcut-wa:hover { border-color: #10B981; background: rgba(16, 185, 129, 0.08); color: #10B981; }
+.btn-quick-shortcut-imei i { color: var(--azure-primary); font-size: 13px; }
+.btn-quick-shortcut-imei:hover { border-color: var(--azure-primary); background: var(--nav-active-bg); color: var(--azure-primary); }
+.btn-quick-shortcut-ai i { color: var(--azure-primary); font-size: 13px; }
+.btn-quick-shortcut-ai:hover { border-color: var(--azure-primary); background: var(--nav-active-bg); color: var(--azure-primary); }
+
+/* ========================================================== */
+/* TOMBOL BERSEBELAHAN: TAMBAH STOK & DAFTAR STOK             */
+/* ========================================================== */
+.stok-action-buttons-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.btn-stok-action-pill {
+    flex: 1;
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-family: var(--font-main);
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-stok-action-pill i {
     font-size: 14px;
-}
-.btn-quick-shortcut-wa:hover {
-    border-color: #10B981;
-    background: rgba(16, 185, 129, 0.08);
-    color: #10B981;
-}
-.btn-quick-shortcut-imei i {
     color: var(--azure-primary);
-    font-size: 13.5px;
+    transition: transform 0.2s ease;
 }
-.btn-quick-shortcut-imei:hover {
+.btn-stok-action-pill:hover {
+    transform: translateY(-2px);
     border-color: var(--azure-primary);
+    box-shadow: 0 6px 18px rgba(0, 119, 182, 0.12);
+}
+.btn-stok-action-pill:hover i {
+    transform: scale(1.15);
+}
+.badge-count-pill {
+    font-size: 9.5px;
+    font-weight: 800;
+    font-family: var(--font-mono);
     background: var(--nav-active-bg);
     color: var(--azure-primary);
-}
-.btn-quick-shortcut-ai i {
-    color: var(--azure-primary);
-    font-size: 13.5px;
-}
-.btn-quick-shortcut-ai:hover {
-    border-color: var(--azure-primary);
-    background: var(--nav-active-bg);
-    color: var(--azure-primary);
+    padding: 2px 7px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 119, 182, 0.2);
+    margin-left: 2px;
 }
 
 /* MODAL CEK IMEI & BRAND GRID */
@@ -402,12 +565,7 @@ body.dark-mode .card-saldo { background: linear-gradient(135deg, #1E293B 0%, #0F
 .empty-state { text-align: center; padding: 32px 16px; }
 .icon-placeholder { font-size: 38px; color: var(--azure-primary); margin-bottom: 12px; }
 
-.promo-action-bar { display: flex; gap: 8px; margin-top: 12px; margin-bottom: 4px; }
-.promo-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 12px; border-radius: 12px; font-family: var(--font-main); font-size: 12px; font-weight: 700; cursor: pointer; border: none; }
-.btn-broadcast-wa { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #FFFFFF; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
-.btn-story-banner { background: linear-gradient(135deg, #0077B6 0%, #0284C7 100%); color: #FFFFFF; box-shadow: 0 4px 12px rgba(0, 119, 182, 0.2); }
-
-/* PRICE LIST & FORMS (OPTIMASI RINGKAS & WARNA PEKAT SENADA) */
+/* PRICE LIST & FORMS */
 .pricelist-filter-area { display: flex; gap: 8px; margin-bottom: 12px; }
 .filter-search-box { flex: 1.4; position: relative; display: flex; align-items: center; }
 .filter-search-box i { position: absolute; left: 12px; font-size: 13px; color: var(--text-secondary); }
@@ -447,7 +605,7 @@ body.dark-mode .price-card { border: 1px solid rgba(255,255,255,0.1); }
 .action-btn { background: var(--bg-page); border: 1px solid var(--border-subtle); color: var(--text-secondary); width: 25px; height: 25px; border-radius: 7px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 10px; }
 .price-compare-stack { display: flex; flex-direction: column; gap: 4px; }
 
-/* BADGE HARGA BNIB (MINIMALIS & RINGKAS TANPA MERAMAIKAN KOTAK) */
+/* BADGE HARGA BNIB */
 .price-card-top-badge {
     display: flex;
     justify-content: flex-end;
@@ -474,7 +632,7 @@ body.dark-mode .badge-bnib-tag {
     border-color: rgba(52, 211, 153, 0.3);
 }
 
-/* KOTAK HARGA DASAR (LAYOUT ATAS-BAWAH, KONTEN HORIZONTAL MENYAMPING) */
+/* KOTAK HARGA DASAR */
 .price-box { 
     border-radius: 7px; 
     padding: 4px 8px; 
@@ -495,7 +653,7 @@ body.dark-mode .badge-bnib-tag {
     white-space: nowrap; 
 }
 
-/* 1. JAKARTA (BARIS ATAS) - NUANSA AZURE BLUE PEKAT */
+/* 1. JAKARTA (BARIS ATAS) */
 .price-compare-stack .price-box:first-child {
     background: rgba(0, 119, 182, 0.06);
     border: 1px solid rgba(0, 119, 182, 0.22);
@@ -517,7 +675,7 @@ body.dark-mode .price-compare-stack .price-box:first-child .price-box-val {
     color: #7DD3FC;
 }
 
-/* 2. CIKARANG (BARIS BAWAH) - NUANSA VIOLET INDIGO PEKAT */
+/* 2. CIKARANG (BARIS BAWAH) */
 .price-compare-stack .price-box:last-child {
     background: rgba(124, 58, 237, 0.05);
     border: 1px solid rgba(124, 58, 237, 0.22);
