@@ -139,18 +139,19 @@
                     </div>
                 </div>
 
-                <div class="sub-tab-container sub-tab-grid-3" style="display: flex;">
+                <!-- SUB-TAB TRANSAKSI (GRID-3 BERSIH & MINIMALIS) -->
+                <div class="sub-tab-container sub-tab-grid-3">
                     <button class="sub-tab-btn active" onclick="switchSubTab('sub-stok-jual', this)">
-                        <i class="fa-solid fa-boxes-stacked"></i>
-                        <span>Stok</span>
+                        <i class="fa-solid fa-boxes-stacked sub-tab-icon"></i>
+                        <span class="sub-tab-text">Stok</span>
                     </button>
                     <button class="sub-tab-btn" onclick="switchSubTab('sub-diagnosis', this)">
-                        <i class="fa-solid fa-stethoscope"></i>
-                        <span>System Check</span>
+                        <i class="fa-solid fa-microchip sub-tab-icon"></i>
+                        <span class="sub-tab-text">System Check</span>
                     </button>
                     <button class="sub-tab-btn" onclick="switchSubTab('sub-modal', this)">
-                        <i class="fa-solid fa-coins"></i>
-                        <span>Modal</span>
+                        <i class="fa-solid fa-vault sub-tab-icon"></i>
+                        <span class="sub-tab-text">Modal</span>
                     </button>
                 </div>
 
@@ -172,7 +173,7 @@
                 <div id="sub-diagnosis" class="sub-content">
                     <div class="add-product-card compact-diagnosis-card" style="margin-top: 0;">
                         <div class="add-header compact-header" style="margin-bottom: 12px;">
-                            <i class="fa-solid fa-stethoscope" style="font-size: 16px; color: var(--azure-primary);"></i>
+                            <i class="fa-solid fa-microchip" style="font-size: 16px; color: var(--azure-primary);"></i>
                             <h3>System check</h3>
                         </div>
                         
@@ -202,7 +203,7 @@
 
                 <div id="sub-modal" class="sub-content">
                     <div class="empty-state">
-                        <i class="fa-solid fa-coins icon-placeholder"></i>
+                        <i class="fa-solid fa-vault icon-placeholder"></i>
                         <h2>Manajemen Modal</h2>
                         <p>Catat dan pantau alokasi perputaran modal usaha.</p>
                     </div>
@@ -210,14 +211,15 @@
             </section>
 
             <section id="section-pricelist" class="tab-content">
+                <!-- SUB-TAB PRICE LIST -->
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('sub-banding-harga', this)">
-                        <i class="fa-solid fa-code-compare"></i>
-                        <span>List Harga</span>
+                        <i class="fa-solid fa-code-compare sub-tab-icon"></i>
+                        <span class="sub-tab-text">List Harga</span>
                     </button>
                     <button class="sub-tab-btn" onclick="switchSubTab('sub-tambah-produk', this)">
-                        <i class="fa-solid fa-circle-plus"></i>
-                        <span>Tambah Produk</span>
+                        <i class="fa-solid fa-circle-plus sub-tab-icon"></i>
+                        <span class="sub-tab-text">Tambah Produk</span>
                     </button>
                 </div>
 
@@ -225,7 +227,10 @@
                     <div class="pricelist-filter-area">
                         <div class="filter-search-box">
                             <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" id="filter-model-input" placeholder="Cari Model Smartphone..." oninput="filterPriceList()">
+                            <input type="text" id="filter-model-input" placeholder="Ketik model & tekan Enter..." oninput="filterPriceList()">
+                            <button type="button" class="action-btn" style="position: absolute; right: 8px; width: 26px; height: 26px;" onclick="triggerPriceListModalSearch()" title="Cari / Buka Pop-up">
+                                <i class="fa-solid fa-arrow-turn-down" style="transform: rotate(90deg); font-size: 11px;"></i>
+                            </button>
                         </div>
                         <div class="filter-select-box">
                             <select id="filter-brand-select" class="form-select-glass" onchange="filterPriceList()">
@@ -299,22 +304,23 @@
                     </div>
                 </div>
 
+                <!-- SUB-TAB PRIBADI (GRID-4 BERSIH & MINIMALIS) -->
                 <div class="sub-tab-container sub-tab-grid-4">
                     <button class="sub-tab-btn active" onclick="switchSubTab('sub-kas', this)">
-                        <i class="fa-solid fa-cash-register"></i>
-                        <span>Kas</span>
+                        <i class="fa-solid fa-cash-register sub-tab-icon"></i>
+                        <span class="sub-tab-text">Kas</span>
                     </button>
                     <button class="sub-tab-btn" onclick="switchSubTab('sub-laporan', this)">
-                        <i class="fa-solid fa-chart-pie"></i>
-                        <span>Laporan</span>
+                        <i class="fa-solid fa-chart-pie sub-tab-icon"></i>
+                        <span class="sub-tab-text">Laporan</span>
                     </button>
                     <button class="sub-tab-btn" onclick="switchSubTab('sub-rjual', this)">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                        <span>R.Jual</span>
+                        <i class="fa-solid fa-clock-rotate-left sub-tab-icon"></i>
+                        <span class="sub-tab-text">R.Jual</span>
                     </button>
                     <button class="sub-tab-btn" onclick="switchSubTab('sub-notes', this)">
-                        <i class="fa-solid fa-note-sticky"></i>
-                        <span>Notes</span>
+                        <i class="fa-solid fa-note-sticky sub-tab-icon"></i>
+                        <span class="sub-tab-text">Notes</span>
                     </button>
                 </div>
 
@@ -662,6 +668,29 @@
         </div>
     </div>
 
+    <!-- MODAL POP-UP DETAIL PRICE LIST (POP-UP HARGA JKT, SGC, BNIB) -->
+    <div class="custom-modal-overlay" id="pricelist-detail-modal">
+        <div class="custom-modal-card" style="max-width: 420px; max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 800;">
+                        <i class="fa-solid fa-tags" style="color: var(--azure-primary); margin-right: 6px;"></i> Detail Harga Model
+                    </h3>
+                    <p style="font-size: 11px; color: var(--text-secondary);" id="modal-pricelist-subtitle">Daftar harga pasaran smartphone</p>
+                </div>
+                <span id="modal-pricelist-count" class="badge-count">0 Item</span>
+            </div>
+
+            <div id="pricelist-modal-results-container" style="flex: 1; max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+                <!-- Hasil kartu harga akan dimuat secara dinamis -->
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closePriceListModal()" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL POP-UP PILIHAN BRAND CEK IMEI -->
     <div class="custom-modal-overlay" id="imei-check-modal">
         <div class="custom-modal-card" style="max-width: 380px;">
@@ -774,7 +803,7 @@
     <div class="custom-modal-overlay" id="diagnosis-modal">
         <div class="custom-modal-card" style="max-width: 420px; max-height: 85vh; display: flex; flex-direction: column;">
             <div class="edit-modal-header" style="margin-bottom: 10px; text-align: left; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
-                <h3 id="diagnosis-modal-title" style="font-size: 15px;"><i class="fa-solid fa-stethoscope" style="color: var(--azure-primary); margin-right: 6px;"></i> Menu Diagnosis</h3>
+                <h3 id="diagnosis-modal-title" style="font-size: 15px;"><i class="fa-solid fa-microchip" style="color: var(--azure-primary); margin-right: 6px;"></i> Menu Diagnosis</h3>
                 <p id="diagnosis-modal-subtitle" style="font-size: 11px; color: var(--text-secondary);">Daftar kode dial rahasia perangkat</p>
             </div>
             <div id="diagnosis-modal-body" style="overflow-y: auto; flex: 1; padding-right: 4px; display: flex; flex-direction: column; gap: 8px;">
