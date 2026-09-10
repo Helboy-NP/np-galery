@@ -336,6 +336,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     initAllCustomDropdowns();
 
+    // Event listener untuk tombol Enter pada input pencarian Price List
+    const searchInput = document.getElementById('filter-model-input');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                triggerPriceListModalSearch();
+            }
+        });
+    }
+
     // Panggil sinkronisasi awal dan aktifkan Realtime listener
     await syncFromSupabase();
     setupSupabaseRealtime();
@@ -354,7 +365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 /* ========================================================== */
-/* FITUR MANAJEMEN NOTES (CATATAN)                            */
+/* FITUR MANAJEMEN NOTES (CATATAN & FUNGSI SALIN)             */
 /* ========================================================== */
 window.toggleNoteForm = function() {
     document.getElementById('note-form-collapse')?.classList.toggle('collapsed');
@@ -407,6 +418,47 @@ window.simpanCatatanBaru = async function() {
     }
 };
 
+// FUNGSI SALIN ISI CATATAN
+window.salinCatatan = function(id) {
+    const note = daftarNotes.find(n => n.id === id);
+    if (!note) return;
+
+    let textToCopy = '';
+    if (note.title && note.title.trim() !== '' && note.title !== 'Catatan Baru') {
+        textToCopy = `📌 *${note.title}*\n${note.content}`;
+    } else {
+        textToCopy = note.content;
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            showToast('Tersalin', 'Isi catatan berhasil disalin.');
+        }).catch(() => {
+            fallbackSalinText(textToCopy);
+        });
+    } else {
+        fallbackSalinText(textToCopy);
+    }
+};
+
+function fallbackSalinText(text) {
+    let textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    textArea.style.top = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showToast('Tersalin', 'Isi catatan berhasil disalin.');
+    } catch (err) {
+        showToast('Gagal', 'Gagal menyalin catatan.', false);
+    }
+    document.body.removeChild(textArea);
+}
+
 window.hapusCatatan = function(id) {
     showCustomConfirm("Hapus Catatan", "Yakin ingin menghapus catatan ini?", async () => {
         daftarNotes = daftarNotes.filter(n => n.id !== id);
@@ -441,6 +493,7 @@ function renderDaftarNotes() {
             <div class="stok-item-top">
                 <span class="stok-item-title">${n.title}</span>
                 <div style="display: flex; gap: 4px;">
+                    <button onclick="salinCatatan('${n.id}')" class="action-btn" title="Salin Catatan"><i class="fa-solid fa-copy"></i></button>
                     <button onclick="bukaEditCatatan('${n.id}')" class="action-btn edit-btn" title="Edit Catatan"><i class="fa-solid fa-pen"></i></button>
                     <button onclick="hapusCatatan('${n.id}')" class="action-btn delete-btn" title="Hapus Catatan"><i class="fa-solid fa-trash"></i></button>
                 </div>
@@ -838,11 +891,11 @@ function openDiagnosisModal(query) {
 
     let targetCodes = [];
     if (matchedBrandObj && matchedBrandObj.codes) {
-        modalTitle.innerHTML = `<i class="fa-solid fa-stethoscope" style="color: var(--azure-primary); margin-right: 6px;"></i> Diagnosis: ${matchedBrandObj.brand.toUpperCase()}`;
+        modalTitle.innerHTML = `<i class="fa-solid fa-microchip" style="color: var(--azure-primary); margin-right: 6px;"></i> Diagnosis: ${matchedBrandObj.brand.toUpperCase()}`;
         modalSub.textContent = `Daftar kode & langkah cek resmi untuk: "${query}"`;
         targetCodes = matchedBrandObj.codes.map(c => ({ code: c.code, name: c.description }));
     } else {
-        modalTitle.innerHTML = `<i class="fa-solid fa-stethoscope" style="color: var(--azure-primary); margin-right: 6px;"></i> Diagnosis: ${query}`;
+        modalTitle.innerHTML = `<i class="fa-solid fa-microchip" style="color: var(--azure-primary); margin-right: 6px;"></i> Diagnosis: ${query}`;
         modalSub.textContent = `Daftar kode dial umum perangkat`;
         targetCodes = [
             { code: "*#06#", name: "Cek Nomor IMEI" },
@@ -1043,8 +1096,14 @@ function saveStokToStorage() { localStorage.setItem('npgalery_stok_masuk', JSON.
 function saveTerjualToStorage() { localStorage.setItem('npgalery_stok_terjual', JSON.stringify(daftarTerjual)); }
 function saveKasToStorage() { localStorage.setItem('npgalery_kas_pribadi', JSON.stringify(daftarKasPribadi)); }
 
+/* ========================================================== */
+/* PEMBARUAN FUNGSI DASHBOARD STATS: MENARGETKAN ID SEJAJAR   */
+/* ========================================================== */
 function updateDashboardStats() {
+    // 1. Hitung total stok ready
     let sumStok = daftarStokMasuk.reduce((sum, item) => sum + parseInt(item.qty || 1), 0);
+    
+    // 2. Hitung total terjual, omset, dan laba/keuntungan bersih
     let sumTerjual = daftarTerjual.reduce((sum, item) => sum + parseInt(item.qty || 1), 0);
     let totalOmset = 0;
     let totalProfit = 0; 
@@ -1057,19 +1116,33 @@ function updateDashboardStats() {
         totalProfit += ((hargaJual - hargaModal) * qty); 
     });
 
+    // 3. Update Kartu Keuntungan
     const keuntunganQtyElem = document.getElementById('keuntungan-qty');
     const keuntunganNominalElem = document.getElementById('keuntungan-nominal');
-    
     if (keuntunganQtyElem) keuntunganQtyElem.textContent = `${sumTerjual} Unit`;
     if (keuntunganNominalElem) keuntunganNominalElem.textContent = formatRupiah(totalProfit);
 
-    const sideCards = document.querySelectorAll('.stat-side-group .stat-card');
-    if (sideCards.length >= 2) {
-        const stokDiv = sideCards[0].querySelector('div');
-        if (stokDiv) stokDiv.innerHTML = `<span class="stat-label-small">Stok Ready</span><h4 class="stat-value-small">${sumStok} Unit</h4>`;
-        const terjualDiv = sideCards[1].querySelector('div');
-        if (terjualDiv) terjualDiv.innerHTML = `<span class="stat-label-small">Terjual</span><h4 class="stat-value-small">${sumTerjual} Unit</h4><span style="font-size: 9.5px; font-weight: 700; color: var(--status-safe); display: block; margin-top: 1px; font-family: var(--font-mono);">${formatRupiah(totalOmset)}</span>`;
+    // 4. Update Kartu Stok Ready (Sesuai ID di index.html)
+    const stokReadyValElem = document.getElementById('stok-ready-val');
+    if (stokReadyValElem) {
+        stokReadyValElem.textContent = `${sumStok} Unit`;
     }
+
+    // 5. Update Kartu Terjual & Omset (Sesuai ID di index.html)
+    const terjualValElem = document.getElementById('terjual-val');
+    const terjualOmsetValElem = document.getElementById('terjual-omset-val');
+    if (terjualValElem) {
+        terjualValElem.textContent = `${sumTerjual} Unit`;
+    }
+    if (terjualOmsetValElem) {
+        terjualOmsetValElem.textContent = formatRupiah(totalOmset);
+    }
+
+    // 6. Update Badge Counter pada Tombol Navigasi/Pill Stok
+    const badgeStokCount = document.getElementById('badge-stok-count');
+    const modalBadgeStokCount = document.getElementById('modal-badge-stok-count');
+    if (badgeStokCount) badgeStokCount.textContent = `${daftarStokMasuk.length} Unit`;
+    if (modalBadgeStokCount) modalBadgeStokCount.textContent = `${daftarStokMasuk.length} Unit`;
 }
 
 function updatePribadiStats() {
@@ -1165,7 +1238,9 @@ function getBrandStyle(brandName) {
     return `color: ${color}; background-color: ${bg}; border-color: ${border};`;
 }
 
-/* PRICE LIST & KATALOG DENGAN DUKUNGAN BNIB */
+/* ========================================================== */
+/* PRICE LIST & KATALOG RINGKAS (BERSIH DENGAN ON-DEMAND)     */
+/* ========================================================== */
 window.addNewProduct = function() {
     const nameInput = document.getElementById('add-input-name').value.trim();
     const jktInput = document.getElementById('add-input-jkt').value.trim();
@@ -1242,7 +1317,15 @@ window.saveEditModal = function() {
         if (document.getElementById('edit-input-bnib')) {
             item.bnib = document.getElementById('edit-input-bnib').value.trim() || '--';
         }
-        closeEditModal(); filterPriceList(); showToast('Berhasil!', 'Perubahan harga disimpan.');
+        closeEditModal(); 
+        filterPriceList(); 
+        showToast('Berhasil!', 'Perubahan harga disimpan.');
+        
+        // Perbarui kartu modal jika sedang terbuka
+        const modal = document.getElementById('pricelist-detail-modal');
+        if (modal && modal.classList.contains('show')) {
+            openSingleProductPriceModal(item.id);
+        }
     }
 };
 
@@ -1250,7 +1333,9 @@ window.deleteProduct = function(id) {
     showCustomConfirm("Hapus Model", "Yakin ingin menghapus model dari katalog?", () => {
         rawPriceListData = rawPriceListData.filter(p => p.id !== id);
         selectedPriceListModelIds.delete(id);
-        initBrandDropdown(); initReportBrandDropdown(); filterPriceList(); renderLaporanKeuangan(); showToast('Berhasil', 'Produk dihapus.', false);
+        initBrandDropdown(); initReportBrandDropdown(); filterPriceList(); renderLaporanKeuangan(); 
+        closePriceListModal();
+        showToast('Berhasil', 'Produk dihapus.', false);
     });
 };
 
@@ -1275,69 +1360,184 @@ function initReportBrandDropdown() {
 }
 
 function filterPriceList() {
-    const searchVal = document.getElementById('filter-model-input').value.toLowerCase().trim();
-    const brandVal = document.getElementById('filter-brand-select').value;
-    currentFilteredData = rawPriceListData.filter(item => {
-        return (brandVal === 'ALL' || item.brand.trim() === brandVal) && (item.model.toLowerCase().includes(searchVal) || item.brand.toLowerCase().includes(searchVal));
-    });
-    currentPage = 1; renderPage();
+    const searchVal = document.getElementById('filter-model-input') ? document.getElementById('filter-model-input').value.toLowerCase().trim() : '';
+    const brandVal = document.getElementById('filter-brand-select') ? document.getElementById('filter-brand-select').value : 'ALL';
+    
+    // Jika belum ada pencarian teks dan filter masih 'ALL', kosongkan list agar layar bersih
+    if (!searchVal && brandVal === 'ALL') {
+        currentFilteredData = [];
+    } else {
+        currentFilteredData = rawPriceListData.filter(item => {
+            return (brandVal === 'ALL' || item.brand.trim() === brandVal) && 
+                   (item.model.toLowerCase().includes(searchVal) || item.brand.toLowerCase().includes(searchVal));
+        });
+    }
+    
+    currentPage = 1; 
+    renderPage();
 }
 
+// RENDER LIST UTAMA (SUPER BERSIH: TAMPIL KETIKA DICARI / FILTER BRAND DIPILIH)
 function renderPage() {
     const container = document.getElementById('pricelist-container');
     const badgeCount = document.getElementById('pricelist-count-badge');
     if (!container) return;
+
+    const searchInput = document.getElementById('filter-model-input');
+    const searchVal = searchInput ? searchInput.value.trim() : '';
+    const brandSelect = document.getElementById('filter-brand-select');
+    const brandVal = brandSelect ? brandSelect.value : 'ALL';
+
+    // 1. Tampilan Bersih Awal (Belum ada pencarian & belum memilih brand)
+    if (!searchVal && brandVal === 'ALL') {
+        if (badgeCount) badgeCount.textContent = `Pencarian Standby`;
+        container.innerHTML = `
+            <div class="empty-state" style="padding: 40px 16px;">
+                <i class="fa-solid fa-magnifying-glass-arrow-right icon-placeholder" style="font-size: 32px; opacity: 0.6;"></i>
+                <h3 style="font-size: 14px; font-weight: 800; margin-top: 6px;">Cari Model Handphone</h3>
+                <p style="font-size: 11.5px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4;">
+                    Ketik model di atas (contoh: <b>Realme 11</b>) lalu tekan <b>Enter</b>, atau pilih merk untuk melihat daftar harga.
+                </p>
+            </div>
+        `;
+        return;
+    }
+
+    // 2. Tampilan Jika Hasil Pencarian / Filter Kosong
     const totalItems = currentFilteredData.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
     if (badgeCount) badgeCount.textContent = `Menampilkan ${totalItems} Item`;
 
     if (totalItems === 0) {
-        container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-file-circle-xmark icon-placeholder"></i><h2>Tidak Ditemukan</h2></div>`;
+        container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-file-circle-xmark icon-placeholder"></i><h2>Tidak Ditemukan</h2><p style="font-size: 11.5px; color: var(--text-secondary);">Tidak ada model yang cocok.</p></div>`;
         return;
     }
 
+    // 3. Tampilan Hasil Filter / Pencarian yang Ringkas
     let htmlContent = '';
     currentFilteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).forEach(item => {
-        let diffHtml = '';
-        let jktMax = getHighestNumericPrice(item.jkt), sgcMax = getHighestNumericPrice(item.sgc);
-        if (jktMax !== null && sgcMax !== null) {
-            let diff = jktMax - sgcMax;
-            let cls = diff > 0 ? 'selisih-green' : (diff < 0 ? 'selisih-red' : 'selisih-neutral');
-            let txt = diff > 0 ? `+ ${formatRupiah(diff)}` : (diff < 0 ? `- ${formatRupiah(Math.abs(diff))}` : 'Rp 0');
-            diffHtml = `<div class="price-card-footer"><span class="selisih-badge ${cls}">${txt}</span></div>`;
-        }
-
-        let bnibBadgeHtml = '';
-        if (item.bnib && item.bnib.trim() !== '--' && item.bnib.trim() !== '') {
-            bnibBadgeHtml = `
-                <div class="price-card-top-badge">
-                    <span class="badge-bnib-tag" title="Harga BNIB">
-                        <i class="fa-solid fa-box" style="font-size: 8.5px;"></i> ${formatDisplayPrice(item.bnib)}
-                    </span>
-                </div>
-            `;
-        }
-
         htmlContent += `
-            <div class="price-card">
-                <div class="price-card-header">
-                    <div><span class="price-card-brand" style="${getBrandStyle(item.brand)}">${item.brand}</span><div class="price-card-model">${item.model}</div></div>
-                    <div class="price-card-actions"><button class="action-btn edit-btn" onclick="editProduct('${item.id}')"><i class="fa-solid fa-pen"></i></button><button class="action-btn delete-btn" onclick="deleteProduct('${item.id}')"><i class="fa-solid fa-trash"></i></button></div>
+            <div class="stok-item-card" onclick="openSingleProductPriceModal('${item.id}')" style="cursor: pointer; padding: 10px 14px;">
+                <div class="stok-item-top" style="align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;">
+                        <span class="price-card-brand" style="${getBrandStyle(item.brand)}">${item.brand}</span>
+                        <span class="stok-item-title" style="font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.model}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 10px; color: var(--azure-primary); font-weight: 700;">Cek Harga <i class="fa-solid fa-chevron-right" style="font-size: 8.5px;"></i></span>
+                    </div>
                 </div>
-                ${bnibBadgeHtml}
-                <div class="price-compare-stack">
-                    <div class="price-box"><span class="price-box-label">Jakarta</span><span class="price-box-val">${formatDisplayPrice(item.jkt)}</span></div>
-                    <div class="price-box"><span class="price-box-label">Cikarang</span><span class="price-box-val">${formatDisplayPrice(item.sgc)}</span></div>
-                </div>
-                ${diffHtml}
             </div>
         `;
     });
+    
     htmlContent += `<div class="pagination-controls"><button class="page-btn" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>Prev</button><span class="page-info">Hal ${currentPage}/${totalPages}</span><button class="page-btn" onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>Next</button></div>`;
     container.innerHTML = htmlContent;
 }
 
 function changePage(direction) { currentPage += direction; renderPage(); }
+
+// FUNGSI MEMBUAT KARTU DETAIL HARGA DI DALAM POP-UP
+function generatePriceCardHTML(item) {
+    let diffHtml = '';
+    let jktMax = getHighestNumericPrice(item.jkt), sgcMax = getHighestNumericPrice(item.sgc);
+    if (jktMax !== null && sgcMax !== null) {
+        let diff = jktMax - sgcMax;
+        let cls = diff > 0 ? 'selisih-green' : (diff < 0 ? 'selisih-red' : 'selisih-neutral');
+        let txt = diff > 0 ? `+ ${formatRupiah(diff)}` : (diff < 0 ? `- ${formatRupiah(Math.abs(diff))}` : 'Rp 0');
+        diffHtml = `<div class="price-card-footer" style="padding-top: 6px;"><span class="selisih-badge ${cls}">Selisih: ${txt}</span></div>`;
+    }
+
+    let bnibBadgeHtml = '';
+    if (item.bnib && item.bnib.trim() !== '--' && item.bnib.trim() !== '') {
+        bnibBadgeHtml = `
+            <div class="price-card-top-badge" style="margin-top: 2px; margin-bottom: 6px;">
+                <span class="badge-bnib-tag" title="Harga BNIB">
+                    <i class="fa-solid fa-box" style="font-size: 8.5px;"></i> ${formatDisplayPrice(item.bnib)}
+                </span>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="price-card" style="margin: 0; background: var(--bg-page);">
+            <div class="price-card-header">
+                <div>
+                    <span class="price-card-brand" style="${getBrandStyle(item.brand)}">${item.brand}</span>
+                    <div class="price-card-model" style="font-size: 13.5px; margin-top: 3px;">${item.model}</div>
+                </div>
+                <div class="price-card-actions">
+                    <button class="action-btn edit-btn" onclick="editProduct('${item.id}')" title="Edit Harga"><i class="fa-solid fa-pen"></i></button>
+                    <button class="action-btn delete-btn" onclick="deleteProduct('${item.id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+            ${bnibBadgeHtml}
+            <div class="price-compare-stack" style="margin-top: 4px;">
+                <div class="price-box"><span class="price-box-label">Jakarta</span><span class="price-box-val">${formatDisplayPrice(item.jkt)}</span></div>
+                <div class="price-box"><span class="price-box-label">Cikarang</span><span class="price-box-val">${formatDisplayPrice(item.sgc)}</span></div>
+            </div>
+            ${diffHtml}
+        </div>
+    `;
+}
+
+// BUKA DETAIL HARGA DARI KLIK PADA SATU MODEL
+window.openSingleProductPriceModal = function(id) {
+    const item = rawPriceListData.find(p => p.id === id);
+    if (!item) return;
+
+    const modal = document.getElementById('pricelist-detail-modal');
+    const container = document.getElementById('pricelist-modal-results-container');
+    const countBadge = document.getElementById('modal-pricelist-count');
+    const subtitle = document.getElementById('modal-pricelist-subtitle');
+
+    if (!modal || !container) return;
+
+    if (countBadge) countBadge.textContent = "1 Model";
+    if (subtitle) subtitle.textContent = `${item.brand} - ${item.model}`;
+
+    container.innerHTML = generatePriceCardHTML(item);
+    modal.classList.add('show');
+};
+
+// TRIGGER PENCARIAN ENTER / TOMBOL CARI PRICE LIST
+window.triggerPriceListModalSearch = function() {
+    const searchInput = document.getElementById('filter-model-input');
+    const searchVal = searchInput ? searchInput.value.trim() : '';
+
+    if (!searchVal) {
+        showToast('Peringatan', 'Ketik nama model smartphone terlebih dahulu!', false);
+        return;
+    }
+
+    const modal = document.getElementById('pricelist-detail-modal');
+    const container = document.getElementById('pricelist-modal-results-container');
+    const countBadge = document.getElementById('modal-pricelist-count');
+    const subtitle = document.getElementById('modal-pricelist-subtitle');
+
+    if (!modal || !container) return;
+
+    // Filter langsung data pencarian
+    const matched = rawPriceListData.filter(item => {
+        return item.model.toLowerCase().includes(searchVal.toLowerCase()) || 
+               item.brand.toLowerCase().includes(searchVal.toLowerCase());
+    });
+
+    if (countBadge) countBadge.textContent = `${matched.length} Item`;
+    if (subtitle) subtitle.textContent = `Hasil pencarian untuk "${searchVal}"`;
+
+    if (matched.length === 0) {
+        container.innerHTML = `<div class="empty-stok-msg">Tidak ada model yang cocok dengan "${searchVal}"</div>`;
+    } else {
+        container.innerHTML = matched.map(item => generatePriceCardHTML(item)).join('');
+    }
+
+    modal.classList.add('show');
+};
+
+window.closePriceListModal = function() {
+    document.getElementById('pricelist-detail-modal')?.classList.remove('show');
+};
 
 /* NAVIGASI & AUTH */
 function restartApp(btn) { btn?.classList.add('spinning'); setTimeout(() => window.location.reload(), 450); }
@@ -1889,9 +2089,9 @@ function renderDaftarTerjual() {
 function renderDaftarModal() {
     const container = document.getElementById('sub-modal');
     if (!container) return;
-    if (daftarTerjual.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-coins icon-placeholder"></i><h2>Manajemen Modal</h2></div>`; return; }
+    if (daftarTerjual.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-vault icon-placeholder"></i><h2>Manajemen Modal</h2></div>`; return; }
     container.innerHTML = `
-        <div class="stok-masuk-header"><div class="header-left"><i class="fa-solid fa-coins"></i><h4>Status Kembali Modal</h4></div></div>
+        <div class="stok-masuk-header"><div class="header-left"><i class="fa-solid fa-vault"></i><h4>Status Kembali Modal</h4></div></div>
         <div class="stok-masuk-container" style="max-height:550px;">
             ${daftarTerjual.map(i => {
                 let s = i.modalStatus === 'sudah';
@@ -1984,7 +2184,9 @@ window.renderManajemenKas = function() {
     let kat = document.getElementById('filter-kas-kategori')?.value || 'ALL';
     let tgl = document.getElementById('filter-kas-tanggal')?.value || '';
     let filtered = daftarKasPribadi.filter(i => (kat === 'ALL' || i.kategori === kat) && (!tgl || i.tanggal === tgl));
+    
     if (badge) badge.textContent = `${filtered.length} Catatan`;
+
     if (filtered.length === 0) { container.innerHTML = `<div class="empty-stok-msg">Tidak ada catatan kas.</div>`; return; }
     container.innerHTML = filtered.map(i => `
         <div class="stok-item-card" style="cursor:default;">
