@@ -536,11 +536,121 @@ body.dark-mode .card-saldo { background: linear-gradient(135deg, #1E293B 0%, #0F
 .pribadi-icon-bg { font-size: 16px; color: var(--text-secondary); }
 .pribadi-value { font-size: 17px; font-weight: 800; font-family: var(--font-mono); }
 
-.sub-tab-container { display: flex; gap: 8px; margin-bottom: 16px; }
-.sub-tab-grid-3 { gap: 6px; }
-.sub-tab-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-.sub-tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 6px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 12px; font-family: var(--font-main); font-size: 11.5px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
-.sub-tab-btn.active { background: var(--card-bg); border-color: var(--azure-primary); color: var(--azure-primary); box-shadow: 0 4px 12px rgba(0, 119, 182, 0.08); }
+/* ========================================================== */
+/* DESAIN SUB-TAB MODERN: BADGE DINAMIS & MIKRO-INTERAKSI     */
+/* ========================================================== */
+.sub-tab-container { 
+    display: flex; 
+    gap: 7px; 
+    margin-bottom: 16px; 
+    width: 100%;
+}
+.sub-tab-grid-3 { 
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px; 
+}
+.sub-tab-grid-4 { 
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 5px; 
+}
+
+.sub-tab-btn { 
+    flex: 1; 
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 6px; 
+    padding: 9px 6px; 
+    background: var(--bg-page); 
+    border: 1px solid var(--border-subtle); 
+    border-radius: 14px; 
+    font-family: var(--font-main); 
+    font-size: 11.5px; 
+    font-weight: 700; 
+    color: var(--text-secondary); 
+    cursor: pointer; 
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1); 
+    white-space: nowrap; 
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.sub-tab-btn .sub-tab-icon {
+    font-size: 12.5px;
+    color: inherit;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sub-tab-btn .sub-tab-text {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.1px;
+}
+
+/* EFEK HOVER & AKTIF SUB-TAB */
+.sub-tab-btn:hover {
+    color: var(--azure-primary);
+    border-color: rgba(0, 119, 182, 0.35);
+    background: var(--card-bg);
+    transform: translateY(-1px);
+}
+.sub-tab-btn:hover .sub-tab-icon {
+    transform: scale(1.12);
+}
+
+.sub-tab-btn.active { 
+    background: var(--card-bg); 
+    border-color: var(--azure-primary); 
+    color: var(--azure-primary); 
+    box-shadow: 0 4px 14px rgba(0, 119, 182, 0.12); 
+}
+.sub-tab-btn.active .sub-tab-icon {
+    color: var(--azure-primary);
+    transform: scale(1.08);
+}
+body.dark-mode .sub-tab-btn.active {
+    background: var(--card-bg);
+    border-color: var(--azure-primary);
+    color: var(--azure-primary);
+    box-shadow: 0 4px 16px rgba(56, 189, 248, 0.18);
+}
+
+/* BADGE COUNTER DINAMIS DI SUB-TAB */
+.sub-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4.5px;
+    border-radius: 99px;
+    font-size: 9px;
+    font-weight: 900;
+    font-family: var(--font-mono);
+    background: rgba(0, 119, 182, 0.12);
+    color: var(--azure-primary);
+    border: 1px solid rgba(0, 119, 182, 0.25);
+    margin-left: 2px;
+    transition: all 0.2s ease;
+}
+.sub-tab-btn.active .sub-tab-badge {
+    background: var(--azure-primary);
+    color: #FFFFFF;
+    border-color: transparent;
+    box-shadow: 0 2px 6px rgba(0, 119, 182, 0.3);
+}
+body.dark-mode .sub-tab-badge {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38BDF8;
+    border-color: rgba(56, 189, 248, 0.35);
+}
+body.dark-mode .sub-tab-btn.active .sub-tab-badge {
+    background: #38BDF8;
+    color: #0F172A;
+}
+
 .sub-content { display: none; animation: fadeIn 0.25s ease; }
 .sub-content.active { display: block; }
 .empty-state { text-align: center; padding: 32px 16px; }
