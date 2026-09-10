@@ -498,6 +498,7 @@ window.closeEditNoteModal = function() {
     activeEditNoteId = null;
 };
 
+// SIMPAN PERUBAHAN CATATAN (DIPERBARUI: DILENGKAPI SELECT & UPSERT FALLBACK)
 window.simpanPerubahanCatatan = async function() {
     if (!activeEditNoteId) return;
 
@@ -521,15 +522,55 @@ window.simpanPerubahanCatatan = async function() {
 
         if (supabaseClient) {
             try {
-                await supabaseClient.from('notes').update({
-                    title: note.title,
-                    content: note.content
-                }).eq('id', activeEditNoteId);
+                const { data, error } = await supabaseClient
+                    .from('notes')
+                    .update({
+                        title: note.title,
+                        content: note.content
+                    })
+                    .eq('id', activeEditNoteId)
+                    .select();
+
+                if (error) {
+                    console.error('Gagal update catatan di Supabase:', error.message);
+                } else if (!data || data.length === 0) {
+                    await supabaseClient.from('notes').upsert([{
+                        id: note.id,
+                        title: note.title,
+                        content: note.content,
+                        date: note.date
+                    }]);
+                }
             } catch (e) {
                 console.warn('Gagal memperbarui catatan di Supabase:', e);
             }
         }
     }
+};
+
+/* ========================================================== */
+/* FITUR MODAL POP-UP STOK (TAMBAH STOK & DAFTAR STOK)       */
+/* ========================================================== */
+window.openAddStokModal = function() {
+    const tglInput = document.getElementById('stok-tanggal');
+    if (tglInput && !tglInput.value) {
+        let d = new Date();
+        tglInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    document.getElementById('add-stok-modal')?.classList.add('show');
+};
+
+window.closeAddStokModal = function() {
+    document.getElementById('add-stok-modal')?.classList.remove('show');
+};
+
+window.openDaftarStokModal = function() {
+    renderDaftarStokMasuk();
+    document.getElementById('daftar-stok-modal')?.classList.add('show');
+};
+
+window.closeDaftarStokModal = function() {
+    document.getElementById('daftar-stok-modal')?.classList.remove('show');
 };
 
 /* ========================================================== */
@@ -599,7 +640,6 @@ window.startImeiScanner = function() {
             // Mengabaikan frame tanpa barcode saat proses deteksi
         };
 
-        // Deteksi ID kamera belakang secara eksplisit agar video tidak layar hitam
         Html5Qrcode.getCameras().then(devices => {
             if (devices && devices.length > 0) {
                 let backCamera = devices.find(device => 
@@ -685,7 +725,6 @@ window.handlePhotoScan = function(inputElement) {
     const imageFile = inputElement.files[0];
     showToast('Memproses', 'Menganalisis foto barcode...');
 
-    // Hentikan video live sementara agar resource kamera dialihkan ke pemrosesan gambar
     if (html5QrScannerInstance && html5QrScannerInstance.isScanning) {
         html5QrScannerInstance.stop().then(() => {
             processImageScan(imageFile);
@@ -1375,12 +1414,6 @@ function switchSubTab(subId, el) {
     document.getElementById(subId)?.classList.add('active'); el?.classList.add('active');
 }
 
-/* STOK & JUAL */
-window.toggleStokForm = function() {
-    document.getElementById('stok-form-collapse')?.classList.toggle('collapsed');
-    document.getElementById('icon-toggle-form')?.classList.toggle('rotated');
-};
-
 window.handleAutocomplete = function(query) {
     const listElem = document.getElementById('stok-autocomplete-list');
     if (!listElem) return;
@@ -1447,6 +1480,10 @@ window.simpanStokBaru = async function() {
 
     document.getElementById('stok-produk-input').value = '';
     document.getElementById('stok-imei').value = '';
+    document.getElementById('stok-harga').value = '';
+
+    // Otomatis tutup modal form tambah stok
+    closeAddStokModal();
 
     if (supabaseClient) {
         try {
@@ -1780,13 +1817,32 @@ window.hapusRiwayatTerjual = function(id) {
 function renderDaftarStokMasuk() {
     const container = document.getElementById('stok-masuk-container');
     const badge = document.getElementById('badge-stok-count');
+    const modalBadge = document.getElementById('modal-badge-stok-count');
     if (!container) return;
+
+    // Perbarui counter di tombol depan dan header pop-up
     if (badge) badge.textContent = `${daftarStokMasuk.length} Unit`;
-    if (daftarStokMasuk.length === 0) { container.innerHTML = `<div class="empty-stok-msg">Belum ada stok.</div>`; return; }
+    if (modalBadge) modalBadge.textContent = `${daftarStokMasuk.length} Unit`;
+
+    if (daftarStokMasuk.length === 0) { 
+        container.innerHTML = `<div class="empty-stok-msg">Belum ada stok unit ready.</div>`; 
+        return; 
+    }
+    
     container.innerHTML = daftarStokMasuk.map(i => `
         <div class="stok-item-card" onclick="openStokDetail('${i.id}')">
-            <div class="stok-item-top"><div class="stok-title-group"><span class="kondisi-badge ${i.kondisi.toLowerCase()}">${i.kondisi}</span><span class="stok-item-title">${i.produk}</span><span class="stok-kelengkapan-sub">${i.kelengkapan}</span></div></div>
-            <div class="stok-item-details"><span class="detail-badge imei-badge">IMEI: ${i.imei}</span><span class="detail-badge">${formatTanggalID(i.tanggal)}</span><span class="detail-badge qty-badge">${i.qty} unit</span></div>
+            <div class="stok-item-top">
+                <div class="stok-title-group">
+                    <span class="kondisi-badge ${i.kondisi.toLowerCase()}">${i.kondisi}</span>
+                    <span class="stok-item-title">${i.produk}</span>
+                    <span class="stok-kelengkapan-sub">${i.kelengkapan}</span>
+                </div>
+            </div>
+            <div class="stok-item-details">
+                <span class="detail-badge imei-badge">IMEI: ${i.imei}</span>
+                <span class="detail-badge">${formatTanggalID(i.tanggal)}</span>
+                <span class="detail-badge qty-badge">${i.qty} unit</span>
+            </div>
         </div>
     `).join('');
 }
