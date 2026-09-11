@@ -56,8 +56,9 @@
                     <i class="fa-solid fa-rotate-right"></i>
                 </button>
                 
-                <button id="btn-protection" class="header-icon-btn status-protected" title="Status Proteksi: Aman" onclick="toggleProtectionStatus(this)">
-                    <i class="fa-solid fa-shield-halved"></i>
+                <!-- Indikator Status Koneksi / Sync Real-Time -->
+                <button id="btn-connection-status" class="header-icon-btn sync-btn status-connected" title="Koneksi: Terhubung ke Cloud" onclick="checkConnectionStatusManual(this)">
+                    <span class="sync-status-dot"></span>
                 </button>
                 
                 <button id="btn-theme" class="header-icon-btn" title="Ganti Tema" onclick="toggleTheme()">
@@ -304,8 +305,8 @@
                     </div>
                 </div>
 
-                <!-- SUB-TAB PRIBADI (GRID-4 BERSIH & MINIMALIS) -->
-                <div class="sub-tab-container sub-tab-grid-4">
+                <!-- SUB-TAB PRIBADI (GRID-3 BERSIH & MINIMALIS: KAS, LAPORAN, NOTES) -->
+                <div class="sub-tab-container sub-tab-grid-3">
                     <button class="sub-tab-btn active" onclick="switchSubTab('sub-kas', this)">
                         <i class="fa-solid fa-cash-register sub-tab-icon"></i>
                         <span class="sub-tab-text">Kas</span>
@@ -314,20 +315,17 @@
                         <i class="fa-solid fa-chart-pie sub-tab-icon"></i>
                         <span class="sub-tab-text">Laporan</span>
                     </button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('sub-rjual', this)">
-                        <i class="fa-solid fa-clock-rotate-left sub-tab-icon"></i>
-                        <span class="sub-tab-text">R.Jual</span>
-                    </button>
                     <button class="sub-tab-btn" onclick="switchSubTab('sub-notes', this)">
                         <i class="fa-solid fa-note-sticky sub-tab-icon"></i>
                         <span class="sub-tab-text">Notes</span>
                     </button>
                 </div>
 
-                <!-- SUB-TAB KAS -->
+                <!-- SUB-TAB KAS (SUPER CLEAN: FILTER SEJAJAR & 2 TOMBOL BERSEBELAHAN) -->
                 <div id="sub-kas" class="sub-content active">
                     
-                    <div class="pricelist-filter-area" style="margin-bottom: 16px;">
+                    <!-- BARIS FILTER MINIMALIS SEJAJAR KE SAMPING -->
+                    <div class="pricelist-filter-area filter-compact-row" style="margin-bottom: 10px;">
                         <div class="filter-select-box" style="flex: 1;">
                             <select id="filter-kas-kategori" class="form-select-glass" onchange="renderManajemenKas()">
                                 <option value="ALL">Semua Catatan</option>
@@ -336,212 +334,102 @@
                             </select>
                         </div>
                         <div class="filter-search-box" style="flex: 1;">
-                            <input type="date" id="filter-kas-tanggal" onchange="renderManajemenKas()" style="padding: 9px 10px;">
+                            <input type="date" id="filter-kas-tanggal" onchange="renderManajemenKas()" style="padding: 7px 8px; font-size: 11.5px;">
                         </div>
                     </div>
 
-                    <button id="btn-toggle-kas-form" class="toggle-form-btn" onclick="toggleKasForm()">
-                        <div class="toggle-btn-left">
+                    <!-- DUA TOMBOL BERJAJAR KE SAMPING (CATAT KAS BARU & RIWAYAT MUTASI) -->
+                    <div class="stok-action-buttons-row" style="margin-bottom: 8px;">
+                        <button type="button" class="btn-stok-action-pill" onclick="openAddKasModal()" title="Buka Form Catat Kas">
                             <i class="fa-solid fa-circle-plus"></i>
-                            <span>Catat Keluar Masuk Uang</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-down toggle-icon" id="icon-toggle-kas-form"></i>
-                    </button>
-
-                    <div id="kas-form-collapse" class="stok-form-collapse collapsed">
-                        <div class="add-product-card glass-form">
-                            <div class="add-header compact-header">
-                                <i class="fa-solid fa-cash-register"></i>
-                                <h3>Tambah Catatan Kas</h3>
-                            </div>
-
-                            <div class="add-form-group">
-                                <label>Untuk Keperluan Apa?</label>
-                                <input type="text" id="kas-keterangan" placeholder="Misal: Beli sparepart, makan, laba unit...">
-                            </div>
-                            
-                            <div class="add-price-row">
-                                <div class="add-form-group half-width">
-                                    <label>Aliran Kas</label>
-                                    <select id="kas-kategori" class="form-select-glass">
-                                        <option value="masuk">Uang Masuk (+)</option>
-                                        <option value="keluar">Uang Keluar (-)</option>
-                                    </select>
-                                </div>
-                                <div class="add-form-group half-width">
-                                    <label>Jumlah Uang (Rp)</label>
-                                    <div class="calc-input-wrapper">
-                                        <input type="text" id="kas-nominal" placeholder="Contoh: 150.000">
-                                        <button type="button" id="btn-open-calc" class="btn-calc-trigger" onclick="openKasCalculator()" title="Buka Kalkulator">
-                                            <i class="fa-solid fa-calculator"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="add-form-group">
-                                <label>Tanggal Transaksi</label>
-                                <input type="date" id="kas-tanggal">
-                            </div>
-
-                            <div class="add-action-row">
-                                <button class="add-submit-btn compact-btn" onclick="tambahKasPribadi()">
-                                    <i class="fa-solid fa-floppy-disk"></i> Simpan Catatan
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stok-masuk-section" style="margin-top: 16px;">
-                        <div class="stok-masuk-header">
-                            <div class="header-left">
-                                <i class="fa-solid fa-book"></i>
-                                <h4>Riwayat Mutasi Kas</h4>
-                            </div>
-                            <span id="badge-kas-count" class="badge-count">0 Catatan</span>
-                        </div>
-                        <div id="kas-masuk-container" class="stok-masuk-container" style="max-height: 400px;">
-                        </div>
+                            <span>Catat Kas Baru</span>
+                        </button>
+                        <button type="button" class="btn-stok-action-pill" onclick="openRiwayatKasModal()" title="Lihat Daftar Mutasi Kas">
+                            <i class="fa-solid fa-book"></i>
+                            <span>Riwayat Mutasi</span>
+                            <span id="badge-kas-count" class="badge-count-pill">0 Catatan</span>
+                        </button>
                     </div>
 
                 </div>
 
-                <!-- SUB-TAB LAPORAN DENGAN FILTER KATEGORI TUNGGAL -->
+                <!-- SUB-TAB LAPORAN (DASHBOARD RAMPING DENGAN 4 KARTU KATEGORI & 3 TOMBOL POPUP SEJAJAR) -->
                 <div id="sub-laporan" class="sub-content">
-                    <div class="stok-masuk-header" style="margin-bottom: 12px;">
-                        <div class="header-left">
+                    
+                    <!-- KONTROL PILIHAN KATEGORI LAPORAN: 4 KOTAK MINI INTERAKTIF RAMPING -->
+                    <div class="report-category-grid">
+                        <div class="report-cat-card active" data-cat="kas" onclick="selectReportCategoryCard('kas', this)">
+                            <i class="fa-solid fa-cash-register"></i>
+                            <span>Kas</span>
+                        </div>
+                        <div class="report-cat-card" data-cat="penjualan" onclick="selectReportCategoryCard('penjualan', this)">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            <span>Penjualan</span>
+                        </div>
+                        <div class="report-cat-card" data-cat="stok" onclick="selectReportCategoryCard('stok', this)">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                            <span>Stok</span>
+                        </div>
+                        <div class="report-cat-card" data-cat="pricelist" onclick="selectReportCategoryCard('pricelist', this)">
+                            <i class="fa-solid fa-tags"></i>
+                            <span>Price List</span>
+                        </div>
+                    </div>
+
+                    <!-- SELECT ELEMEN ASLI (TERSEMBUNYI UNTUK MENJAGA LOGIKA SCRIPT LAMA) -->
+                    <select id="report-main-category-select" style="display: none;" onchange="onReportCategorySelectChanged(this.value)">
+                        <option value="kas">Kas Pribadi</option>
+                        <option value="penjualan">Penjualan</option>
+                        <option value="stok">Stok Ready</option>
+                        <option value="pricelist">Price List</option>
+                    </select>
+
+                    <!-- BARIS TOMBOL FILTER MINIMALIS -->
+                    <div class="stok-action-buttons-row" style="margin-top: 10px; margin-bottom: 6px;">
+                        <button type="button" class="btn-stok-action-pill" onclick="openReportFilterModal()" title="Buka Pengaturan Filter Laporan" style="width: 100%;">
+                            <i class="fa-solid fa-sliders"></i>
+                            <span>Atur Filter Data</span>
+                        </button>
+                    </div>
+
+                    <!-- 3 TOMBOL POPUP SEJAJAR KE SAMPING (RINGKASAN, RINCIAN, FORMAT & UNDUH) -->
+                    <div class="stok-action-buttons-row report-tri-action-row" style="margin-bottom: 10px;">
+                        <button type="button" class="btn-stok-action-pill" onclick="openReportSummaryModal()" title="Buka Ringkasan">
                             <i class="fa-solid fa-chart-pie"></i>
-                            <h4 style="font-size: 14px; font-weight: 800;">Laporan & Rekapitulasi</h4>
-                        </div>
-                        <button class="header-icon-btn" onclick="renderLaporanKeuangan()" title="Muat Ulang Laporan" style="width: 28px; height: 28px; background: var(--bg-page); border: 1px solid var(--border-subtle);">
-                            <i class="fa-solid fa-rotate-right" style="font-size: 11px; color: var(--text-secondary);"></i>
+                            <span>Ringkasan</span>
+                        </button>
+                        <button type="button" class="btn-stok-action-pill" onclick="openReportDetailsModal()" title="Buka Rincian Data">
+                            <i class="fa-solid fa-list-check"></i>
+                            <span>Rincian</span>
+                        </button>
+                        <button type="button" class="btn-stok-action-pill" onclick="openReportFormatModal()" title="Atur Format & Unduh File">
+                            <i class="fa-solid fa-file-arrow-down"></i>
+                            <span>Format & Unduh</span>
                         </button>
                     </div>
 
-                    <!-- 1 Filter Dropdown Kategori Utama Pengganti 4 Sub-Tab -->
-                    <div class="pricelist-filter-area" style="margin-bottom: 8px;">
-                        <div class="filter-select-box" style="flex: 1;">
-                            <label style="font-size: 10.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; display: block;">Pilih Kategori Laporan</label>
-                            <select id="report-main-category-select" class="form-select-glass" onchange="onReportCategorySelectChanged(this.value)">
-                                <option value="kas">Kas Pribadi</option>
-                                <option value="penjualan">Penjualan</option>
-                                <option value="stok">Stok Ready</option>
-                                <option value="pricelist">Price List</option>
-                            </select>
-                        </div>
-                    </div>
+                    <!-- WADAH ELEMEN DINAMIS INTERNAL UNTUK SINKRONISASI JAVASCRIPT LAMA -->
+                    <div id="laporan-container" style="display: none;"></div>
 
-                    <!-- Filter Khusus Kas (Muncul otomatis saat Kas dipilih) -->
-                    <div id="report-filter-kas-area" class="pricelist-filter-area" style="margin-top: 8px; margin-bottom: 8px;">
-                        <div class="filter-select-box" style="flex: 1;">
-                            <select id="report-filter-kas-kategori" class="form-select-glass" onchange="renderLaporanKeuangan()">
-                                <option value="ALL">Semua Mutasi</option>
-                                <option value="masuk">Kas Masuk Saja</option>
-                                <option value="keluar">Kas Keluar Saja</option>
-                            </select>
-                        </div>
-                        <div class="filter-search-box" style="flex: 1;">
-                            <input type="date" id="report-filter-kas-tanggal" onchange="renderLaporanKeuangan()" style="padding: 9px 10px;" title="Filter Tanggal Spesifik">
-                        </div>
-                    </div>
-
-                    <!-- Filter Khusus Price List (Muncul otomatis saat Price List dipilih) -->
-                    <div id="report-filter-pricelist-area" style="margin-top: 8px; margin-bottom: 8px; display: none; flex-direction: column; gap: 8px;">
-                        <div class="pricelist-filter-area" style="margin-bottom: 0;">
-                            <div class="filter-select-box" style="flex: 1;">
-                                <select id="report-filter-brand-select" class="form-select-glass" onchange="onReportBrandChanged()">
-                                    <option value="ALL">Semua Merk</option>
-                                </select>
-                            </div>
-                            <div class="filter-search-box" style="flex: 1.2;">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                                <input type="text" id="report-filter-model-input" placeholder="Cari tipe model..." oninput="onReportBrandChanged()">
-                            </div>
-                        </div>
-                        <div class="model-selection-ctrl-bar">
-                            <span id="selected-models-count-badge" class="selection-indicator">0 Model Dipilih</span>
-                            <div class="selection-actions-btns">
-                                <button type="button" class="btn-select-ctrl" onclick="selectAllPriceListModels(true)"><i class="fa-solid fa-check-double"></i> Pilih Semua</button>
-                                <button type="button" class="btn-select-ctrl" onclick="selectAllPriceListModels(false)"><i class="fa-solid fa-xmark"></i> Batal Semua</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="export-action-bar" style="margin-top: 10px;">
-                        <button class="export-btn preview-action-btn" onclick="openReportPreview()">
-                            <i class="fa-solid fa-eye"></i> Preview
-                        </button>
-                        <div class="export-dropdown-group">
-                            <select id="export-format-select" class="form-select-glass" style="font-size: 12px; padding: 8px 10px;">
-                                <option value="txt">Format TXT</option>
-                                <option value="csv">Format CSV (Excel)</option>
-                                <option value="docs">Format DOCS</option>
-                                <option value="img">Format Gambar (PNG)</option>
-                            </select>
-                            <button class="export-btn download-action-btn" onclick="executeExportReport()">
-                                <i class="fa-solid fa-download"></i> Unduh
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="laporan-container" class="laporan-grid" style="margin-top: 10px;">
-                    </div>
                 </div>
 
-                <div id="sub-rjual" class="sub-content">
-                    <div class="empty-state">
-                        <i class="fa-solid fa-clock-rotate-left icon-placeholder"></i>
-                        <h2>Riwayat Penjualan</h2>
-                        <p>Daftar riwayat transaksi barang yang telah terjual.</p>
-                    </div>
-                </div>
-
-                <!-- SUB-TAB NOTES / CATATAN -->
+                <!-- SUB-TAB NOTES & RIWAYAT JUAL (3 TOMBOL SEJAJAR KE SAMPING) -->
                 <div id="sub-notes" class="sub-content">
-                    <button id="btn-toggle-note-form" class="toggle-form-btn" onclick="toggleNoteForm()">
-                        <div class="toggle-btn-left">
+                    <div class="stok-action-buttons-row notes-action-row" style="margin-bottom: 8px;">
+                        <button type="button" class="btn-stok-action-pill" onclick="openAddNoteModal()" title="Buka Form Tambah Catatan">
                             <i class="fa-solid fa-circle-plus"></i>
-                            <span>Tambah Catatan Baru</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-down toggle-icon" id="icon-toggle-note-form"></i>
-                    </button>
-
-                    <div id="note-form-collapse" class="stok-form-collapse collapsed">
-                        <div class="add-product-card glass-form">
-                            <div class="add-header compact-header">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                                <h3>Buat Catatan Toko</h3>
-                            </div>
-
-                            <div class="add-form-group">
-                                <label>Judul Catatan</label>
-                                <input type="text" id="note-title-input" placeholder="Misal: Daftar Belanja / Pengingat Servis">
-                            </div>
-
-                            <div class="add-form-group">
-                                <label>Isi Catatan</label>
-                                <textarea id="note-content-input" class="notes-textarea-glass" placeholder="Tuliskan catatan detail Anda di sini..." rows="4"></textarea>
-                            </div>
-
-                            <div class="add-action-row align-right">
-                                <button class="add-submit-btn compact-btn" onclick="simpanCatatanBaru()">
-                                    <i class="fa-solid fa-floppy-disk"></i> Simpan Catatan
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stok-masuk-section" style="margin-top: 16px;">
-                        <div class="stok-masuk-header">
-                            <div class="header-left">
-                                <i class="fa-solid fa-note-sticky"></i>
-                                <h4>Daftar Catatan</h4>
-                            </div>
-                            <span id="badge-notes-count" class="badge-count">0 Catatan</span>
-                        </div>
-                        <div id="notes-container" class="stok-masuk-container" style="max-height: 450px;">
-                            <div class="empty-stok-msg">Belum ada catatan tersimpan.</div>
-                        </div>
+                            <span>Catat Baru</span>
+                        </button>
+                        <button type="button" class="btn-stok-action-pill" onclick="openDaftarNotesModal()" title="Lihat Semua Catatan">
+                            <i class="fa-solid fa-note-sticky"></i>
+                            <span>Daftar Catatan</span>
+                            <span id="badge-notes-count" class="badge-count-pill">0</span>
+                        </button>
+                        <button type="button" class="btn-stok-action-pill" onclick="openRiwayatJualModal()" title="Lihat Riwayat Unit Terjual">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            <span>Riwayat Jual</span>
+                            <span id="badge-rjual-count" class="badge-count-pill">0</span>
+                        </button>
                     </div>
                 </div>
 
@@ -568,6 +456,144 @@
             </button>
         </div>
     </nav>
+
+    <!-- MODAL POP-UP 1: RINGKASAN LAPORAN -->
+    <div class="custom-modal-overlay" id="report-summary-modal">
+        <div class="custom-modal-card" style="max-width: 440px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 800;" id="report-summary-modal-title">
+                        <i class="fa-solid fa-chart-pie" style="color: var(--azure-primary); margin-right: 6px;"></i> Ringkasan Laporan
+                    </h3>
+                    <p style="font-size: 11px; color: var(--text-secondary);" id="report-summary-modal-subtitle">Rekapitulasi metrik utama data aktif</p>
+                </div>
+                <span id="badge-summary-count" class="badge-count">0 Data</span>
+            </div>
+
+            <div id="report-summary-modal-body" style="overflow-y: auto; flex: 1; padding-right: 4px; display: flex; flex-direction: column; gap: 8px;">
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeReportSummaryModal()" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP 2: RINCIAN LENGKAP (SCROLLABLE) -->
+    <div class="custom-modal-overlay" id="report-details-modal">
+        <div class="custom-modal-card" style="max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 800;" id="report-details-modal-title">
+                        <i class="fa-solid fa-list-check" style="color: var(--azure-primary); margin-right: 6px;"></i> Rincian Data
+                    </h3>
+                    <p style="font-size: 11px; color: var(--text-secondary);" id="report-details-modal-subtitle">Daftar item rincian terfilter</p>
+                </div>
+                <span id="badge-details-count" class="badge-count">0 Item</span>
+            </div>
+
+            <div id="report-details-modal-body" class="stok-masuk-container" style="flex: 1; max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+                <div class="empty-stok-msg">Belum ada rincian data.</div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeReportDetailsModal()" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP 3: ATUR FORMAT FILE & UNDUH -->
+    <div class="custom-modal-overlay" id="report-format-modal">
+        <div class="custom-modal-card" style="max-width: 400px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                <h3 style="font-size: 15px; font-weight: 800;">
+                    <i class="fa-solid fa-file-arrow-down" style="color: var(--azure-primary); margin-right: 6px;"></i> Format & Unduh Laporan
+                </h3>
+                <p style="font-size: 11px; color: var(--text-secondary);">Pilih format file dan unduh rekapitulasi data</p>
+            </div>
+
+            <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+                <div class="add-form-group" style="margin-bottom: 12px;">
+                    <label>Pilih Format File</label>
+                    <select id="export-format-select" class="form-select-glass" style="font-size: 12px; padding: 10px;">
+                        <option value="txt">Format TXT (.txt)</option>
+                        <option value="csv">Format CSV (Excel .csv)</option>
+                        <option value="docs">Format Dokumen Word (.doc)</option>
+                        <option value="img">Format Gambar A4 (.png)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 10px; display: flex; gap: 8px;">
+                <button type="button" class="btn-cancel" onclick="closeReportFormatModal()" style="flex: 0.8;">Batal</button>
+                <button type="button" class="btn-stok-action-pill" onclick="openReportPreview(); closeReportFormatModal();" style="flex: 1; padding: 10px 8px; font-size: 11.5px;">
+                    <i class="fa-solid fa-eye"></i> Preview
+                </button>
+                <button type="button" class="btn-save" onclick="executeExportReport(); closeReportFormatModal();" style="flex: 1; padding: 10px 8px; font-size: 11.5px;">
+                    <i class="fa-solid fa-download"></i> Unduh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP PENGATURAN FILTER LAPORAN KHUSUS -->
+    <div class="custom-modal-overlay" id="report-filter-modal">
+        <div class="custom-modal-card" style="max-width: 440px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 800;">
+                        <i class="fa-solid fa-sliders" style="color: var(--azure-primary); margin-right: 6px;"></i> Pengaturan Filter Laporan
+                    </h3>
+                    <p style="font-size: 11px; color: var(--text-secondary);" id="modal-report-filter-subtitle">Sesuaikan data yang ingin direkap</p>
+                </div>
+            </div>
+
+            <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+                <!-- FILTER KAS -->
+                <div id="report-filter-kas-area" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
+                    <div class="add-form-group" style="margin-bottom: 8px;">
+                        <label>Aliran Mutasi</label>
+                        <select id="report-filter-kas-kategori" class="form-select-glass" onchange="renderLaporanKeuangan()">
+                            <option value="ALL">Semua Mutasi</option>
+                            <option value="masuk">Kas Masuk Saja</option>
+                            <option value="keluar">Kas Keluar Saja</option>
+                        </select>
+                    </div>
+                    <div class="add-form-group" style="margin-bottom: 8px;">
+                        <label>Filter Tanggal Spesifik</label>
+                        <input type="date" id="report-filter-kas-tanggal" onchange="renderLaporanKeuangan()" style="padding: 9px 10px; width: 100%;">
+                    </div>
+                </div>
+
+                <!-- FILTER PRICE LIST -->
+                <div id="report-filter-pricelist-area" style="display: none; flex-direction: column; gap: 8px; margin-bottom: 8px;">
+                    <div class="add-form-group" style="margin-bottom: 8px;">
+                        <label>Pilih Merk</label>
+                        <select id="report-filter-brand-select" class="form-select-glass" onchange="onReportBrandChanged()">
+                            <option value="ALL">Semua Merk</option>
+                        </select>
+                    </div>
+                    <div class="add-form-group" style="margin-bottom: 8px;">
+                        <label>Cari Tipe Model</label>
+                        <input type="text" id="report-filter-model-input" placeholder="Cari tipe model..." oninput="onReportBrandChanged()">
+                    </div>
+                    <div class="model-selection-ctrl-bar">
+                        <span id="selected-models-count-badge" class="selection-indicator">0 Model Dipilih</span>
+                        <div class="selection-actions-btns">
+                            <button type="button" class="btn-select-ctrl" onclick="selectAllPriceListModels(true)"><i class="fa-solid fa-check-double"></i> Pilih Semua</button>
+                            <button type="button" class="btn-select-ctrl" onclick="selectAllPriceListModels(false)"><i class="fa-solid fa-xmark"></i> Batal Semua</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-save" onclick="closeReportFilterModal()" style="width: 100%;">
+                    <i class="fa-solid fa-check"></i> Terapkan & Selesai
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL POP-UP TAMBAH STOK BARU -->
     <div class="custom-modal-overlay" id="add-stok-modal">
@@ -643,6 +669,156 @@
         </div>
     </div>
 
+    <!-- MODAL POP-UP TAMBAH CATATAN KAS BARU -->
+    <div class="custom-modal-overlay" id="add-kas-modal">
+        <div class="custom-modal-card" style="max-width: 440px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                <h3 style="font-size: 15px; font-weight: 800;">
+                    <i class="fa-solid fa-cash-register" style="color: var(--azure-primary); margin-right: 6px;"></i> Tambah Catatan Kas
+                </h3>
+                <p style="font-size: 11px; color: var(--text-secondary);">Catat mutasi uang masuk atau pengeluaran</p>
+            </div>
+            
+            <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+                <div class="add-form-group">
+                    <label>Untuk Keperluan Apa?</label>
+                    <input type="text" id="kas-keterangan" placeholder="Misal: Beli sparepart, makan, laba unit...">
+                </div>
+                
+                <div class="add-price-row">
+                    <div class="add-form-group half-width">
+                        <label>Aliran Kas</label>
+                        <select id="kas-kategori" class="form-select-glass">
+                            <option value="masuk">Uang Masuk (+)</option>
+                            <option value="keluar">Uang Keluar (-)</option>
+                        </select>
+                    </div>
+                    <div class="add-form-group half-width">
+                        <label>Jumlah Uang (Rp)</label>
+                        <div class="calc-input-wrapper">
+                            <input type="text" id="kas-nominal" placeholder="Contoh: 150.000">
+                            <button type="button" id="btn-open-calc" class="btn-calc-trigger" onclick="openKasCalculator()" title="Buka Kalkulator">
+                                <i class="fa-solid fa-calculator"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="add-form-group">
+                    <label>Tanggal Transaksi</label>
+                    <input type="date" id="kas-tanggal">
+                </div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeAddKasModal()">Batal</button>
+                <button type="button" class="btn-save" onclick="tambahKasPribadi()">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Catatan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP RIWAYAT MUTASI KAS (SCROLLABLE & CLEAN) -->
+    <div class="custom-modal-overlay" id="riwayat-kas-modal">
+        <div class="custom-modal-card" style="max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 800;">
+                        <i class="fa-solid fa-book" style="color: var(--azure-primary); margin-right: 6px;"></i> Riwayat Mutasi Kas
+                    </h3>
+                    <p style="font-size: 11px; color: var(--text-secondary);">Daftar seluruh transaksi pemasukan dan pengeluaran</p>
+                </div>
+                <span id="modal-badge-kas-count" class="badge-count">0 Catatan</span>
+            </div>
+
+            <div id="kas-masuk-container" class="stok-masuk-container" style="flex: 1; max-height: 60vh; overflow-y: auto;">
+                <div class="empty-stok-msg">Tidak ada catatan kas.</div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeRiwayatKasModal()" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP TAMBAH CATATAN TOKO (NOTES) BARU -->
+    <div class="custom-modal-overlay" id="add-note-modal">
+        <div class="custom-modal-card" style="max-width: 440px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                <h3 style="font-size: 15px; font-weight: 800;">
+                    <i class="fa-solid fa-pen-to-square" style="color: var(--azure-primary); margin-right: 6px;"></i> Buat Catatan Toko
+                </h3>
+                <p style="font-size: 11px; color: var(--text-secondary);">Tulis memo, belanjaan, atau pengingat servis</p>
+            </div>
+            
+            <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+                <div class="add-form-group">
+                    <label>Judul Catatan</label>
+                    <input type="text" id="note-title-input" placeholder="Misal: Daftar Belanja / Pengingat Servis">
+                </div>
+
+                <div class="add-form-group">
+                    <label>Isi Catatan</label>
+                    <textarea id="note-content-input" class="notes-textarea-glass" placeholder="Tuliskan catatan detail Anda di sini..." rows="5"></textarea>
+                </div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeAddNoteModal()">Batal</button>
+                <button type="button" class="btn-save" onclick="simpanCatatanBaru()">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Catatan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DAFTAR SELURUH CATATAN (NOTES SCROLLABLE) -->
+    <div class="custom-modal-overlay" id="daftar-notes-modal">
+        <div class="custom-modal-card" style="max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 800;">
+                        <i class="fa-solid fa-note-sticky" style="color: var(--azure-primary); margin-right: 6px;"></i> Daftar Catatan Toko
+                    </h3>
+                    <p style="font-size: 11px; color: var(--text-secondary);">Memo, pengingat, dan catatan penting operasional</p>
+                </div>
+                <span id="modal-badge-notes-count" class="badge-count">0 Catatan</span>
+            </div>
+
+            <div id="notes-container" class="stok-masuk-container" style="flex: 1; max-height: 60vh; overflow-y: auto;">
+                <div class="empty-stok-msg">Belum ada catatan tersimpan.</div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeDaftarNotesModal()" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP DAFTAR RIWAYAT JUAL (SCROLLABLE) -->
+    <div class="custom-modal-overlay" id="riwayat-jual-modal">
+        <div class="custom-modal-card" style="max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 800;">
+                        <i class="fa-solid fa-clock-rotate-left" style="color: var(--azure-primary); margin-right: 6px;"></i> Riwayat Penjualan
+                    </h3>
+                    <p style="font-size: 11px; color: var(--text-secondary);">Daftar riwayat transaksi unit smartphone yang telah terjual</p>
+                </div>
+                <span id="modal-badge-rjual-count" class="badge-count">0 Unit</span>
+            </div>
+
+            <div id="rjual-container" class="stok-masuk-container" style="flex: 1; max-height: 60vh; overflow-y: auto;">
+                <div class="empty-stok-msg">Belum ada riwayat penjualan.</div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeRiwayatJualModal()" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL POP-UP DAFTAR SELURUH STOK -->
     <div class="custom-modal-overlay" id="daftar-stok-modal">
         <div class="custom-modal-card" style="max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;">
@@ -668,7 +844,7 @@
         </div>
     </div>
 
-    <!-- MODAL POP-UP DETAIL PRICE LIST (POP-UP HARGA JKT, SGC, BNIB) -->
+    <!-- MODAL POP-UP DETAIL PRICE LIST -->
     <div class="custom-modal-overlay" id="pricelist-detail-modal">
         <div class="custom-modal-card" style="max-width: 420px; max-height: 85vh; display: flex; flex-direction: column;">
             <div class="edit-modal-header" style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
@@ -682,7 +858,6 @@
             </div>
 
             <div id="pricelist-modal-results-container" style="flex: 1; max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
-                <!-- Hasil kartu harga akan dimuat secara dinamis -->
             </div>
 
             <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
@@ -752,7 +927,7 @@
         </div>
     </div>
 
-    <!-- MODAL POP-UP SCANNER KAMERA HP SUNGGUHAN (HTML5-QRCODE DILENGKAPI FITUR SNAPSHOT & FOTO) -->
+    <!-- MODAL POP-UP SCANNER KAMERA HP SUNGGUHAN -->
     <div class="custom-modal-overlay" id="scanner-modal">
         <div class="custom-modal-card scanner-modal-card">
             <div class="edit-modal-header">
@@ -873,7 +1048,7 @@
         </div>
     </div>
 
-    <!-- MODAL PREVIEW LAPORAN (DINAMIS SESUAI FORMAT A4 / TXT / CSV) -->
+    <!-- MODAL PREVIEW LAPORAN -->
     <div class="custom-modal-overlay" id="report-preview-modal">
         <div class="custom-modal-card" style="max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;">
             <div class="edit-modal-header" style="margin-bottom: 12px; text-align: left; border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px;">
@@ -903,7 +1078,7 @@
         </div>
     </div>
 
-    <!-- Wadah Render Canvas Laporan A4 Tersembunyi (Proporsi Lebar Standar 794px) -->
+    <!-- Wadah Render Canvas Laporan A4 Tersembunyi -->
     <div id="export-render-canvas-wrap" style="position: absolute; left: -9999px; top: 0; width: 794px; z-index: -1;">
         <div id="export-render-canvas" class="elegant-export-card"></div>
     </div>
