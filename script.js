@@ -2,6 +2,7 @@
  * NPGALERY - CORE SCRIPT & PRICE LIST PERBANDINGAN HARGA
  * TERINTEGRASI PENUH DENGAN SUPABASE & FITUR BNIB BADGE
  * DILENGKAPI SISTEM SUPABASE AUTH, RLS, NOTES & REALTIME SYNC
+ * DENGAN INDIKATOR STATUS KONEKSI CLOUD REAL-TIME
  */
 
 // KONFIGURASI KONEKSI SUPABASE
@@ -45,23 +46,77 @@ let checkedDiagnosisCodes = new Set();
 let calcCurrentVal = "0";
 let calcEquation = "";
 
+/* ========================================================== */
+/* SISTEM INDIKATOR STATUS KONEKSI / SYNC OTOMATIS             */
+/* ========================================================== */
+let isCloudConnected = false;
+
+function setConnectionStatus(status) {
+    const btn = document.getElementById('btn-connection-status');
+    if (!btn) return;
+
+    btn.classList.remove('status-connected', 'status-disconnected', 'status-syncing');
+
+    if (status === 'connected') {
+        isCloudConnected = true;
+        btn.classList.add('status-connected');
+        btn.title = 'Koneksi Cloud: Terhubung & Realtime Aktif';
+    } else if (status === 'syncing') {
+        btn.classList.add('status-syncing');
+        btn.title = 'Koneksi Cloud: Sedang Sinkronisasi...';
+    } else {
+        isCloudConnected = false;
+        btn.classList.add('status-disconnected');
+        btn.title = 'Koneksi Cloud: Offline / Menggunakan Data Lokal';
+    }
+}
+
+// Pengecekan manual saat tombol indikator titik diklik
+window.checkConnectionStatusManual = async function(btn) {
+    setConnectionStatus('syncing');
+    showToast('Koneksi', 'Memeriksa status sambungan cloud...');
+    try {
+        if (!navigator.onLine || !supabaseClient) {
+            throw new Error('Offline');
+        }
+        const { error } = await supabaseClient.from('product').select('id').limit(1);
+        if (error) throw error;
+
+        setConnectionStatus('connected');
+        showToast('Online', 'Terhubung ke server Supabase Cloud.');
+        await syncFromSupabase();
+    } catch (e) {
+        setConnectionStatus('disconnected');
+        showToast('Offline', 'Bekerja dengan penyimpanan lokal (Localstorage).', false);
+    }
+};
+
+// Event listener bawaan browser untuk mendeteksi jaringan online/offline
+window.addEventListener('online', () => {
+    setConnectionStatus('syncing');
+    syncFromSupabase().then(() => setConnectionStatus('connected'));
+});
+window.addEventListener('offline', () => {
+    setConnectionStatus('disconnected');
+    showToast('Offline', 'Koneksi internet terputus.', false);
+});
+
 // SINKRONISASI DATA AWAL DARI SUPABASE
 async function syncFromSupabase() {
-    if (!supabaseClient) return;
+    if (!supabaseClient || !navigator.onLine) {
+        setConnectionStatus('disconnected');
+        return;
+    }
+    setConnectionStatus('syncing');
     try {
-        // 1. Ambil Data Produk (Stok Ready) dari tabel 'product'
         await syncProductsFromSupabaseOnly();
-
-        // 2. Ambil Data Penjualan (Transactions)
         await syncTransactionsFromSupabaseOnly();
-
-        // 3. Ambil Mutasi Kas
         await syncCashFromSupabaseOnly();
-
-        // 4. Ambil Data Notes / Catatan
         await syncNotesFromSupabaseOnly();
+        setConnectionStatus('connected');
     } catch (err) {
         console.warn('Gagal sinkronisasi data dari Supabase:', err);
+        setConnectionStatus('disconnected');
     }
 }
 
@@ -170,7 +225,10 @@ async function syncNotesFromSupabaseOnly() {
 
 // SETUP SUPABASE REALTIME MULTI-DEVICE
 function setupSupabaseRealtime() {
-    if (!supabaseClient) return;
+    if (!supabaseClient) {
+        setConnectionStatus('disconnected');
+        return;
+    }
 
     supabaseClient
         .channel('npgalery-realtime-channel')
@@ -188,7 +246,10 @@ function setupSupabaseRealtime() {
         })
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
+                setConnectionStatus('connected');
                 console.log('Realtime listener aktif untuk semua tabel NPGalery.');
+            } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+                setConnectionStatus('disconnected');
             }
         });
 }
@@ -311,18 +372,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    const protectionStatus = localStorage.getItem('npgalery_protection');
-    const protBtn = document.getElementById('btn-protection');
-    if (protBtn) {
-        if (protectionStatus === 'unprotected') {
-            protBtn.className = 'header-icon-btn status-unprotected';
-            protBtn.title = 'Status Proteksi: Belum Terproteksi';
-        } else {
-            protBtn.className = 'header-icon-btn status-protected';
-            protBtn.title = 'Status Proteksi: Aman & Terproteksi';
-        }
-    }
-
     loadPriceListData();
     loadDiagnosisData();
     
@@ -336,7 +385,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     initAllCustomDropdowns();
 
-    // Event listener untuk tombol Enter pada input pencarian Price List
     const searchInput = document.getElementById('filter-model-input');
     if (searchInput) {
         searchInput.addEventListener('keydown', function(e) {
@@ -347,9 +395,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Panggil sinkronisasi awal dan aktifkan Realtime listener
-    await syncFromSupabase();
-    setupSupabaseRealtime();
+    // Set status awal & jalankan sinkronisasi
+    if (navigator.onLine && supabaseClient) {
+        setConnectionStatus('syncing');
+        await syncFromSupabase();
+        setupSupabaseRealtime();
+    } else {
+        setConnectionStatus('disconnected');
+    }
 
     document.addEventListener('click', (e) => {
         const inputElem = document.getElementById('stok-produk-input');
@@ -365,11 +418,79 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 /* ========================================================== */
+/* LOGIKA PEMFORMATAN RUPIAH (RINGKAS UNTUK UI & NORMAL LENGKAP) */
+/* ========================================================== */
+
+// Format Ringkas (Membuang 3 nol di belakang: 1.500.000 -> Rp 1.500)
+function formatRupiahRingkas(num) {
+    if (num === null || isNaN(num)) return 'Rp 0';
+    let ringkas = Math.round(num / 1000);
+    return 'Rp ' + ringkas.toLocaleString('id-ID');
+}
+
+// Format Lengkap Normal (Khusus Invoice & Dokumen Ekspor)
+function formatRupiahLengkap(num) {
+    if (num === null || isNaN(num)) return 'Rp 0';
+    return 'Rp ' + Math.round(num).toLocaleString('id-ID');
+}
+
+function formatRupiah(num) {
+    return formatRupiahRingkas(num);
+}
+
+function parseRawToNumeric(valStr) {
+    if (!valStr || valStr.trim() === '--' || valStr.trim() === '') return null;
+    let clean = valStr.toString().trim().replace(/\./g, '');
+    let num = parseFloat(clean);
+    if (isNaN(num)) return null;
+    if (num < 10000) return num * 1000;
+    return num;
+}
+
+function formatDisplayPrice(priceString, isExport = false) {
+    if (!priceString || priceString.trim() === '--') return '--';
+    const parts = priceString.split('/');
+    const formattedParts = parts.map(part => {
+        const val = parseRawToNumeric(part);
+        if (val === null) return '--';
+        return isExport ? formatRupiahLengkap(val) : formatRupiahRingkas(val);
+    });
+    return formattedParts.join(' / ');
+}
+
+function getHighestNumericPrice(priceString) {
+    if (!priceString || priceString.trim() === '--') return null;
+    const parts = priceString.split('/');
+    let maxVal = null;
+    parts.forEach(part => {
+        const val = parseRawToNumeric(part);
+        if (val !== null && (maxVal === null || val > maxVal)) maxVal = val;
+    });
+    return maxVal;
+}
+
+/* ========================================================== */
 /* FITUR MANAJEMEN NOTES (CATATAN & FUNGSI SALIN)             */
 /* ========================================================== */
+window.openAddNoteModal = function() {
+    document.getElementById('add-note-modal')?.classList.add('show');
+};
+
+window.closeAddNoteModal = function() {
+    document.getElementById('add-note-modal')?.classList.remove('show');
+};
+
+window.openDaftarNotesModal = function() {
+    renderDaftarNotes();
+    document.getElementById('daftar-notes-modal')?.classList.add('show');
+};
+
+window.closeDaftarNotesModal = function() {
+    document.getElementById('daftar-notes-modal')?.classList.remove('show');
+};
+
 window.toggleNoteForm = function() {
-    document.getElementById('note-form-collapse')?.classList.toggle('collapsed');
-    document.getElementById('icon-toggle-note-form')?.classList.toggle('rotated');
+    openAddNoteModal();
 };
 
 function saveNotesToStorage() {
@@ -402,7 +523,7 @@ window.simpanCatatanBaru = async function() {
 
     titleInput.value = '';
     contentInput.value = '';
-    toggleNoteForm();
+    closeAddNoteModal();
 
     if (supabaseClient) {
         try {
@@ -418,7 +539,6 @@ window.simpanCatatanBaru = async function() {
     }
 };
 
-// FUNGSI SALIN ISI CATATAN
 window.salinCatatan = function(id) {
     const note = daftarNotes.find(n => n.id === id);
     if (!note) return;
@@ -479,9 +599,11 @@ window.hapusCatatan = function(id) {
 function renderDaftarNotes() {
     const container = document.getElementById('notes-container');
     const badge = document.getElementById('badge-notes-count');
+    const modalBadge = document.getElementById('modal-badge-notes-count');
     if (!container) return;
 
-    if (badge) badge.textContent = `${daftarNotes.length} Catatan`;
+    if (badge) badge.textContent = `${daftarNotes.length}`;
+    if (modalBadge) modalBadge.textContent = `${daftarNotes.length} Catatan`;
 
     if (daftarNotes.length === 0) {
         container.innerHTML = `<div class="empty-stok-msg">Belum ada catatan tersimpan.</div>`;
@@ -506,7 +628,6 @@ function renderDaftarNotes() {
     `).join('');
 }
 
-// MODAL & FUNGSI EDIT CATATAN
 let activeEditNoteId = null;
 
 function createEditNoteModalDOM() {
@@ -551,7 +672,6 @@ window.closeEditNoteModal = function() {
     activeEditNoteId = null;
 };
 
-// SIMPAN PERUBAHAN CATATAN (DIPERBARUI: DILENGKAPI SELECT & UPSERT FALLBACK)
 window.simpanPerubahanCatatan = async function() {
     if (!activeEditNoteId) return;
 
@@ -627,6 +747,47 @@ window.closeDaftarStokModal = function() {
 };
 
 /* ========================================================== */
+/* FITUR MODAL POP-UP KAS (TAMBAH MUTASI KAS & RIWAYAT KAS)   */
+/* ========================================================== */
+window.openAddKasModal = function() {
+    const tglInput = document.getElementById('kas-tanggal');
+    if (tglInput && !tglInput.value) {
+        let d = new Date();
+        tglInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    document.getElementById('add-kas-modal')?.classList.add('show');
+};
+
+window.closeAddKasModal = function() {
+    document.getElementById('add-kas-modal')?.classList.remove('show');
+};
+
+window.openRiwayatKasModal = function() {
+    renderManajemenKas();
+    document.getElementById('riwayat-kas-modal')?.classList.add('show');
+};
+
+window.closeRiwayatKasModal = function() {
+    document.getElementById('riwayat-kas-modal')?.classList.remove('show');
+};
+
+window.toggleKasForm = function() {
+    openAddKasModal();
+};
+
+/* ========================================================== */
+/* FITUR MODAL POP-UP RIWAYAT PENJUALAN (R.JUAL)              */
+/* ========================================================== */
+window.openRiwayatJualModal = function() {
+    renderDaftarTerjual();
+    document.getElementById('riwayat-jual-modal')?.classList.add('show');
+};
+
+window.closeRiwayatJualModal = function() {
+    document.getElementById('riwayat-jual-modal')?.classList.remove('show');
+};
+
+/* ========================================================== */
 /* FITUR CEK IMEI & PORTAL WEBVIEW IN-APP                      */
 /* ========================================================== */
 window.openImeiCheckModal = function() {
@@ -658,7 +819,7 @@ window.closeImeiWebModal = function() {
 };
 
 /* ========================================================== */
-/* SCANNER KAMERA HP (HTML5-QRCODE) - DETEKSI RESMI KAMERA BELAKANG */
+/* SCANNER KAMERA HP (HTML5-QRCODE)                           */
 /* ========================================================== */
 window.startImeiScanner = function() {
     const scannerModal = document.getElementById('scanner-modal');
@@ -689,9 +850,7 @@ window.startImeiScanner = function() {
             stopImeiScanner();
         };
 
-        const onScanFailure = (errorMessage) => {
-            // Mengabaikan frame tanpa barcode saat proses deteksi
-        };
+        const onScanFailure = () => {};
 
         Html5Qrcode.getCameras().then(devices => {
             if (devices && devices.length > 0) {
@@ -709,17 +868,13 @@ window.startImeiScanner = function() {
                     onScanSuccess,
                     onScanFailure
                 ).catch(err => {
-                    console.warn("Gagal memulai dengan Camera ID, beralih ke facingMode:", err);
+                    console.warn("Gagal kamera ID:", err);
                     html5QrScannerInstance.start(
                         { facingMode: "environment" },
                         qrConfig,
                         onScanSuccess,
                         onScanFailure
-                    ).catch(innerErr => {
-                        console.error("Gagal membuka kamera:", innerErr);
-                        showToast('Kamera', 'Tidak dapat mengakses kamera perangkat.', false);
-                        stopImeiScanner();
-                    });
+                    ).catch(() => stopImeiScanner());
                 });
             } else {
                 html5QrScannerInstance.start(
@@ -727,28 +882,11 @@ window.startImeiScanner = function() {
                     qrConfig,
                     onScanSuccess,
                     onScanFailure
-                ).catch(innerErr => {
-                    console.error("Gagal membuka kamera:", innerErr);
-                    showToast('Kamera', 'Tidak dapat mengakses kamera perangkat.', false);
-                    stopImeiScanner();
-                });
+                ).catch(() => stopImeiScanner());
             }
-        }).catch(err => {
-            console.warn("Gagal getCameras, beralih ke facingMode:", err);
-            html5QrScannerInstance.start(
-                { facingMode: "environment" },
-                qrConfig,
-                onScanSuccess,
-                onScanFailure
-            ).catch(innerErr => {
-                console.error("Gagal membuka kamera:", innerErr);
-                showToast('Kamera', 'Tidak dapat mengakses kamera perangkat.', false);
-                stopImeiScanner();
-            });
-        });
+        }).catch(() => stopImeiScanner());
 
     } catch (e) {
-        console.error("Scanner Error:", e);
         showToast('Kamera', 'Terjadi kesalahan sistem kamera.', false);
         stopImeiScanner();
     }
@@ -769,9 +907,6 @@ window.stopImeiScanner = function() {
     }
 };
 
-/* ========================================================== */
-/* PEMROSES FOTO LANGSUNG (SNAPSHOT / SCAN DARI GAMBAR)       */
-/* ========================================================== */
 window.handlePhotoScan = function(inputElement) {
     if (!inputElement.files || inputElement.files.length === 0) return;
 
@@ -803,7 +938,6 @@ function processImageScan(imageFile) {
             if (photoInput) photoInput.value = '';
         })
         .catch(err => {
-            console.warn("Gagal membaca barcode dari foto:", err);
             showToast('Scan Gagal', 'Barcode tidak terdeteksi. Pastikan foto tegak dan jelas!', false);
             const photoInput = document.getElementById('scanner-photo-input');
             if (photoInput) photoInput.value = '';
@@ -850,7 +984,7 @@ window.submitDirectWa = function() {
 };
 
 /* ========================================================== */
-/* LOGIKA SUB-TAB DIAGNOSIS (DINAMIS DARI DIAGNOSIS.JSON)     */
+/* LOGIKA SUB-TAB DIAGNOSIS                                   */
 /* ========================================================== */
 window.triggerDiagnosisCheck = function() {
     const inputVal = document.getElementById('diagnosis-input-model').value.trim();
@@ -1083,8 +1217,7 @@ function initAllCustomDropdowns() {
         '#kas-kategori',
         '#export-format-select',
         '#report-filter-kas-kategori',
-        '#report-filter-brand-select',
-        '#report-main-category-select'
+        '#report-filter-brand-select'
     ];
     targets.forEach(sel => {
         const el = document.querySelector(sel);
@@ -1097,13 +1230,10 @@ function saveTerjualToStorage() { localStorage.setItem('npgalery_stok_terjual', 
 function saveKasToStorage() { localStorage.setItem('npgalery_kas_pribadi', JSON.stringify(daftarKasPribadi)); }
 
 /* ========================================================== */
-/* PEMBARUAN FUNGSI DASHBOARD STATS: MENARGETKAN ID SEJAJAR   */
+/* UPDATE DASHBOARD STATS (MENGGUNAKAN FORMAT RUPIAH RINGKAS)  */
 /* ========================================================== */
 function updateDashboardStats() {
-    // 1. Hitung total stok ready
     let sumStok = daftarStokMasuk.reduce((sum, item) => sum + parseInt(item.qty || 1), 0);
-    
-    // 2. Hitung total terjual, omset, dan laba/keuntungan bersih
     let sumTerjual = daftarTerjual.reduce((sum, item) => sum + parseInt(item.qty || 1), 0);
     let totalOmset = 0;
     let totalProfit = 0; 
@@ -1116,33 +1246,35 @@ function updateDashboardStats() {
         totalProfit += ((hargaJual - hargaModal) * qty); 
     });
 
-    // 3. Update Kartu Keuntungan
     const keuntunganQtyElem = document.getElementById('keuntungan-qty');
     const keuntunganNominalElem = document.getElementById('keuntungan-nominal');
     if (keuntunganQtyElem) keuntunganQtyElem.textContent = `${sumTerjual} Unit`;
-    if (keuntunganNominalElem) keuntunganNominalElem.textContent = formatRupiah(totalProfit);
+    if (keuntunganNominalElem) keuntunganNominalElem.textContent = formatRupiahRingkas(totalProfit);
 
-    // 4. Update Kartu Stok Ready (Sesuai ID di index.html)
     const stokReadyValElem = document.getElementById('stok-ready-val');
     if (stokReadyValElem) {
         stokReadyValElem.textContent = `${sumStok} Unit`;
     }
 
-    // 5. Update Kartu Terjual & Omset (Sesuai ID di index.html)
     const terjualValElem = document.getElementById('terjual-val');
     const terjualOmsetValElem = document.getElementById('terjual-omset-val');
     if (terjualValElem) {
         terjualValElem.textContent = `${sumTerjual} Unit`;
     }
     if (terjualOmsetValElem) {
-        terjualOmsetValElem.textContent = formatRupiah(totalOmset);
+        terjualOmsetValElem.textContent = formatRupiahRingkas(totalOmset);
     }
 
-    // 6. Update Badge Counter pada Tombol Navigasi/Pill Stok
     const badgeStokCount = document.getElementById('badge-stok-count');
     const modalBadgeStokCount = document.getElementById('modal-badge-stok-count');
     if (badgeStokCount) badgeStokCount.textContent = `${daftarStokMasuk.length} Unit`;
     if (modalBadgeStokCount) modalBadgeStokCount.textContent = `${daftarStokMasuk.length} Unit`;
+
+    // Sinkronisasi badge riwayat jual di sub-tab Notes
+    const badgeRjual = document.getElementById('badge-rjual-count');
+    const modalBadgeRjual = document.getElementById('modal-badge-rjual-count');
+    if (badgeRjual) badgeRjual.textContent = `${sumTerjual}`;
+    if (modalBadgeRjual) modalBadgeRjual.textContent = `${sumTerjual} Unit`;
 }
 
 function updatePribadiStats() {
@@ -1159,8 +1291,8 @@ function updatePribadiStats() {
     if (cards.length >= 2) {
         const saldoValElem = cards[0].querySelector('.pribadi-value');
         const pengeluaranValElem = cards[1].querySelector('.pribadi-value');
-        if (saldoValElem) saldoValElem.textContent = formatRupiah(saldoAktif);
-        if (pengeluaranValElem) pengeluaranValElem.textContent = formatRupiah(totalKeluar);
+        if (saldoValElem) saldoValElem.textContent = formatRupiahRingkas(saldoAktif);
+        if (pengeluaranValElem) pengeluaranValElem.textContent = formatRupiahRingkas(totalKeluar);
     }
 }
 
@@ -1169,41 +1301,6 @@ function formatTanggalID(dateString) {
     const parts = dateString.split('-');
     if (parts.length !== 3) return dateString;
     return `${parts[2]} - ${parts[1]} - ${parts[0]}`;
-}
-
-function formatRupiah(num) {
-    if (num === null || isNaN(num)) return 'Rp 0';
-    return 'Rp ' + num.toLocaleString('id-ID');
-}
-
-function parseRawToNumeric(valStr) {
-    if (!valStr || valStr.trim() === '--' || valStr.trim() === '') return null;
-    let clean = valStr.toString().trim().replace(/\./g, '');
-    let num = parseFloat(clean);
-    if (isNaN(num)) return null;
-    if (num < 10000) return num * 1000;
-    return num;
-}
-
-function formatDisplayPrice(priceString) {
-    if (!priceString || priceString.trim() === '--') return '--';
-    const parts = priceString.split('/');
-    const formattedParts = parts.map(part => {
-        const val = parseRawToNumeric(part);
-        return val !== null ? formatRupiah(val) : '--';
-    });
-    return formattedParts.join(' / ');
-}
-
-function getHighestNumericPrice(priceString) {
-    if (!priceString || priceString.trim() === '--') return null;
-    const parts = priceString.split('/');
-    let maxVal = null;
-    parts.forEach(part => {
-        const val = parseRawToNumeric(part);
-        if (val !== null && (maxVal === null || val > maxVal)) maxVal = val;
-    });
-    return maxVal;
 }
 
 function showToast(title, desc, isSuccess = true) {
@@ -1239,7 +1336,7 @@ function getBrandStyle(brandName) {
 }
 
 /* ========================================================== */
-/* PRICE LIST & KATALOG RINGKAS (BERSIH DENGAN ON-DEMAND)     */
+/* PRICE LIST & KATALOG RINGKAS                               */
 /* ========================================================== */
 window.addNewProduct = function() {
     const nameInput = document.getElementById('add-input-name').value.trim();
@@ -1321,7 +1418,6 @@ window.saveEditModal = function() {
         filterPriceList(); 
         showToast('Berhasil!', 'Perubahan harga disimpan.');
         
-        // Perbarui kartu modal jika sedang terbuka
         const modal = document.getElementById('pricelist-detail-modal');
         if (modal && modal.classList.contains('show')) {
             openSingleProductPriceModal(item.id);
@@ -1363,7 +1459,6 @@ function filterPriceList() {
     const searchVal = document.getElementById('filter-model-input') ? document.getElementById('filter-model-input').value.toLowerCase().trim() : '';
     const brandVal = document.getElementById('filter-brand-select') ? document.getElementById('filter-brand-select').value : 'ALL';
     
-    // Jika belum ada pencarian teks dan filter masih 'ALL', kosongkan list agar layar bersih
     if (!searchVal && brandVal === 'ALL') {
         currentFilteredData = [];
     } else {
@@ -1377,7 +1472,6 @@ function filterPriceList() {
     renderPage();
 }
 
-// RENDER LIST UTAMA (SUPER BERSIH: TAMPIL KETIKA DICARI / FILTER BRAND DIPILIH)
 function renderPage() {
     const container = document.getElementById('pricelist-container');
     const badgeCount = document.getElementById('pricelist-count-badge');
@@ -1388,7 +1482,6 @@ function renderPage() {
     const brandSelect = document.getElementById('filter-brand-select');
     const brandVal = brandSelect ? brandSelect.value : 'ALL';
 
-    // 1. Tampilan Bersih Awal (Belum ada pencarian & belum memilih brand)
     if (!searchVal && brandVal === 'ALL') {
         if (badgeCount) badgeCount.textContent = `Pencarian Standby`;
         container.innerHTML = `
@@ -1403,7 +1496,6 @@ function renderPage() {
         return;
     }
 
-    // 2. Tampilan Jika Hasil Pencarian / Filter Kosong
     const totalItems = currentFilteredData.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
     if (badgeCount) badgeCount.textContent = `Menampilkan ${totalItems} Item`;
@@ -1413,7 +1505,6 @@ function renderPage() {
         return;
     }
 
-    // 3. Tampilan Hasil Filter / Pencarian yang Ringkas
     let htmlContent = '';
     currentFilteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).forEach(item => {
         htmlContent += `
@@ -1437,14 +1528,13 @@ function renderPage() {
 
 function changePage(direction) { currentPage += direction; renderPage(); }
 
-// FUNGSI MEMBUAT KARTU DETAIL HARGA DI DALAM POP-UP
 function generatePriceCardHTML(item) {
     let diffHtml = '';
     let jktMax = getHighestNumericPrice(item.jkt), sgcMax = getHighestNumericPrice(item.sgc);
     if (jktMax !== null && sgcMax !== null) {
         let diff = jktMax - sgcMax;
         let cls = diff > 0 ? 'selisih-green' : (diff < 0 ? 'selisih-red' : 'selisih-neutral');
-        let txt = diff > 0 ? `+ ${formatRupiah(diff)}` : (diff < 0 ? `- ${formatRupiah(Math.abs(diff))}` : 'Rp 0');
+        let txt = diff > 0 ? `+ ${formatRupiahRingkas(diff)}` : (diff < 0 ? `- ${formatRupiahRingkas(Math.abs(diff))}` : 'Rp 0');
         diffHtml = `<div class="price-card-footer" style="padding-top: 6px;"><span class="selisih-badge ${cls}">Selisih: ${txt}</span></div>`;
     }
 
@@ -1481,7 +1571,6 @@ function generatePriceCardHTML(item) {
     `;
 }
 
-// BUKA DETAIL HARGA DARI KLIK PADA SATU MODEL
 window.openSingleProductPriceModal = function(id) {
     const item = rawPriceListData.find(p => p.id === id);
     if (!item) return;
@@ -1500,7 +1589,6 @@ window.openSingleProductPriceModal = function(id) {
     modal.classList.add('show');
 };
 
-// TRIGGER PENCARIAN ENTER / TOMBOL CARI PRICE LIST
 window.triggerPriceListModalSearch = function() {
     const searchInput = document.getElementById('filter-model-input');
     const searchVal = searchInput ? searchInput.value.trim() : '';
@@ -1517,7 +1605,6 @@ window.triggerPriceListModalSearch = function() {
 
     if (!modal || !container) return;
 
-    // Filter langsung data pencarian
     const matched = rawPriceListData.filter(item => {
         return item.model.toLowerCase().includes(searchVal.toLowerCase()) || 
                item.brand.toLowerCase().includes(searchVal.toLowerCase());
@@ -1541,10 +1628,6 @@ window.closePriceListModal = function() {
 
 /* NAVIGASI & AUTH */
 function restartApp(btn) { btn?.classList.add('spinning'); setTimeout(() => window.location.reload(), 450); }
-function toggleProtectionStatus(btn) {
-    if (btn.classList.contains('status-protected')) { btn.className = 'header-icon-btn status-unprotected'; localStorage.setItem('npgalery_protection', 'unprotected'); }
-    else { btn.className = 'header-icon-btn status-protected'; localStorage.setItem('npgalery_protection', 'protected'); }
-}
 function toggleTheme() {
     const isDark = document.body.classList.toggle('dark-mode');
     document.getElementById('theme-icon')?.classList.replace(isDark ? 'fa-moon' : 'fa-sun', isDark ? 'fa-sun' : 'fa-moon');
@@ -1581,7 +1664,7 @@ async function handleLogin(e) {
     }
 
     try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
+        const { error } = await supabaseClient.auth.signInWithPassword({
             email: userVal,
             password: passVal
         });
@@ -1651,7 +1734,7 @@ window.selectStokKatalog = function(val) {
     document.getElementById('stok-autocomplete-list')?.classList.add('hidden');
 };
 
-// SIMPAN STOK (SUPABASE INTEGRATED KE TABEL 'product')
+// SIMPAN STOK
 window.simpanStokBaru = async function() {
     let produk = document.getElementById('stok-produk-input').value.trim();
     let imei = document.getElementById('stok-imei').value.trim();
@@ -1682,10 +1765,10 @@ window.simpanStokBaru = async function() {
     document.getElementById('stok-imei').value = '';
     document.getElementById('stok-harga').value = '';
 
-    // Otomatis tutup modal form tambah stok
     closeAddStokModal();
 
     if (supabaseClient) {
+        setConnectionStatus('syncing');
         try {
             await supabaseClient.from('product').insert([{
                 id: newStockItem.id,
@@ -1699,8 +1782,10 @@ window.simpanStokBaru = async function() {
                 status: 'ready',
                 date: newStockItem.tanggal
             }]);
+            setConnectionStatus('connected');
         } catch (e) {
             console.warn('Gagal sinkron stok ke Supabase:', e);
+            setConnectionStatus('disconnected');
         }
     }
 };
@@ -1766,7 +1851,7 @@ window.openStokDetail = function(id) {
     document.getElementById('modal-detail-qty').textContent = `${item.qty} unit`;
 
     let numericModal = parseRawToNumeric(item.hargaModal);
-    document.getElementById('modal-detail-harga').textContent = numericModal !== null ? formatRupiah(numericModal) : '-';
+    document.getElementById('modal-detail-harga').textContent = numericModal !== null ? formatRupiahRingkas(numericModal) : '-';
 
     document.getElementById('modal-input-customer').value = item.pembeli || '';
     document.getElementById('modal-input-harga-jual').value = item.hargaJual || '';
@@ -1800,7 +1885,7 @@ window.updatePembeliLive = function(val) {
 
 window.closeStokDetailModal = function() { document.getElementById('stok-detail-modal')?.classList.remove('show'); activeDetailStokId = null; };
 
-// JUAL STOK (SUPABASE INTEGRATED)
+// JUAL STOK
 window.jualStokItem = function(id) {
     const item = daftarStokMasuk.find(s => s.id === id);
     if (item) {
@@ -1825,6 +1910,7 @@ window.jualStokItem = function(id) {
             openInvoiceModal(item);
 
             if (supabaseClient) {
+                setConnectionStatus('syncing');
                 try {
                     await supabaseClient.from('product').update({ status: 'sold' }).eq('id', item.id);
 
@@ -1852,20 +1938,24 @@ window.jualStokItem = function(id) {
                             date: tgl
                         }]);
                     }
+                    setConnectionStatus('connected');
                 } catch (err) {
                     console.warn('Gagal sinkron penjualan ke Supabase:', err);
+                    setConnectionStatus('disconnected');
                 }
             }
         });
     }
 };
 
-/* INVOICE A4 */
+/* ========================================================== */
+/* INVOICE A4 (FORMAT NOMINAL NORMAL LENGKAP)                 */
+/* ========================================================== */
 function generateInvoiceHTML(item) {
     let invoiceNo = 'INV-' + (item.tanggalTerjualRaw ? item.tanggalTerjualRaw.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '')) + '-' + String(item.id).slice(-4);
     let customerName = item.pembeli && item.pembeli.trim() !== '' ? item.pembeli.trim() : 'Pelanggan Setia';
     let numericJual = parseRawToNumeric(item.hargaJual) || 0;
-    let hargaTampil = formatRupiah(numericJual);
+    let hargaTampil = formatRupiahLengkap(numericJual);
     let qty = parseInt(item.qty || 1);
     let tglTampil = formatTanggalID(item.tanggalTerjualRaw || new Date().toISOString().slice(0, 10));
 
@@ -1876,7 +1966,7 @@ function generateInvoiceHTML(item) {
                     <img src="logo-np.jpg" alt="Logo NP" class="invoice-brand-logo">
                     <div>
                         <h2 class="invoice-brand-title">NP - GALERY</h2>
-                        <p class="invoice-brand-sub">Smartphone Store & Premium Service</p>
+                        <p class="invoice-brand-sub">Smartphone Store</p>
                     </div>
                 </div>
                 <div class="invoice-num-badge">
@@ -1960,7 +2050,7 @@ window.shareInvoiceWA = function() {
     text += `📦 Kelengkapan : ${item.kelengkapan}\n`;
     text += `🔢 IMEI/SN     : ${item.imei || '-'}\n`;
     text += `───────────────────────\n`;
-    text += `💰 Total Bayar : *${formatRupiah(numericJual)}* (LUNAS)\n`;
+    text += `💰 Total Bayar : *${formatRupiahLengkap(numericJual)}* (LUNAS)\n`;
     text += `───────────────────────\n`;
     text += `Terima kasih atas kepercayaan Anda bertransaksi di *NP - Galery Smartphone*! 🙏✨`;
 
@@ -1999,7 +2089,13 @@ window.hapusStokItem = function(id) {
         daftarStokMasuk = daftarStokMasuk.filter(s => s.id !== id);
         saveStokToStorage(); renderDaftarStokMasuk(); updateDashboardStats(); renderLaporanKeuangan();
         if (supabaseClient) {
-            try { await supabaseClient.from('product').delete().eq('id', id); } catch (e) {}
+            setConnectionStatus('syncing');
+            try { 
+                await supabaseClient.from('product').delete().eq('id', id); 
+                setConnectionStatus('connected');
+            } catch (e) {
+                setConnectionStatus('disconnected');
+            }
         }
     });
 };
@@ -2009,7 +2105,13 @@ window.hapusRiwayatTerjual = function(id) {
         daftarTerjual = daftarTerjual.filter(s => s.id !== id);
         saveTerjualToStorage(); renderDaftarTerjual(); renderDaftarModal(); updateDashboardStats(); renderLaporanKeuangan();
         if (supabaseClient) {
-            try { await supabaseClient.from('transactions').delete().eq('id', id); } catch (e) {}
+            setConnectionStatus('syncing');
+            try { 
+                await supabaseClient.from('transactions').delete().eq('id', id); 
+                setConnectionStatus('connected');
+            } catch (e) {
+                setConnectionStatus('disconnected');
+            }
         }
     });
 };
@@ -2020,7 +2122,6 @@ function renderDaftarStokMasuk() {
     const modalBadge = document.getElementById('modal-badge-stok-count');
     if (!container) return;
 
-    // Perbarui counter di tombol depan dan header pop-up
     if (badge) badge.textContent = `${daftarStokMasuk.length} Unit`;
     if (modalBadge) modalBadge.textContent = `${daftarStokMasuk.length} Unit`;
 
@@ -2048,42 +2149,47 @@ function renderDaftarStokMasuk() {
 }
 
 function renderDaftarTerjual() {
-    const container = document.getElementById('sub-rjual');
+    const container = document.getElementById('rjual-container');
+    const badge = document.getElementById('badge-rjual-count');
+    const modalBadge = document.getElementById('modal-badge-rjual-count');
     if (!container) return;
-    if (daftarTerjual.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-clock-rotate-left icon-placeholder"></i><h2>Riwayat Kosong</h2></div>`; return; }
-    container.innerHTML = `
-        <div class="stok-masuk-header"><div class="header-left"><i class="fa-solid fa-clock-rotate-left"></i><h4>Riwayat Terjual</h4></div><span class="badge-count">${daftarTerjual.length} Unit</span></div>
-        <div class="stok-masuk-container" style="max-height:550px;">
-            ${daftarTerjual.map(i => {
-                let numericModal = parseRawToNumeric(i.hargaModal) || 0;
-                let numericJual = parseRawToNumeric(i.hargaJual) || 0;
-                let p = numericJual - numericModal;
-                let namaPembeliText = i.pembeli && i.pembeli.trim() !== '' ? ` • Pembeli: <b>${i.pembeli}</b>` : '';
-                return `
-                    <div class="stok-item-card" style="cursor:default;">
-                        <div class="stok-item-top">
-                            <div class="stok-title-group">
-                                <span class="kondisi-badge ${i.kondisi.toLowerCase()}">${i.kondisi}</span>
-                                <span class="stok-item-title">${i.produk}</span>
-                            </div>
-                            <div style="display: flex; gap: 4px;">
-                                <button onclick='openInvoiceModal(${JSON.stringify(i).replace(/'/g, "&apos;")})' class="action-btn edit-btn" title="Cetak / Lihat Invoice"><i class="fa-solid fa-receipt"></i></button>
-                                <button onclick="hapusRiwayatTerjual('${i.id}')" class="action-btn delete-btn" title="Hapus Riwayat"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <div class="stok-item-details">
-                            <span class="detail-badge imei-badge">IMEI: ${i.imei}</span>
-                            <span class="detail-badge" style="font-size: 10px; color: var(--text-secondary);">${namaPembeliText}</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px; font-weight:700;">
-                            <span>Modal: ${formatRupiah(numericModal)} | Jual: ${formatRupiah(numericJual)}</span>
-                            <span style="color:${p>=0?'var(--status-safe)':'var(--status-unsafe)'}">${p>=0?'+ ':''}${formatRupiah(p)}</span>
-                        </div>
+
+    if (badge) badge.textContent = `${daftarTerjual.length}`;
+    if (modalBadge) modalBadge.textContent = `${daftarTerjual.length} Unit`;
+
+    if (daftarTerjual.length === 0) { 
+        container.innerHTML = `<div class="empty-stok-msg">Belum ada riwayat penjualan.</div>`; 
+        return; 
+    }
+    
+    container.innerHTML = daftarTerjual.map(i => {
+        let numericModal = parseRawToNumeric(i.hargaModal) || 0;
+        let numericJual = parseRawToNumeric(i.hargaJual) || 0;
+        let p = numericJual - numericModal;
+        let namaPembeliText = i.pembeli && i.pembeli.trim() !== '' ? ` • Pembeli: <b>${i.pembeli}</b>` : '';
+        return `
+            <div class="stok-item-card" style="cursor:default;">
+                <div class="stok-item-top">
+                    <div class="stok-title-group">
+                        <span class="kondisi-badge ${i.kondisi.toLowerCase()}">${i.kondisi}</span>
+                        <span class="stok-item-title">${i.produk}</span>
                     </div>
-                `;
-            }).join('')}
-        </div>
-    `;
+                    <div style="display: flex; gap: 4px;">
+                        <button onclick='openInvoiceModal(${JSON.stringify(i).replace(/'/g, "&apos;")})' class="action-btn edit-btn" title="Cetak / Lihat Invoice"><i class="fa-solid fa-receipt"></i></button>
+                        <button onclick="hapusRiwayatTerjual('${i.id}')" class="action-btn delete-btn" title="Hapus Riwayat"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="stok-item-details">
+                    <span class="detail-badge imei-badge">IMEI: ${i.imei}</span>
+                    <span class="detail-badge" style="font-size: 10px; color: var(--text-secondary);">${namaPembeliText}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px; font-weight:700;">
+                    <span>Modal: ${formatRupiahRingkas(numericModal)} | Jual: ${formatRupiahRingkas(numericJual)}</span>
+                    <span style="color:${p>=0?'var(--status-safe)':'var(--status-unsafe)'}">${p>=0?'+ ':''}${formatRupiahRingkas(p)}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 function renderDaftarModal() {
@@ -2095,11 +2201,12 @@ function renderDaftarModal() {
         <div class="stok-masuk-container" style="max-height:550px;">
             ${daftarTerjual.map(i => {
                 let s = i.modalStatus === 'sudah';
+                let disabledAttr = s ? 'disabled style="opacity: 0.85; cursor: not-allowed;"' : '';
                 return `
                     <div class="stok-item-card" style="cursor:default;">
                         <div class="stok-item-top">
                             <span class="stok-item-title">${i.produk}</span>
-                            <button onclick="toggleModalStatus('${i.id}')" style="background:${s?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'}; color:${s?'var(--status-safe)':'var(--status-unsafe)'}; border:1px solid currentColor; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">${s?'Sudah':'Belum'}</button>
+                            <button onclick="toggleModalStatus('${i.id}')" ${disabledAttr} style="background:${s?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'}; color:${s?'var(--status-safe)':'var(--status-unsafe)'}; border:1px solid currentColor; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:${s?'not-allowed':'pointer'};">${s?'Sudah':'Belum'}</button>
                         </div>
                     </div>
                 `;
@@ -2111,21 +2218,20 @@ function renderDaftarModal() {
 window.toggleModalStatus = function(id) {
     const item = daftarTerjual.find(s => s.id === id);
     if (item) {
-        item.modalStatus = item.modalStatus === 'sudah' ? 'belum' : 'sudah';
+        if (item.modalStatus === 'sudah') return; // Cegah perubahan kembali jika sudah terkunci
+        item.modalStatus = 'sudah';
         saveTerjualToStorage();
         renderDaftarModal();
         if (supabaseClient) {
-            supabaseClient.from('transactions').update({ modal_status: item.modalStatus }).eq('id', id).then();
+            setConnectionStatus('syncing');
+            supabaseClient.from('transactions').update({ modal_status: item.modalStatus }).eq('id', id).then(({ error }) => {
+                if (!error) setConnectionStatus('connected');
+                else setConnectionStatus('disconnected');
+            });
         }
     }
 };
 
-window.toggleKasForm = function() {
-    document.getElementById('kas-form-collapse')?.classList.toggle('collapsed');
-    document.getElementById('icon-toggle-kas-form')?.classList.toggle('rotated');
-};
-
-// TAMBAH KAS (SUPABASE INTEGRATED)
 window.tambahKasPribadi = async function() {
     let ket = document.getElementById('kas-keterangan').value.trim();
     let nom = parseRawToNumeric(document.getElementById('kas-nominal').value);
@@ -2144,12 +2250,14 @@ window.tambahKasPribadi = async function() {
     saveKasToStorage();
     document.getElementById('kas-keterangan').value = '';
     document.getElementById('kas-nominal').value = '';
+    closeAddKasModal();
     renderManajemenKas();
     updatePribadiStats();
     renderLaporanKeuangan();
     showToast('Berhasil', 'Kas ditambahkan.');
 
     if (supabaseClient) {
+        setConnectionStatus('syncing');
         try {
             await supabaseClient.from('cash_mutations').insert([{
                 id: newKasItem.id,
@@ -2158,8 +2266,10 @@ window.tambahKasPribadi = async function() {
                 amount: newKasItem.nominal,
                 date: newKasItem.tanggal
             }]);
+            setConnectionStatus('connected');
         } catch (e) {
             console.warn('Gagal sinkron kas ke Supabase:', e);
+            setConnectionStatus('disconnected');
         }
     }
 };
@@ -2172,7 +2282,13 @@ window.hapusKasPribadi = function(id) {
         updatePribadiStats();
         renderLaporanKeuangan();
         if (supabaseClient) {
-            try { await supabaseClient.from('cash_mutations').delete().eq('id', id); } catch (e) {}
+            setConnectionStatus('syncing');
+            try { 
+                await supabaseClient.from('cash_mutations').delete().eq('id', id); 
+                setConnectionStatus('connected');
+            } catch (e) {
+                setConnectionStatus('disconnected');
+            }
         }
     });
 };
@@ -2180,18 +2296,24 @@ window.hapusKasPribadi = function(id) {
 window.renderManajemenKas = function() {
     const container = document.getElementById('kas-masuk-container');
     const badge = document.getElementById('badge-kas-count');
+    const modalBadge = document.getElementById('modal-badge-kas-count');
     if (!container) return;
     let kat = document.getElementById('filter-kas-kategori')?.value || 'ALL';
     let tgl = document.getElementById('filter-kas-tanggal')?.value || '';
     let filtered = daftarKasPribadi.filter(i => (kat === 'ALL' || i.kategori === kat) && (!tgl || i.tanggal === tgl));
     
     if (badge) badge.textContent = `${filtered.length} Catatan`;
+    if (modalBadge) modalBadge.textContent = `${filtered.length} Catatan`;
 
-    if (filtered.length === 0) { container.innerHTML = `<div class="empty-stok-msg">Tidak ada catatan kas.</div>`; return; }
+    if (filtered.length === 0) { 
+        container.innerHTML = `<div class="empty-stok-msg">Tidak ada catatan kas.</div>`; 
+        return; 
+    }
+    
     container.innerHTML = filtered.map(i => `
         <div class="stok-item-card" style="cursor:default;">
             <div class="stok-item-top"><span style="font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:4px; background:${i.kategori==='masuk'?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'}; color:${i.kategori==='masuk'?'var(--status-safe)':'var(--status-unsafe)'}">${i.kategori==='masuk'?'Masuk':'Keluar'}</span><span class="stok-item-title">${i.keterangan}</span><button onclick="hapusKasPribadi('${i.id}')" class="action-btn delete-btn"><i class="fa-solid fa-trash"></i></button></div>
-            <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px;"><span style="color:var(--text-secondary)">${formatTanggalID(i.tanggal)}</span><span style="font-weight:800; color:${i.kategori==='masuk'?'var(--status-safe)':'var(--status-unsafe)'}">${i.kategori==='masuk'?'+':'-'} ${formatRupiah(i.nominal)}</span></div>
+            <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px;"><span style="color:var(--text-secondary)">${formatTanggalID(i.tanggal)}</span><span style="font-weight:800; color:${i.kategori==='masuk'?'var(--status-safe)':'var(--status-unsafe)'}">${i.kategori==='masuk'?'+':'-'} ${formatRupiahRingkas(i.nominal)}</span></div>
         </div>
     `).join('');
 };
@@ -2209,7 +2331,7 @@ window.broadcastStokWA = function() {
     text += `───────────────────────\n\n`;
 
     daftarStokMasuk.forEach((item, idx) => {
-        let hargaTampil = item.hargaJual ? `Rp ${parseRawToNumeric(item.hargaJual).toLocaleString('id-ID')}` : 'Chat Admin';
+        let hargaTampil = item.hargaJual ? formatRupiahLengkap(parseRawToNumeric(item.hargaJual)) : 'Chat Admin';
         text += `${idx + 1}. *${item.produk}*\n`;
         text += `   • Kondisi: ${item.kondisi}\n`;
         text += `   • Kelengkapan: ${item.kelengkapan}\n`;
@@ -2236,7 +2358,7 @@ window.broadcastStokWA = function() {
 
 function generateStoryBannerHTML() {
     let itemsHtml = daftarStokMasuk.slice(0, 8).map((item) => {
-        let hargaTampil = item.hargaJual ? `Rp ${parseRawToNumeric(item.hargaJual).toLocaleString('id-ID')}` : 'Ready Siap Pakai';
+        let hargaTampil = item.hargaJual ? formatRupiahLengkap(parseRawToNumeric(item.hargaJual)) : 'Ready Siap Pakai';
         return `
             <div class="story-unit-card">
                 <div class="story-unit-left">
@@ -2302,7 +2424,7 @@ window.closeStoryPreview = function() {
 window.executeDownloadStoryBanner = function() {
     const canvasElem = document.getElementById('story-banner-canvas');
     if (!canvasElem || !window.html2canvas) {
-        showToast('Gagal', 'Library render gambar belum siap.', false);
+        showToast('Gagal', 'Library gambar belum siap.', false);
         return;
     }
 
@@ -2318,7 +2440,82 @@ window.executeDownloadStoryBanner = function() {
     });
 };
 
-/* LAPORAN & EXPORT */
+/* ========================================================== */
+/* LAPORAN & EXPORT MODAL LOGIC                               */
+/* ========================================================== */
+
+// PENGATURAN MODAL RINGKASAN LAPORAN
+window.openReportSummaryModal = function() {
+    const modal = document.getElementById('report-summary-modal');
+    if (modal) {
+        renderLaporanKeuangan();
+        modal.classList.add('show');
+    }
+};
+
+window.closeReportSummaryModal = function() {
+    document.getElementById('report-summary-modal')?.classList.remove('show');
+};
+
+// PENGATURAN MODAL RINCIAN LAPORAN (SCROLLABLE)
+window.openReportDetailsModal = function() {
+    const modal = document.getElementById('report-details-modal');
+    if (modal) {
+        renderLaporanKeuangan();
+        modal.classList.add('show');
+    }
+};
+
+window.closeReportDetailsModal = function() {
+    document.getElementById('report-details-modal')?.classList.remove('show');
+};
+
+// PENGATURAN MODAL FORMAT FILE & UNDUH
+window.openReportFormatModal = function() {
+    const modal = document.getElementById('report-format-modal');
+    if (modal) modal.classList.add('show');
+};
+
+window.closeReportFormatModal = function() {
+    document.getElementById('report-format-modal')?.classList.remove('show');
+};
+
+window.selectReportCategoryCard = function(catKey, cardEl) {
+    document.querySelectorAll('.report-cat-card').forEach(c => c.classList.remove('active'));
+    if (cardEl) cardEl.classList.add('active');
+
+    const selectElem = document.getElementById('report-main-category-select');
+    if (selectElem) selectElem.value = catKey;
+
+    onReportCategorySelectChanged(catKey);
+};
+
+window.openReportFilterModal = function() {
+    const modal = document.getElementById('report-filter-modal');
+    const subtitle = document.getElementById('modal-report-filter-subtitle');
+    const filterKasArea = document.getElementById('report-filter-kas-area');
+    const filterPLArea = document.getElementById('report-filter-pricelist-area');
+
+    if (subtitle) {
+        let catTitles = { kas: 'Kas Pribadi', penjualan: 'Penjualan', stok: 'Stok Ready', pricelist: 'Price List' };
+        subtitle.textContent = `Pengaturan filter data: ${catTitles[activeReportCategory] || 'Laporan'}`;
+    }
+
+    if (filterKasArea) filterKasArea.style.display = (activeReportCategory === 'kas') ? 'flex' : 'none';
+    if (filterPLArea) filterPLArea.style.display = (activeReportCategory === 'pricelist') ? 'flex' : 'none';
+
+    if (activeReportCategory !== 'kas' && activeReportCategory !== 'pricelist') {
+        showToast('Info', 'Kategori ini tidak memerlukan filter khusus.');
+        return;
+    }
+
+    if (modal) modal.classList.add('show');
+};
+
+window.closeReportFilterModal = function() {
+    document.getElementById('report-filter-modal')?.classList.remove('show');
+};
+
 function getFilteredReportKas() {
     let kat = document.getElementById('report-filter-kas-kategori')?.value || 'ALL';
     let tgl = document.getElementById('report-filter-kas-tanggal')?.value || '';
@@ -2366,14 +2563,6 @@ function updateSelectionIndicator() {
     if (indicator) indicator.textContent = `${selected.length} Model Dipilih`;
 }
 
-window.toggleReportAccordion = function() {
-    isReportAccordionOpen = !isReportAccordionOpen;
-    const headerBtn = document.querySelector('.report-accordion-header');
-    const contentBox = document.getElementById('report-accordion-body');
-    if (headerBtn) headerBtn.classList.toggle('expanded', isReportAccordionOpen);
-    if (contentBox) contentBox.classList.toggle('expanded', isReportAccordionOpen);
-};
-
 function getLaporanDataSummary() {
     let filteredKas = getFilteredReportKas();
     let totalMasuk = 0, totalKeluar = 0;
@@ -2400,6 +2589,11 @@ function getLaporanDataSummary() {
 window.onReportCategorySelectChanged = function(catKey) {
     activeReportCategory = catKey;
 
+    document.querySelectorAll('.report-cat-card').forEach(c => {
+        if (c.getAttribute('data-cat') === catKey) c.classList.add('active');
+        else c.classList.remove('active');
+    });
+
     const filterKasArea = document.getElementById('report-filter-kas-area');
     const filterPLArea = document.getElementById('report-filter-pricelist-area');
 
@@ -2409,123 +2603,151 @@ window.onReportCategorySelectChanged = function(catKey) {
     renderLaporanKeuangan();
 };
 
+// RENDER ULANG MODAL RINGKASAN & RINCIAN SECARA DINAMIS
 window.renderLaporanKeuangan = function() {
-    const container = document.getElementById('laporan-container');
-    if (!container) return;
     let d = getLaporanDataSummary();
     updateSelectionIndicator();
 
-    let html = '';
+    const sumTitle = document.getElementById('report-summary-modal-title');
+    const sumSubtitle = document.getElementById('report-summary-modal-subtitle');
+    const sumBadge = document.getElementById('badge-summary-count');
+    const sumBody = document.getElementById('report-summary-modal-body');
+
+    const detTitle = document.getElementById('report-details-modal-title');
+    const detSubtitle = document.getElementById('report-details-modal-subtitle');
+    const detBadge = document.getElementById('badge-details-count');
+    const detBody = document.getElementById('report-details-modal-body');
+
     if (activeReportCategory === 'kas') {
-        let rowsHtml = d.filteredKas.length === 0 ? '<div style="font-size:11px; color:var(--text-secondary); text-align:center; padding:12px;">Tidak ada data kas sesuai filter</div>' : d.filteredKas.map(k => `
-            <div class="laporan-detail-item">
-                <div class="detail-left"><span class="detail-title">${k.keterangan}</span><span class="detail-sub">${formatTanggalID(k.tanggal)} • ${k.kategori === 'masuk' ? 'Kas Masuk' : 'Kas Keluar'}</span></div>
-                <div class="detail-val" style="color: ${k.kategori === 'masuk' ? 'var(--status-safe)' : 'var(--status-unsafe)'}">${k.kategori === 'masuk' ? '+' : '-'} ${formatRupiah(k.nominal)}</div>
-            </div>
-        `).join('');
+        if (sumTitle) sumTitle.innerHTML = `<i class="fa-solid fa-chart-pie" style="color: var(--azure-primary); margin-right: 6px;"></i> Ringkasan Kas Pribadi`;
+        if (sumSubtitle) sumSubtitle.textContent = `Rekap mutasi uang masuk dan pengeluaran`;
+        if (sumBadge) sumBadge.textContent = `${d.filteredKas.length} Catatan`;
 
-        html = `
-            <div class="laporan-section-card">
-                <div class="laporan-section-header">
-                    <div class="laporan-section-title"><i class="fa-solid fa-cash-register"></i> Ringkasan Kas Pribadi</div>
-                    <span class="badge-count">${d.filteredKas.length} Catatan</span>
+        if (sumBody) {
+            sumBody.innerHTML = `
+                <div class="laporan-section-card" style="box-shadow:none; background:transparent; padding:4px 0;">
+                    <div class="laporan-row"><span class="laporan-label">Total Masuk</span><span class="laporan-value highlight-green">+ ${formatRupiahRingkas(d.totalMasuk)}</span></div>
+                    <div class="laporan-row" style="margin-top:6px;"><span class="laporan-label">Total Keluar</span><span class="laporan-value" style="color:var(--status-unsafe)">- ${formatRupiahRingkas(d.totalKeluar)}</span></div>
+                    <div class="laporan-row" style="border-top:1px dashed var(--border-subtle); padding-top:8px; margin-top:8px;">
+                        <span class="laporan-label" style="color:var(--text-primary); font-weight:800;">Saldo Aktif Terfilter</span>
+                        <span class="laporan-value highlight-blue">${formatRupiahRingkas(d.saldoAktif)}</span>
+                    </div>
                 </div>
-                <div class="laporan-row"><span class="laporan-label">Total Masuk</span><span class="laporan-value highlight-green">+ ${formatRupiah(d.totalMasuk)}</span></div>
-                <div class="laporan-row"><span class="laporan-label">Total Keluar</span><span class="laporan-value" style="color:var(--status-unsafe)">- ${formatRupiah(d.totalKeluar)}</span></div>
-                <div class="laporan-row" style="border-top:1px dashed var(--border-subtle); padding-top:6px; margin-top:2px;">
-                    <span class="laporan-label" style="color:var(--text-primary); font-weight:800;">Saldo Aktif Terfilter</span>
-                    <span class="laporan-value highlight-blue">${formatRupiah(d.saldoAktif)}</span>
-                </div>
-            </div>
-            <button class="report-accordion-header ${isReportAccordionOpen ? 'expanded' : ''}" onclick="toggleReportAccordion()">
-                <span><i class="fa-solid fa-list-ol" style="color:var(--azure-primary); margin-right:6px;"></i> Rincian Mutasi (${d.filteredKas.length})</span>
-                <i class="fa-solid fa-chevron-down acc-icon"></i>
-            </button>
-            <div id="report-accordion-body" class="report-accordion-content ${isReportAccordionOpen ? 'expanded' : ''}">${rowsHtml}</div>
-        `;
-    } else if (activeReportCategory === 'penjualan') {
-        let rowsHtml = daftarTerjual.length === 0 ? '<div style="font-size:11px; color:var(--text-secondary); text-align:center; padding:12px;">Belum ada riwayat penjualan</div>' : daftarTerjual.map(t => {
-            let p = (parseRawToNumeric(t.hargaJual) || 0) - (parseRawToNumeric(t.hargaModal) || 0);
-            return `
+            `;
+        }
+
+        if (detTitle) detTitle.innerHTML = `<i class="fa-solid fa-list-check" style="color: var(--azure-primary); margin-right: 6px;"></i> Rincian Mutasi Kas`;
+        if (detSubtitle) detSubtitle.textContent = `Daftar transaksi kas pemasukan dan pengeluaran`;
+        if (detBadge) detBadge.textContent = `${d.filteredKas.length} Catatan`;
+
+        if (detBody) {
+            detBody.innerHTML = d.filteredKas.length === 0 ? '<div class="empty-stok-msg">Tidak ada catatan kas sesuai filter.</div>' : d.filteredKas.map(k => `
                 <div class="laporan-detail-item">
-                    <div class="detail-left"><span class="detail-title">${t.produk}</span><span class="detail-sub">IMEI: ${t.imei || '-'} • Qty: ${t.qty || 1} unit</span></div>
-                    <div class="detail-val" style="color: ${p >= 0 ? 'var(--status-safe)' : 'var(--status-unsafe)'}">+ ${formatRupiah(p)}</div>
+                    <div class="detail-left"><span class="detail-title">${k.keterangan}</span><span class="detail-sub">${formatTanggalID(k.tanggal)} • ${k.kategori === 'masuk' ? 'Kas Masuk' : 'Kas Keluar'}</span></div>
+                    <div class="detail-val" style="color: ${k.kategori === 'masuk' ? 'var(--status-safe)' : 'var(--status-unsafe)'}">${k.kategori === 'masuk' ? '+' : '-'} ${formatRupiahRingkas(k.nominal)}</div>
+                </div>
+            `).join('');
+        }
+
+    } else if (activeReportCategory === 'penjualan') {
+        if (sumTitle) sumTitle.innerHTML = `<i class="fa-solid fa-chart-pie" style="color: var(--azure-primary); margin-right: 6px;"></i> Ringkasan Penjualan`;
+        if (sumSubtitle) sumSubtitle.textContent = `Rekap perolehan omset dan laba unit`;
+        if (sumBadge) sumBadge.textContent = `${d.sumTerjual} Unit Laku`;
+
+        if (sumBody) {
+            sumBody.innerHTML = `
+                <div class="laporan-section-card" style="box-shadow:none; background:transparent; padding:4px 0;">
+                    <div class="laporan-row"><span class="laporan-label">Total Unit Terjual</span><span class="laporan-value highlight-blue">${d.sumTerjual} Unit</span></div>
+                    <div class="laporan-row" style="margin-top:6px;"><span class="laporan-label">Total Omset</span><span class="laporan-value">${formatRupiahRingkas(d.totalOmset)}</span></div>
+                    <div class="laporan-row" style="border-top:1px dashed var(--border-subtle); padding-top:8px; margin-top:8px;">
+                        <span class="laporan-label" style="color:var(--text-primary); font-weight:800;">Laba Bersih</span>
+                        <span class="laporan-value highlight-green">+ ${formatRupiahRingkas(d.totalProfit)}</span>
+                    </div>
                 </div>
             `;
-        }).join('');
+        }
 
-        html = `
-            <div class="laporan-section-card">
-                <div class="laporan-section-header">
-                    <div class="laporan-section-title"><i class="fa-solid fa-clock-rotate-left"></i> Ringkasan Penjualan</div>
-                    <span class="badge-count">${d.sumTerjual} Unit Laku</span>
-                </div>
-                <div class="laporan-row"><span class="laporan-label">Total Omset</span><span class="laporan-value">${formatRupiah(d.totalOmset)}</span></div>
-                <div class="laporan-row" style="border-top:1px dashed var(--border-subtle); padding-top:6px; margin-top:2px;">
-                    <span class="laporan-label" style="color:var(--text-primary); font-weight:800;">Laba Bersih</span>
-                    <span class="laporan-value highlight-green">+ ${formatRupiah(d.totalProfit)}</span>
-                </div>
-            </div>
-            <button class="report-accordion-header ${isReportAccordionOpen ? 'expanded' : ''}" onclick="toggleReportAccordion()">
-                <span><i class="fa-solid fa-receipt" style="color:var(--azure-primary); margin-right:6px;"></i> Rincian Unit Terjual (${daftarTerjual.length})</span>
-                <i class="fa-solid fa-chevron-down acc-icon"></i>
-            </button>
-            <div id="report-accordion-body" class="report-accordion-content ${isReportAccordionOpen ? 'expanded' : ''}">${rowsHtml}</div>
-        `;
+        if (detTitle) detTitle.innerHTML = `<i class="fa-solid fa-list-check" style="color: var(--azure-primary); margin-right: 6px;"></i> Rincian Penjualan`;
+        if (detSubtitle) detSubtitle.textContent = `Daftar transaksi smartphone yang telah terjual`;
+        if (detBadge) detBadge.textContent = `${daftarTerjual.length} Unit`;
+
+        if (detBody) {
+            detBody.innerHTML = daftarTerjual.length === 0 ? '<div class="empty-stok-msg">Belum ada riwayat penjualan.</div>' : daftarTerjual.map(t => {
+                let p = (parseRawToNumeric(t.hargaJual) || 0) - (parseRawToNumeric(t.hargaModal) || 0);
+                return `
+                    <div class="laporan-detail-item">
+                        <div class="detail-left"><span class="detail-title">${t.produk}</span><span class="detail-sub">IMEI: ${t.imei || '-'} • Qty: ${t.qty || 1} unit</span></div>
+                        <div class="detail-val" style="color: ${p >= 0 ? 'var(--status-safe)' : 'var(--status-unsafe)'}">+ ${formatRupiahRingkas(p)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
     } else if (activeReportCategory === 'stok') {
-        let rowsHtml = daftarStokMasuk.length === 0 ? '<div style="font-size:11px; color:var(--text-secondary); text-align:center; padding:12px;">Belum ada stok barang</div>' : daftarStokMasuk.map(s => `
-            <div class="laporan-detail-item">
-                <div class="detail-left"><span class="detail-title">${s.produk} (${s.kondisi})</span><span class="detail-sub">IMEI: ${s.imei || '-'} • Masuk: ${formatTanggalID(s.tanggal)}</span></div>
-                <div class="detail-val"><span style="color:var(--azure-primary); font-weight:800;">${s.qty || 1} Unit</span></div>
-            </div>
-        `).join('');
+        if (sumTitle) sumTitle.innerHTML = `<i class="fa-solid fa-chart-pie" style="color: var(--azure-primary); margin-right: 6px;"></i> Ringkasan Stok Gudang`;
+        if (sumSubtitle) sumSubtitle.textContent = `Rekap jumlah unit yang siap diperjualbelikan`;
+        if (sumBadge) sumBadge.textContent = `${d.sumStok} Ready`;
 
-        html = `
-            <div class="laporan-section-card">
-                <div class="laporan-section-header">
-                    <div class="laporan-section-title"><i class="fa-solid fa-boxes-stacked"></i> Ringkasan Stok Gudang</div>
-                    <span class="badge-count">${d.sumStok} Ready</span>
-                </div>
-                <div class="laporan-row"><span class="laporan-label">Total Unit Ready</span><span class="laporan-value highlight-blue">${d.sumStok} Unit</span></div>
-            </div>
-            <button class="report-accordion-header ${isReportAccordionOpen ? 'expanded' : ''}" onclick="toggleReportAccordion()">
-                <span><i class="fa-solid fa-clipboard-check" style="color:var(--azure-primary); margin-right:6px;"></i> Rincian Stok Ready (${daftarStokMasuk.length})</span>
-                <i class="fa-solid fa-chevron-down acc-icon"></i>
-            </button>
-            <div id="report-accordion-body" class="report-accordion-content ${isReportAccordionOpen ? 'expanded' : ''}">${rowsHtml}</div>
-        `;
-    } else if (activeReportCategory === 'pricelist') {
-        let rowsHtml = d.filteredPLAll.length === 0 ? '<div style="font-size:11px; color:var(--text-secondary); text-align:center; padding:12px;">Tidak ada model sesuai filter</div>' : d.filteredPLAll.map(p => {
-            let isChecked = selectedPriceListModelIds.has(p.id);
-            return `
-                <div class="laporan-detail-item" style="padding: 6px 10px;">
-                    <label class="checkbox-model-item">
-                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="togglePriceListModelSelect('${p.id}')">
-                        <div class="detail-left" style="flex:1;"><span class="detail-title">${p.brand} - ${p.model}</span><span class="detail-sub">JKT: ${formatDisplayPrice(p.jkt)} | SGC: ${formatDisplayPrice(p.sgc)} | BNIB: ${formatDisplayPrice(p.bnib)}</span></div>
-                    </label>
+        if (sumBody) {
+            sumBody.innerHTML = `
+                <div class="laporan-section-card" style="box-shadow:none; background:transparent; padding:4px 0;">
+                    <div class="laporan-row"><span class="laporan-label">Total Unit Ready</span><span class="laporan-value highlight-blue">${d.sumStok} Unit</span></div>
+                    <div class="laporan-row" style="margin-top:6px;"><span class="laporan-label">Varian Model Aktif</span><span class="laporan-value">${daftarStokMasuk.length} Tipe</span></div>
                 </div>
             `;
-        }).join('');
+        }
 
-        html = `
-            <div class="laporan-section-card">
-                <div class="laporan-section-header">
-                    <div class="laporan-section-title"><i class="fa-solid fa-tags"></i> Ringkasan Price List</div>
-                    <span class="badge-count">${d.filteredPLSelected.length} dari ${d.filteredPLAll.length} Dipilih</span>
+        if (detTitle) detTitle.innerHTML = `<i class="fa-solid fa-list-check" style="color: var(--azure-primary); margin-right: 6px;"></i> Rincian Stok Ready`;
+        if (detSubtitle) detSubtitle.textContent = `Daftar ketersediaan unit di etalase/gudang`;
+        if (detBadge) detBadge.textContent = `${daftarStokMasuk.length} Unit`;
+
+        if (detBody) {
+            detBody.innerHTML = daftarStokMasuk.length === 0 ? '<div class="empty-stok-msg">Belum ada unit ready di stok.</div>' : daftarStokMasuk.map(s => `
+                <div class="laporan-detail-item">
+                    <div class="detail-left"><span class="detail-title">${s.produk} (${s.kondisi})</span><span class="detail-sub">IMEI: ${s.imei || '-'} • Masuk: ${formatTanggalID(s.tanggal)}</span></div>
+                    <div class="detail-val"><span style="color:var(--azure-primary); font-weight:800;">${s.qty || 1} Unit</span></div>
                 </div>
-                <div class="laporan-row"><span class="laporan-label">Model Siap Cetak</span><span class="laporan-value highlight-blue">${d.filteredPLSelected.length} Model</span></div>
-            </div>
-            <button class="report-accordion-header ${isReportAccordionOpen ? 'expanded' : ''}" onclick="toggleReportAccordion()">
-                <span><i class="fa-solid fa-square-check" style="color:var(--azure-primary); margin-right:6px;"></i> Pilih Model Handphone (${d.filteredPLAll.length})</span>
-                <i class="fa-solid fa-chevron-down acc-icon"></i>
-            </button>
-            <div id="report-accordion-body" class="report-accordion-content ${isReportAccordionOpen ? 'expanded' : ''}">${rowsHtml}</div>
-        `;
-    }
+            `).join('');
+        }
 
-    container.innerHTML = html;
+    } else if (activeReportCategory === 'pricelist') {
+        if (sumTitle) sumTitle.innerHTML = `<i class="fa-solid fa-chart-pie" style="color: var(--azure-primary); margin-right: 6px;"></i> Ringkasan Price List`;
+        if (sumSubtitle) sumSubtitle.textContent = `Rekap jumlah model terpilih untuk dicetak`;
+        if (sumBadge) sumBadge.textContent = `${d.filteredPLSelected.length} Dipilih`;
+
+        if (sumBody) {
+            sumBody.innerHTML = `
+                <div class="laporan-section-card" style="box-shadow:none; background:transparent; padding:4px 0;">
+                    <div class="laporan-row"><span class="laporan-label">Total Model Sesuai Filter</span><span class="laporan-value">${d.filteredPLAll.length} Model</span></div>
+                    <div class="laporan-row" style="margin-top:6px; border-top:1px dashed var(--border-subtle); padding-top:8px;">
+                        <span class="laporan-label" style="color:var(--text-primary); font-weight:800;">Model Siap Cetak</span>
+                        <span class="laporan-value highlight-blue">${d.filteredPLSelected.length} Model</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (detTitle) detTitle.innerHTML = `<i class="fa-solid fa-list-check" style="color: var(--azure-primary); margin-right: 6px;"></i> Pilih & Rincian Model`;
+        if (detSubtitle) detSubtitle.textContent = `Centang model handphone yang akan dimasukkan ke laporan`;
+        if (detBadge) detBadge.textContent = `${d.filteredPLAll.length} Model`;
+
+        if (detBody) {
+            detBody.innerHTML = d.filteredPLAll.length === 0 ? '<div class="empty-stok-msg">Tidak ada model sesuai filter.</div>' : d.filteredPLAll.map(p => {
+                let isChecked = selectedPriceListModelIds.has(p.id);
+                return `
+                    <div class="laporan-detail-item" style="padding: 6px 10px;">
+                        <label class="checkbox-model-item">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="togglePriceListModelSelect('${p.id}')">
+                            <div class="detail-left" style="flex:1;"><span class="detail-title">${p.brand} - ${p.model}</span><span class="detail-sub">JKT: ${formatDisplayPrice(p.jkt)} | SGC: ${formatDisplayPrice(p.sgc)} | BNIB: ${formatDisplayPrice(p.bnib)}</span></div>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
 };
 
+// DOKUMEN EKSPOR A4 (MEMAKAI FORMAT RUPIAH LENGKAP)
 function generateReportCardHTML() {
     let d = getLaporanDataSummary();
     let catTitles = { kas: 'Kas Pribadi', penjualan: 'Penjualan', stok: 'Stok Ready Gudang', pricelist: 'Katalog Price List' };
@@ -2537,23 +2759,23 @@ function generateReportCardHTML() {
 
     if (activeReportCategory === 'kas') {
         summaryCardsHtml = `
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Pemasukan</span><h4 style="color: #10B981; font-size: 13.5px; margin-top:2px;">+ ${formatRupiah(d.totalMasuk)}</h4></div>
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Pengeluaran</span><h4 style="color: #EF4444; font-size: 13.5px; margin-top:2px;">- ${formatRupiah(d.totalKeluar)}</h4></div>
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Saldo Akhir</span><h4 style="color: #0077B6; font-size: 13.5px; margin-top:2px;">${formatRupiah(d.saldoAktif)}</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Pemasukan</span><h4 style="color: #10B981; font-size: 13.5px; margin-top:2px;">+ ${formatRupiahLengkap(d.totalMasuk)}</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Pengeluaran</span><h4 style="color: #EF4444; font-size: 13.5px; margin-top:2px;">- ${formatRupiahLengkap(d.totalKeluar)}</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Saldo Akhir</span><h4 style="color: #0077B6; font-size: 13.5px; margin-top:2px;">${formatRupiahLengkap(d.saldoAktif)}</h4></div>
         `;
         tableRowsHtml = d.filteredKas.length === 0 ? `<tr><td colspan="4" align="center" style="color:#64748B;">Tidak ada catatan kas.</td></tr>` : d.filteredKas.map((k, i) => `
             <tr>
                 <td align="center">${i + 1}</td>
                 <td><b>${k.keterangan}</b></td>
                 <td>${formatTanggalID(k.tanggal)} (${k.kategori.toUpperCase()})</td>
-                <td align="right" style="font-weight:700; color:${k.kategori==='masuk'?'#10B981':'#EF4444'}; font-family:var(--font-mono);">${k.kategori==='masuk'?'+':'-'} ${formatRupiah(k.nominal)}</td>
+                <td align="right" style="font-weight:700; color:${k.kategori==='masuk'?'#10B981':'#EF4444'}; font-family:var(--font-mono);">${k.kategori==='masuk'?'+':'-'} ${formatRupiahLengkap(k.nominal)}</td>
             </tr>
         `).join('');
     } else if (activeReportCategory === 'penjualan') {
         summaryCardsHtml = `
             <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Unit Terjual</span><h4 style="color: #0F172A; font-size: 13.5px; margin-top:2px;">${d.sumTerjual} Unit</h4></div>
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Omset Transaksi</span><h4 style="color: #0077B6; font-size: 13.5px; margin-top:2px;">${formatRupiah(d.totalOmset)}</h4></div>
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Laba Bersih</span><h4 style="color: #10B981; font-size: 13.5px; margin-top:2px;">+ ${formatRupiah(d.totalProfit)}</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Omset Transaksi</span><h4 style="color: #0077B6; font-size: 13.5px; margin-top:2px;">${formatRupiahLengkap(d.totalOmset)}</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Laba Bersih</span><h4 style="color: #10B981; font-size: 13.5px; margin-top:2px;">+ ${formatRupiahLengkap(d.totalProfit)}</h4></div>
         `;
         tableRowsHtml = daftarTerjual.length === 0 ? `<tr><td colspan="4" align="center" style="color:#64748B;">Belum ada data penjualan.</td></tr>` : daftarTerjual.map((t, i) => {
             let p = (parseRawToNumeric(t.hargaJual) || 0) - (parseRawToNumeric(t.hargaModal) || 0);
@@ -2561,8 +2783,8 @@ function generateReportCardHTML() {
                 <tr>
                     <td align="center">${i + 1}</td>
                     <td><b>${t.produk}</b><br><span style="font-size:9.5px; color:#64748B;">IMEI: ${t.imei || '-'}</span></td>
-                    <td>Modal: ${t.hargaModal || '0'}<br>Jual: ${t.hargaJual || '0'}</td>
-                    <td align="right" style="font-weight:700; color:${p>=0?'#10B981':'#EF4444'}; font-family:var(--font-mono);">+ ${formatRupiah(p)}</td>
+                    <td>Modal: ${formatRupiahLengkap(parseRawToNumeric(t.hargaModal))}<br>Jual: ${formatRupiahLengkap(parseRawToNumeric(t.hargaJual))}</td>
+                    <td align="right" style="font-weight:700; color:${p>=0?'#10B981':'#EF4444'}; font-family:var(--font-mono);">+ ${formatRupiahLengkap(p)}</td>
                 </tr>
             `;
         }).join('');
@@ -2586,8 +2808,8 @@ function generateReportCardHTML() {
             <tr>
                 <td align="center">${i + 1}</td>
                 <td><b>[${p.brand}] ${p.model}</b></td>
-                <td>JKT: ${formatDisplayPrice(p.jkt)} | SGC: ${formatDisplayPrice(p.sgc)}</td>
-                <td align="right" style="font-weight:700; color:#10B981; font-family:var(--font-mono);">BNIB: ${formatDisplayPrice(p.bnib)}</td>
+                <td>JKT: ${formatDisplayPrice(p.jkt, true)} | SGC: ${formatDisplayPrice(p.sgc, true)}</td>
+                <td align="right" style="font-weight:700; color:#10B981; font-family:var(--font-mono);">BNIB: ${formatDisplayPrice(p.bnib, true)}</td>
             </tr>
         `).join('');
     }
@@ -2639,6 +2861,7 @@ function generateReportCardHTML() {
     `;
 }
 
+// EKSPOR TXT (MEMAKAI FORMAT RUPIAH LENGKAP)
 function generatePlainTextReport() {
     let d = getLaporanDataSummary();
     let catNames = { kas: 'KAS PRIBADI', penjualan: 'PENJUALAN', stok: 'STOK READY', pricelist: 'PRICE LIST' };
@@ -2651,21 +2874,21 @@ function generatePlainTextReport() {
     text += `======================================================\n\n`;
 
     if (currentCatKey === 'kas') {
-        text += `Total Pemasukan   : + ${formatRupiah(d.totalMasuk)}\n`;
-        text += `Total Pengeluaran : - ${formatRupiah(d.totalKeluar)}\n`;
-        text += `Saldo Aktif Kas   : ${formatRupiah(d.saldoAktif)}\n\n`;
+        text += `Total Pemasukan   : + ${formatRupiahLengkap(d.totalMasuk)}\n`;
+        text += `Total Pengeluaran : - ${formatRupiahLengkap(d.totalKeluar)}\n`;
+        text += `Saldo Aktif Kas   : ${formatRupiahLengkap(d.saldoAktif)}\n\n`;
         text += `--- RINCIAN MUTASI ---\n`;
         d.filteredKas.forEach((k, i) => {
-            text += `${i+1}. [${k.kategori.toUpperCase()}] ${k.keterangan} | ${formatRupiah(k.nominal)} | Tgl: ${formatTanggalID(k.tanggal)}\n`;
+            text += `${i+1}. [${k.kategori.toUpperCase()}] ${k.keterangan} | ${formatRupiahLengkap(k.nominal)} | Tgl: ${formatTanggalID(k.tanggal)}\n`;
         });
     } else if (currentCatKey === 'penjualan') {
         text += `Total Terjual : ${d.sumTerjual} Unit\n`;
-        text += `Total Omset   : ${formatRupiah(d.totalOmset)}\n`;
-        text += `Total Laba    : + ${formatRupiah(d.totalProfit)}\n\n`;
+        text += `Total Omset   : ${formatRupiahLengkap(d.totalOmset)}\n`;
+        text += `Total Laba    : + ${formatRupiahLengkap(d.totalProfit)}\n\n`;
         text += `--- RINCIAN PENJUALAN ---\n`;
         daftarTerjual.forEach((t, i) => {
             let p = (parseRawToNumeric(t.hargaJual) || 0) - (parseRawToNumeric(t.hargaModal) || 0);
-            text += `${i+1}. ${t.produk} | Modal: ${t.hargaModal} | Jual: ${t.hargaJual} | Laba: ${formatRupiah(p)}\n`;
+            text += `${i+1}. ${t.produk} | Modal: ${formatRupiahLengkap(parseRawToNumeric(t.hargaModal))} | Jual: ${formatRupiahLengkap(parseRawToNumeric(t.hargaJual))} | Laba: ${formatRupiahLengkap(p)}\n`;
         });
     } else if (currentCatKey === 'stok') {
         text += `Total Stok Ready : ${d.sumStok} Unit\n\n`;
@@ -2677,12 +2900,13 @@ function generatePlainTextReport() {
         text += `Model Dipilih : ${d.filteredPLSelected.length} Model\n\n`;
         text += `--- KATALOG HARGA ---\n`;
         d.filteredPLSelected.forEach((p, i) => {
-            text += `${i+1}. [${p.brand}] ${p.model} | JKT: ${p.jkt} | SGC: ${p.sgc} | BNIB: ${p.bnib}\n`;
+            text += `${i+1}. [${p.brand}] ${p.model} | JKT: ${formatDisplayPrice(p.jkt, true)} | SGC: ${formatDisplayPrice(p.sgc, true)} | BNIB: ${formatDisplayPrice(p.bnib, true)}\n`;
         });
     }
     return text;
 }
 
+// EKSPOR CSV (NILAI ASLI LENGKAP TANPA PEMOTONGAN)
 function generateCSVReport() {
     let d = getLaporanDataSummary();
     let currentCatKey = activeReportCategory;
@@ -2738,9 +2962,9 @@ window.openReportPreview = function() {
         let d = getLaporanDataSummary();
         let tableRows = '';
         if (activeReportCategory === 'kas') {
-            tableRows = d.filteredKas.map((k, i) => `<tr><td align="center">${i+1}</td><td>KAS</td><td>${k.keterangan}</td><td>${k.tanggal}</td><td align="right">${formatRupiah(k.nominal)}</td></tr>`).join('');
+            tableRows = d.filteredKas.map((k, i) => `<tr><td align="center">${i+1}</td><td>KAS</td><td>${k.keterangan}</td><td>${k.tanggal}</td><td align="right">${formatRupiahLengkap(k.nominal)}</td></tr>`).join('');
         } else if (activeReportCategory === 'penjualan') {
-            tableRows = daftarTerjual.map((t, i) => `<tr><td align="center">${i+1}</td><td>PENJUALAN</td><td>${t.produk}</td><td>${t.imei || '-'}</td><td align="right">${t.hargaJual || '0'}</td></tr>`).join('');
+            tableRows = daftarTerjual.map((t, i) => `<tr><td align="center">${i+1}</td><td>PENJUALAN</td><td>${t.produk}</td><td>${t.imei || '-'}</td><td align="right">${formatRupiahLengkap(parseRawToNumeric(t.hargaJual))}</td></tr>`).join('');
         } else if (activeReportCategory === 'stok') {
             tableRows = daftarStokMasuk.map((s, i) => `<tr><td align="center">${i+1}</td><td>STOK</td><td>${s.produk}</td><td>${s.kondisi}</td><td align="center">${s.qty || 1}</td></tr>`).join('');
         } else if (activeReportCategory === 'pricelist') {
