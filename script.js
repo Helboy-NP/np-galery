@@ -1695,6 +1695,11 @@ function switchSubTab(subId, el) {
     p?.querySelectorAll('.sub-content').forEach(s => s.classList.remove('active'));
     p?.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(subId)?.classList.add('active'); el?.classList.add('active');
+
+    // AUTO-FETCH: Jika membuka sub-tab modal, otomatis tarik data terbaru dari cloud Supabase
+    if (subId === 'sub-modal' && navigator.onLine && supabaseClient) {
+        syncTransactionsFromSupabaseOnly();
+    }
 }
 
 window.handleAutocomplete = function(query) {
@@ -2215,19 +2220,33 @@ function renderDaftarModal() {
     `;
 }
 
-window.toggleModalStatus = function(id) {
+window.toggleModalStatus = async function(id) {
     const item = daftarTerjual.find(s => s.id === id);
     if (item) {
         if (item.modalStatus === 'sudah') return; // Cegah perubahan kembali jika sudah terkunci
+        
         item.modalStatus = 'sudah';
         saveTerjualToStorage();
         renderDaftarModal();
+        showToast('Memperbarui', 'Menyimpan status modal ke cloud...');
+
         if (supabaseClient) {
             setConnectionStatus('syncing');
-            supabaseClient.from('transactions').update({ modal_status: item.modalStatus }).eq('id', id).then(({ error }) => {
-                if (!error) setConnectionStatus('connected');
-                else setConnectionStatus('disconnected');
-            });
+            try {
+                const { error } = await supabaseClient
+                    .from('transactions')
+                    .update({ modal_status: 'sudah' })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                setConnectionStatus('connected');
+                showToast('Berhasil', 'Status modal tersinkron ke cloud.');
+            } catch (err) {
+                console.warn('Gagal sinkron status modal:', err);
+                setConnectionStatus('disconnected');
+                showToast('Offline', 'Perubahan tersimpan secara lokal.', false);
+            }
         }
     }
 };
