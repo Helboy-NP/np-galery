@@ -1,8 +1,6 @@
 /**
  * NPGALERY - CORE SCRIPT & PRICE LIST PERBANDINGAN HARGA
- * TERINTEGRASI PENUH DENGAN SUPABASE & FITUR BNIB BADGE
- * DILENGKAPI SISTEM SUPABASE AUTH, RLS, NOTES & REALTIME SYNC
- * DENGAN INDIKATOR STATUS KONEKSI CLOUD REAL-TIME
+ * FULLY CLOUD-NATIVE VIA SUPABASE & REALTIME SYNC (5 TABEL UTAMA)
  */
 
 // KONFIGURASI KONEKSI SUPABASE
@@ -14,11 +12,13 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
-// 1. DATA MASTER PRICE LIST (DIMUAT OTOMATIS DARI FILE JSON EKSTERNAL)
+// DATA IN-MEMORY (SINGLE SOURCE OF TRUTH: SUPABASE)
 let rawPriceListData = [];
-
-// 2. DATA MASTER DIAGNOSIS SYSTEM CHECK (DIMUAT DARI DIAGNOSIS.JSON)
 let rawDiagnosisData = [];
+let daftarStokMasuk = [];
+let daftarTerjual = [];
+let daftarKasPribadi = [];
+let daftarNotes = [];
 
 let currentPage = 1;
 const itemsPerPage = 10;
@@ -29,12 +29,9 @@ let activeReportCategory = 'kas';
 let selectedPriceListModelIds = new Set();
 let isReportAccordionOpen = false;
 
-let daftarStokMasuk = JSON.parse(localStorage.getItem('npgalery_stok_masuk')) || [];
-let daftarTerjual = JSON.parse(localStorage.getItem('npgalery_stok_terjual')) || [];
-let daftarKasPribadi = JSON.parse(localStorage.getItem('npgalery_kas_pribadi')) || [];
-let daftarNotes = JSON.parse(localStorage.getItem('npgalery_notes')) || [];
-
 let activeInvoiceData = null;
+let tempInvoiceOverridePrice = null;
+let tempInvoiceOriginalItem = null;
 
 // INSTANCE SCANNER KAMERA
 let html5QrScannerInstance = null;
@@ -47,7 +44,7 @@ let calcCurrentVal = "0";
 let calcEquation = "";
 
 /* ========================================================== */
-/* SISTEM INDIKATOR STATUS KONEKSI / SYNC OTOMATIS             */
+/* SISTEM INDIKATOR STATUS KONEKSI & REAL-TIME SYNC           */
 /* ========================================================== */
 let isCloudConnected = false;
 
@@ -67,14 +64,13 @@ function setConnectionStatus(status) {
     } else {
         isCloudConnected = false;
         btn.classList.add('status-disconnected');
-        btn.title = 'Koneksi Cloud: Offline / Menggunakan Data Lokal';
+        btn.title = 'Koneksi Cloud: Terputus / Periksa Sambungan';
     }
 }
 
-// Pengecekan manual saat tombol indikator titik diklik
 window.checkConnectionStatusManual = async function(btn) {
     setConnectionStatus('syncing');
-    showToast('Koneksi', 'Memeriksa status sambungan cloud...');
+    showToast('Koneksi', 'Memeriksa sambungan ke Supabase...');
     try {
         if (!navigator.onLine || !supabaseClient) {
             throw new Error('Offline');
@@ -87,11 +83,10 @@ window.checkConnectionStatusManual = async function(btn) {
         await syncFromSupabase();
     } catch (e) {
         setConnectionStatus('disconnected');
-        showToast('Offline', 'Bekerja dengan penyimpanan lokal (Localstorage).', false);
+        showToast('Offline', 'Koneksi cloud terganggu. Periksa internet Anda.', false);
     }
 };
 
-// Event listener bawaan browser untuk mendeteksi jaringan online/offline
 window.addEventListener('online', () => {
     setConnectionStatus('syncing');
     syncFromSupabase().then(() => setConnectionStatus('connected'));
@@ -101,7 +96,7 @@ window.addEventListener('offline', () => {
     showToast('Offline', 'Koneksi internet terputus.', false);
 });
 
-// SINKRONISASI DATA AWAL DARI SUPABASE
+// SINKRONISASI DATA UTAMA DARI SUPABASE
 async function syncFromSupabase() {
     if (!supabaseClient || !navigator.onLine) {
         setConnectionStatus('disconnected');
@@ -109,10 +104,13 @@ async function syncFromSupabase() {
     }
     setConnectionStatus('syncing');
     try {
-        await syncProductsFromSupabaseOnly();
-        await syncTransactionsFromSupabaseOnly();
-        await syncCashFromSupabaseOnly();
-        await syncNotesFromSupabaseOnly();
+        await Promise.all([
+            syncPriceListFromSupabaseOnly(),
+            syncProductsFromSupabaseOnly(),
+            syncTransactionsFromSupabaseOnly(),
+            syncCashFromSupabaseOnly(),
+            syncNotesFromSupabaseOnly()
+        ]);
         setConnectionStatus('connected');
     } catch (err) {
         console.warn('Gagal sinkronisasi data dari Supabase:', err);
@@ -120,7 +118,105 @@ async function syncFromSupabase() {
     }
 }
 
-// FUNGSI SINKRONISASI PARSIAL
+/* ========================================================== */
+/* FUNGSI SINKRONISASI MASING-MASING TABEL KE SUPABASE        */
+/* ========================================================== */
+
+// 1. TABEL PRICELIST
+async function syncPriceListFromSupabaseOnly() {
+    if (!supabaseClient) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('pricelist')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (!error && data) {
+            if (data.length === 0) {
+                await initialMigratePriceListToSupabase();
+                return;
+            }
+            rawPriceListData = data.map(item => ({
+                id: item.id,
+                brand: item.brand,
+                model: item.model,
+                jkt: item.jkt || '--',
+                sgc: item.sgc || '--',
+                bnib: item.bnib || '--'
+            }));
+            selectedPriceListModelIds = new Set(rawPriceListData.map(p => p.id));
+            initBrandDropdown();
+            initReportBrandDropdown();
+            filterPriceList();
+            renderLaporanKeuangan();
+        }
+    } catch (e) {
+        console.warn('Gagal memuat tabel pricelist:', e);
+    }
+}
+
+async function initialMigratePriceListToSupabase() {
+    try {
+        let oldData = [];
+        try {
+            const response = await fetch('pricelist.json');
+            if (response.ok) oldData = await response.json();
+        } catch (e) {}
+
+        let bnibData = [];
+        try {
+            const resBnib = await fetch('listbnib.json');
+            if (resBnib.ok) bnibData = await resBnib.json();
+        } catch (e) {}
+
+        let mergedMap = new Map();
+        oldData.forEach(item => {
+            let key = `${item.brand.trim().toUpperCase()} - ${item.model.trim().toUpperCase()}`;
+            mergedMap.set(key, {
+                id: String(item.id || 'pl-' + Math.random().toString(36).substr(2, 9)),
+                brand: item.brand.trim().toUpperCase(),
+                model: item.model.trim(),
+                jkt: item.jkt || '--',
+                sgc: item.sgc || '--',
+                bnib: item.bnib || '--'
+            });
+        });
+
+        bnibData.forEach(item => {
+            let key = `${item.brand.trim().toUpperCase()} - ${item.model.trim().toUpperCase()}`;
+            if (mergedMap.has(key)) {
+                let existing = mergedMap.get(key);
+                if (item.bnib && item.bnib !== '--') existing.bnib = item.bnib;
+            } else {
+                mergedMap.set(key, {
+                    id: String(item.id || 'pl-' + Math.random().toString(36).substr(2, 9)),
+                    brand: item.brand.trim().toUpperCase(),
+                    model: item.model.trim(),
+                    jkt: item.jkt || '--',
+                    sgc: item.sgc || '--',
+                    bnib: item.bnib || '--'
+                });
+            }
+        });
+
+        const initialList = Array.from(mergedMap.values());
+        if (initialList.length > 0 && supabaseClient) {
+            const { error } = await supabaseClient.from('pricelist').upsert(initialList);
+            if (!error) {
+                rawPriceListData = initialList;
+                selectedPriceListModelIds = new Set(rawPriceListData.map(p => p.id));
+                initBrandDropdown();
+                initReportBrandDropdown();
+                filterPriceList();
+                renderLaporanKeuangan();
+            }
+        }
+    } catch (err) {
+        console.warn('Gagal migrasi data awal pricelist:', err);
+    }
+}
+
+// 2. TABEL PRODUCT (STOK READY)
 async function syncProductsFromSupabaseOnly() {
     if (!supabaseClient) return;
     const { data: prods, error: errProds } = await supabaseClient
@@ -128,7 +224,7 @@ async function syncProductsFromSupabaseOnly() {
         .select('*')
         .order('created_at', { ascending: false });
 
-    if (!errProds && prods && prods.length > 0) {
+    if (!errProds && prods) {
         daftarStokMasuk = prods.filter(p => p.status === 'ready' || !p.status).map(p => ({
             id: p.id,
             produk: p.name,
@@ -141,13 +237,13 @@ async function syncProductsFromSupabaseOnly() {
             pembeli: p.buyer || '',
             tanggal: p.date || (p.created_at ? p.created_at.slice(0, 10) : '')
         }));
-        saveStokToStorage();
         renderDaftarStokMasuk();
         updateDashboardStats();
         renderLaporanKeuangan();
     }
 }
 
+// 3. TABEL TRANSACTIONS (TERJUAL)
 async function syncTransactionsFromSupabaseOnly() {
     if (!supabaseClient) return;
     const { data: trx, error: errTrx } = await supabaseClient
@@ -155,7 +251,7 @@ async function syncTransactionsFromSupabaseOnly() {
         .select('*')
         .order('created_at', { ascending: false });
 
-    if (!errTrx && trx && trx.length > 0) {
+    if (!errTrx && trx) {
         daftarTerjual = trx.map(t => ({
             id: t.id,
             produk: t.product_name,
@@ -170,7 +266,6 @@ async function syncTransactionsFromSupabaseOnly() {
             tanggalTerjualRaw: t.sold_date || (t.created_at ? t.created_at.slice(0, 10) : ''),
             modalStatus: t.modal_status || 'belum'
         }));
-        saveTerjualToStorage();
         renderDaftarTerjual();
         renderDaftarModal();
         updateDashboardStats();
@@ -178,6 +273,7 @@ async function syncTransactionsFromSupabaseOnly() {
     }
 }
 
+// 4. TABEL CASH_MUTATIONS (KAS PRIBADI)
 async function syncCashFromSupabaseOnly() {
     if (!supabaseClient) return;
     const { data: mutasi, error: errMutasi } = await supabaseClient
@@ -185,7 +281,7 @@ async function syncCashFromSupabaseOnly() {
         .select('*')
         .order('created_at', { ascending: false });
 
-    if (!errMutasi && mutasi && mutasi.length > 0) {
+    if (!errMutasi && mutasi) {
         daftarKasPribadi = mutasi.map(m => ({
             id: m.id,
             keterangan: m.description,
@@ -193,13 +289,13 @@ async function syncCashFromSupabaseOnly() {
             nominal: parseFloat(m.amount) || 0,
             tanggal: m.date || (m.created_at ? m.created_at.slice(0, 10) : '')
         }));
-        saveKasToStorage();
         renderManajemenKas();
         updatePribadiStats();
         renderLaporanKeuangan();
     }
 }
 
+// 5. TABEL NOTES (MEMO TOKO)
 async function syncNotesFromSupabaseOnly() {
     if (!supabaseClient) return;
     try {
@@ -215,7 +311,6 @@ async function syncNotesFromSupabaseOnly() {
                 content: n.content || '',
                 date: n.date || (n.created_at ? n.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10))
             }));
-            saveNotesToStorage();
             renderDaftarNotes();
         }
     } catch (e) {
@@ -223,7 +318,7 @@ async function syncNotesFromSupabaseOnly() {
     }
 }
 
-// SETUP SUPABASE REALTIME MULTI-DEVICE
+// SETUP SUPABASE REALTIME MULTI-DEVICE (5 TABEL SEKALIGUS)
 function setupSupabaseRealtime() {
     if (!supabaseClient) {
         setConnectionStatus('disconnected');
@@ -232,6 +327,9 @@ function setupSupabaseRealtime() {
 
     supabaseClient
         .channel('npgalery-realtime-channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pricelist' }, () => {
+            syncPriceListFromSupabaseOnly();
+        })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'product' }, () => {
             syncProductsFromSupabaseOnly();
         })
@@ -247,80 +345,10 @@ function setupSupabaseRealtime() {
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
                 setConnectionStatus('connected');
-                console.log('Realtime listener aktif untuk semua tabel NPGalery.');
             } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
                 setConnectionStatus('disconnected');
             }
         });
-}
-
-// FUNGSI MEMUAT DATA DARI PRICELIST.JSON DAN LISTBNIB.JSON
-async function loadPriceListData() {
-    try {
-        let oldData = [];
-        try {
-            const response = await fetch('pricelist.json');
-            if (response.ok) oldData = await response.json();
-        } catch (e) {
-            console.warn('File pricelist.json tidak ditemukan atau kosong:', e);
-        }
-
-        let bnibData = [];
-        try {
-            const resBnib = await fetch('listbnib.json');
-            if (resBnib.ok) bnibData = await resBnib.json();
-        } catch (e) {
-            console.warn('File listbnib.json tidak ditemukan atau kosong:', e);
-        }
-
-        let mergedMap = new Map();
-
-        oldData.forEach(item => {
-            let key = `${item.brand.trim().toUpperCase()} - ${item.model.trim().toUpperCase()}`;
-            mergedMap.set(key, {
-                id: item.id,
-                brand: item.brand,
-                model: item.model,
-                jkt: item.jkt || '--',
-                sgc: item.sgc || '--',
-                bnib: item.bnib || '--'
-            });
-        });
-
-        bnibData.forEach(item => {
-            let key = `${item.brand.trim().toUpperCase()} - ${item.model.trim().toUpperCase()}`;
-            if (mergedMap.has(key)) {
-                let existing = mergedMap.get(key);
-                if (item.bnib && item.bnib !== '--') {
-                    existing.bnib = item.bnib;
-                }
-            } else {
-                mergedMap.set(key, {
-                    id: item.id || ('bnib-' + Math.random().toString(36).substr(2, 9)),
-                    brand: item.brand,
-                    model: item.model,
-                    jkt: item.jkt || '--',
-                    sgc: item.sgc || '--',
-                    bnib: item.bnib || '--'
-                });
-            }
-        });
-
-        rawPriceListData = Array.from(mergedMap.values());
-        
-        selectedPriceListModelIds = new Set(rawPriceListData.map(p => p.id));
-        initBrandDropdown();
-        initReportBrandDropdown();
-        filterPriceList();
-        renderLaporanKeuangan();
-    } catch (error) {
-        console.warn('Memuat pricelist gagal:', error);
-        rawPriceListData = [];
-        initBrandDropdown();
-        initReportBrandDropdown();
-        filterPriceList();
-        renderLaporanKeuangan();
-    }
 }
 
 async function loadDiagnosisData() {
@@ -335,7 +363,7 @@ async function loadDiagnosisData() {
     }
 }
 
-// INISIALISASI
+// INISIALISASI SAAT DOM READY
 document.addEventListener('DOMContentLoaded', async () => {
     const savedTheme = localStorage.getItem('npgalery_theme');
     if (savedTheme === 'dark') {
@@ -345,7 +373,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const authModal = document.getElementById('auth-modal');
-    
     if (supabaseClient) {
         const { data: sessionData } = await supabaseClient.auth.getSession();
         if (sessionData && sessionData.session) {
@@ -354,35 +381,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             const isLoggedIn = localStorage.getItem('npgalery_logged_in');
             if (authModal) {
-                if (isLoggedIn === 'true') {
-                    authModal.classList.add('hidden');
-                } else {
-                    authModal.classList.remove('hidden');
-                }
-            }
-        }
-    } else {
-        const isLoggedIn = localStorage.getItem('npgalery_logged_in');
-        if (authModal) {
-            if (isLoggedIn === 'true') {
-                authModal.classList.add('hidden');
-            } else {
-                authModal.classList.remove('hidden');
+                if (isLoggedIn === 'true') authModal.classList.add('hidden');
+                else authModal.classList.remove('hidden');
             }
         }
     }
 
-    loadPriceListData();
     loadDiagnosisData();
-    
-    renderDaftarStokMasuk(); 
-    renderDaftarTerjual();
-    renderDaftarModal(); 
-    renderManajemenKas();
-    renderDaftarNotes();
-    updateDashboardStats();
-    updatePribadiStats();
-
     initAllCustomDropdowns();
 
     const searchInput = document.getElementById('filter-model-input');
@@ -395,7 +400,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Set status awal & jalankan sinkronisasi
     if (navigator.onLine && supabaseClient) {
         setConnectionStatus('syncing');
         await syncFromSupabase();
@@ -418,17 +422,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 /* ========================================================== */
-/* LOGIKA PEMFORMATAN RUPIAH (RINGKAS UNTUK UI & NORMAL LENGKAP) */
+/* LOGIKA PEMFORMATAN RUPIAH                                  */
 /* ========================================================== */
-
-// Format Ringkas (Membuang 3 nol di belakang: 1.500.000 -> Rp 1.500)
 function formatRupiahRingkas(num) {
     if (num === null || isNaN(num)) return 'Rp 0';
     let ringkas = Math.round(num / 1000);
     return 'Rp ' + ringkas.toLocaleString('id-ID');
 }
 
-// Format Lengkap Normal (Khusus Invoice & Dokumen Ekspor)
 function formatRupiahLengkap(num) {
     if (num === null || isNaN(num)) return 'Rp 0';
     return 'Rp ' + Math.round(num).toLocaleString('id-ID');
@@ -470,7 +471,7 @@ function getHighestNumericPrice(priceString) {
 }
 
 /* ========================================================== */
-/* FITUR MANAJEMEN NOTES (CATATAN & FUNGSI SALIN)             */
+/* FITUR MANAJEMEN NOTES                                      */
 /* ========================================================== */
 window.openAddNoteModal = function() {
     document.getElementById('add-note-modal')?.classList.add('show');
@@ -488,14 +489,6 @@ window.openDaftarNotesModal = function() {
 window.closeDaftarNotesModal = function() {
     document.getElementById('daftar-notes-modal')?.classList.remove('show');
 };
-
-window.toggleNoteForm = function() {
-    openAddNoteModal();
-};
-
-function saveNotesToStorage() {
-    localStorage.setItem('npgalery_notes', JSON.stringify(daftarNotes));
-}
 
 window.simpanCatatanBaru = async function() {
     const titleInput = document.getElementById('note-title-input');
@@ -516,25 +509,23 @@ window.simpanCatatanBaru = async function() {
         date: new Date().toISOString().slice(0, 10)
     };
 
-    daftarNotes.unshift(newNote);
-    saveNotesToStorage();
-    renderDaftarNotes();
-    showToast('Tersimpan', 'Catatan berhasil ditambahkan.');
-
     titleInput.value = '';
     contentInput.value = '';
     closeAddNoteModal();
 
     if (supabaseClient) {
+        setConnectionStatus('syncing');
         try {
-            await supabaseClient.from('notes').insert([{
-                id: newNote.id,
-                title: newNote.title,
-                content: newNote.content,
-                date: newNote.date
-            }]);
+            const { error } = await supabaseClient.from('notes').insert([newNote]);
+            if (error) throw error;
+            daftarNotes.unshift(newNote);
+            renderDaftarNotes();
+            setConnectionStatus('connected');
+            showToast('Tersimpan', 'Catatan berhasil ditambahkan ke Cloud.');
         } catch (e) {
             console.warn('Gagal menyimpan catatan ke Supabase:', e);
+            setConnectionStatus('disconnected');
+            showToast('Gagal', 'Tidak dapat menyimpan catatan ke Cloud.', false);
         }
     }
 };
@@ -553,9 +544,7 @@ window.salinCatatan = function(id) {
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(textToCopy).then(() => {
             showToast('Tersalin', 'Isi catatan berhasil disalin.');
-        }).catch(() => {
-            fallbackSalinText(textToCopy);
-        });
+        }).catch(() => fallbackSalinText(textToCopy));
     } else {
         fallbackSalinText(textToCopy);
     }
@@ -581,16 +570,19 @@ function fallbackSalinText(text) {
 
 window.hapusCatatan = function(id) {
     showCustomConfirm("Hapus Catatan", "Yakin ingin menghapus catatan ini?", async () => {
-        daftarNotes = daftarNotes.filter(n => n.id !== id);
-        saveNotesToStorage();
-        renderDaftarNotes();
-        showToast('Berhasil', 'Catatan telah dihapus.', false);
-
         if (supabaseClient) {
+            setConnectionStatus('syncing');
             try {
-                await supabaseClient.from('notes').delete().eq('id', id);
+                const { error } = await supabaseClient.from('notes').delete().eq('id', id);
+                if (error) throw error;
+                daftarNotes = daftarNotes.filter(n => n.id !== id);
+                renderDaftarNotes();
+                setConnectionStatus('connected');
+                showToast('Berhasil', 'Catatan telah dihapus dari Cloud.');
             } catch (e) {
                 console.warn('Gagal menghapus catatan di Supabase:', e);
+                setConnectionStatus('disconnected');
+                showToast('Gagal', 'Gagal menghapus catatan.', false);
             }
         }
     });
@@ -629,7 +621,6 @@ function renderDaftarNotes() {
 }
 
 let activeEditNoteId = null;
-
 function createEditNoteModalDOM() {
     if (document.getElementById('edit-note-modal')) return;
     document.body.insertAdjacentHTML('beforeend', `
@@ -645,7 +636,7 @@ function createEditNoteModalDOM() {
                 </div>
                 <div class="edit-input-group" style="margin-top: 10px;">
                     <label>Isi Catatan</label>
-                    <textarea id="edit-note-content-input" rows="4" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid var(--border-subtle); background:var(--bg-card); color:var(--text-primary); font-family:inherit; font-size:12px; resize:vertical; box-sizing:border-box; outline:none;"></textarea>
+                    <textarea id="edit-note-content-input" rows="4" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid var(--border-subtle); background:var(--card-bg); color:var(--text-primary); font-family:inherit; font-size:12px; resize:vertical; box-sizing:border-box; outline:none;"></textarea>
                 </div>
                 <div class="edit-modal-actions" style="margin-top: 14px;">
                     <button class="btn-cancel" onclick="closeEditNoteModal()">Batal</button>
@@ -684,45 +675,32 @@ window.simpanPerubahanCatatan = async function() {
     }
 
     const note = daftarNotes.find(n => n.id === activeEditNoteId);
-    if (note) {
-        note.title = newTitle || 'Catatan Baru';
-        note.content = newContent;
+    if (note && supabaseClient) {
+        setConnectionStatus('syncing');
+        try {
+            const { error } = await supabaseClient
+                .from('notes')
+                .update({ title: newTitle || 'Catatan Baru', content: newContent })
+                .eq('id', activeEditNoteId);
 
-        saveNotesToStorage();
-        renderDaftarNotes();
-        closeEditNoteModal();
-        showToast('Berhasil', 'Catatan berhasil diperbarui.');
+            if (error) throw error;
 
-        if (supabaseClient) {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('notes')
-                    .update({
-                        title: note.title,
-                        content: note.content
-                    })
-                    .eq('id', activeEditNoteId)
-                    .select();
-
-                if (error) {
-                    console.error('Gagal update catatan di Supabase:', error.message);
-                } else if (!data || data.length === 0) {
-                    await supabaseClient.from('notes').upsert([{
-                        id: note.id,
-                        title: note.title,
-                        content: note.content,
-                        date: note.date
-                    }]);
-                }
-            } catch (e) {
-                console.warn('Gagal memperbarui catatan di Supabase:', e);
-            }
+            note.title = newTitle || 'Catatan Baru';
+            note.content = newContent;
+            renderDaftarNotes();
+            closeEditNoteModal();
+            setConnectionStatus('connected');
+            showToast('Berhasil', 'Catatan berhasil diperbarui di Cloud.');
+        } catch (e) {
+            console.warn('Gagal update catatan di Supabase:', e);
+            setConnectionStatus('disconnected');
+            showToast('Gagal', 'Gagal memperbarui catatan.', false);
         }
     }
 };
 
 /* ========================================================== */
-/* FITUR MODAL POP-UP STOK (TAMBAH STOK & DAFTAR STOK)       */
+/* MODAL POP-UP STOK (TAMBAH STOK & DAFTAR STOK)              */
 /* ========================================================== */
 window.openAddStokModal = function() {
     const tglInput = document.getElementById('stok-tanggal');
@@ -747,7 +725,7 @@ window.closeDaftarStokModal = function() {
 };
 
 /* ========================================================== */
-/* FITUR MODAL POP-UP KAS (TAMBAH MUTASI KAS & RIWAYAT KAS)   */
+/* MODAL POP-UP KAS (CATAT KAS & RIWAYAT KAS)                 */
 /* ========================================================== */
 window.openAddKasModal = function() {
     const tglInput = document.getElementById('kas-tanggal');
@@ -771,12 +749,8 @@ window.closeRiwayatKasModal = function() {
     document.getElementById('riwayat-kas-modal')?.classList.remove('show');
 };
 
-window.toggleKasForm = function() {
-    openAddKasModal();
-};
-
 /* ========================================================== */
-/* FITUR MODAL POP-UP RIWAYAT PENJUALAN (R.JUAL)              */
+/* MODAL POP-UP RIWAYAT PENJUALAN (R.JUAL)                    */
 /* ========================================================== */
 window.openRiwayatJualModal = function() {
     renderDaftarTerjual();
@@ -788,38 +762,39 @@ window.closeRiwayatJualModal = function() {
 };
 
 /* ========================================================== */
-/* FITUR CEK IMEI & PORTAL WEBVIEW IN-APP                      */
+/* MODAL POP-UP SUB-TAB MODAL (BELUM & SUDAH KEMBALI)         */
+/* ========================================================== */
+window.openModalBelumKembaliModal = function() {
+    renderDaftarModal();
+    document.getElementById('modal-belum-kembali-popup')?.classList.add('show');
+};
+
+window.closeModalBelumKembaliModal = function() {
+    document.getElementById('modal-belum-kembali-popup')?.classList.remove('show');
+};
+
+window.openModalSudahKembaliModal = function() {
+    renderDaftarModal();
+    document.getElementById('modal-sudah-kembali-popup')?.classList.add('show');
+};
+
+window.closeModalSudahKembaliModal = function() {
+    document.getElementById('modal-sudah-kembali-popup')?.classList.remove('show');
+};
+
+/* ========================================================== */
+/* FITUR CEK IMEI                                             */
 /* ========================================================== */
 window.openImeiCheckModal = function() {
-    const modal = document.getElementById('imei-check-modal');
-    if (modal) modal.classList.add('show');
+    document.getElementById('imei-check-modal')?.classList.add('show');
 };
 
 window.closeImeiCheckModal = function() {
-    const modal = document.getElementById('imei-check-modal');
-    if (modal) modal.classList.remove('show');
-};
-
-window.openImeiPortal = function(url, brandTitle) {
-    closeImeiCheckModal();
-    const webModal = document.getElementById('imei-web-modal');
-    const iframe = document.getElementById('imei-webview-frame');
-    const titleElem = document.getElementById('inapp-webview-title');
-
-    if (titleElem) titleElem.textContent = brandTitle;
-    if (iframe) iframe.src = url;
-    if (webModal) webModal.classList.add('show');
-};
-
-window.closeImeiWebModal = function() {
-    const webModal = document.getElementById('imei-web-modal');
-    const iframe = document.getElementById('imei-webview-frame');
-    if (iframe) iframe.src = 'about:blank';
-    if (webModal) webModal.classList.remove('show');
+    document.getElementById('imei-check-modal')?.classList.remove('show');
 };
 
 /* ========================================================== */
-/* SCANNER KAMERA HP (HTML5-QRCODE)                           */
+/* SCANNER KAMERA HP                                          */
 /* ========================================================== */
 window.startImeiScanner = function() {
     const scannerModal = document.getElementById('scanner-modal');
@@ -838,11 +813,7 @@ window.startImeiScanner = function() {
             html5QrScannerInstance = new Html5Qrcode("scanner-reader");
         }
 
-        const qrConfig = {
-            fps: 15,
-            qrbox: { width: 260, height: 160 },
-            aspectRatio: 1.0
-        };
+        const qrConfig = { fps: 15, qrbox: { width: 260, height: 160 }, aspectRatio: 1.0 };
 
         const onScanSuccess = (decodedText) => {
             document.getElementById('stok-imei').value = decodedText.trim();
@@ -850,44 +821,23 @@ window.startImeiScanner = function() {
             stopImeiScanner();
         };
 
-        const onScanFailure = () => {};
-
         Html5Qrcode.getCameras().then(devices => {
-            if (devices && devices.length > 0) {
-                let backCamera = devices.find(device => 
-                    device.label.toLowerCase().includes('back') || 
-                    device.label.toLowerCase().includes('rear') ||
-                    device.label.toLowerCase().includes('environment')
-                );
+            let backCamera = devices.find(device => 
+                device.label.toLowerCase().includes('back') || 
+                device.label.toLowerCase().includes('rear') ||
+                device.label.toLowerCase().includes('environment')
+            );
+            let cameraId = backCamera ? backCamera.id : (devices.length > 0 ? devices[devices.length - 1].id : null);
 
-                let cameraId = backCamera ? backCamera.id : devices[devices.length - 1].id;
-
-                html5QrScannerInstance.start(
-                    cameraId,
-                    qrConfig,
-                    onScanSuccess,
-                    onScanFailure
-                ).catch(err => {
-                    console.warn("Gagal kamera ID:", err);
-                    html5QrScannerInstance.start(
-                        { facingMode: "environment" },
-                        qrConfig,
-                        onScanSuccess,
-                        onScanFailure
-                    ).catch(() => stopImeiScanner());
-                });
-            } else {
-                html5QrScannerInstance.start(
-                    { facingMode: "environment" },
-                    qrConfig,
-                    onScanSuccess,
-                    onScanFailure
-                ).catch(() => stopImeiScanner());
-            }
+            html5QrScannerInstance.start(
+                cameraId || { facingMode: "environment" },
+                qrConfig,
+                onScanSuccess,
+                () => {}
+            ).catch(() => stopImeiScanner());
         }).catch(() => stopImeiScanner());
-
     } catch (e) {
-        showToast('Kamera', 'Terjadi kesalahan sistem kamera.', false);
+        showToast('Kamera', 'Terjadi kendala sistem kamera.', false);
         stopImeiScanner();
     }
 };
@@ -909,22 +859,9 @@ window.stopImeiScanner = function() {
 
 window.handlePhotoScan = function(inputElement) {
     if (!inputElement.files || inputElement.files.length === 0) return;
-
     const imageFile = inputElement.files[0];
     showToast('Memproses', 'Menganalisis foto barcode...');
 
-    if (html5QrScannerInstance && html5QrScannerInstance.isScanning) {
-        html5QrScannerInstance.stop().then(() => {
-            processImageScan(imageFile);
-        }).catch(() => {
-            processImageScan(imageFile);
-        });
-    } else {
-        processImageScan(imageFile);
-    }
-};
-
-function processImageScan(imageFile) {
     if (!html5QrScannerInstance) {
         html5QrScannerInstance = new Html5Qrcode("scanner-reader");
     }
@@ -934,15 +871,13 @@ function processImageScan(imageFile) {
             document.getElementById('stok-imei').value = decodedText.trim();
             showToast('Berhasil', `IMEI Terbaca: ${decodedText}`);
             stopImeiScanner();
-            const photoInput = document.getElementById('scanner-photo-input');
-            if (photoInput) photoInput.value = '';
+            if (inputElement) inputElement.value = '';
         })
-        .catch(err => {
-            showToast('Scan Gagal', 'Barcode tidak terdeteksi. Pastikan foto tegak dan jelas!', false);
-            const photoInput = document.getElementById('scanner-photo-input');
-            if (photoInput) photoInput.value = '';
+        .catch(() => {
+            showToast('Scan Gagal', 'Barcode tidak terdeteksi. Pastikan foto jelas!', false);
+            if (inputElement) inputElement.value = '';
         });
-}
+};
 
 /* ========================================================== */
 /* POP-UP CHAT WHATSAPP LANGSUNG                              */
@@ -970,46 +905,28 @@ window.submitDirectWa = function() {
     }
 
     phone = phone.replace(/[^0-9]/g, '');
-    if (phone.startsWith('0')) {
-        phone = '62' + phone.substring(1);
-    }
+    if (phone.startsWith('0')) phone = '62' + phone.substring(1);
 
     let url = `https://api.whatsapp.com/send?phone=${phone}`;
-    if (msg) {
-        url += `&text=${encodeURIComponent(msg)}`;
-    }
+    if (msg) url += `&text=${encodeURIComponent(msg)}`;
 
     window.open(url, '_blank');
     closeDirectWaModal();
 };
 
 /* ========================================================== */
-/* LOGIKA SUB-TAB DIAGNOSIS                                   */
+/* SUB-TAB DIAGNOSIS / SYSTEM CHECK                           */
 /* ========================================================== */
-window.triggerDiagnosisCheck = function() {
-    const inputVal = document.getElementById('diagnosis-input-model').value.trim();
-    if (!inputVal) {
-        showToast('Peringatan', 'Masukkan model HP terlebih dahulu!', false);
-        return;
-    }
-    openDiagnosisModal(inputVal);
-};
-
-window.quickDiagnosisBrand = function(brandName) {
-    document.getElementById('diagnosis-input-model').value = brandName;
+window.openDiagnosisBrand = function(brandName) {
+    if (!brandName) return;
     openDiagnosisModal(brandName);
 };
 
 window.toggleDiagnosisCheckItem = function(codeStr, isChecked) {
-    if (isChecked) {
-        checkedDiagnosisCodes.add(codeStr);
-    } else {
-        checkedDiagnosisCodes.delete(codeStr);
-    }
+    if (isChecked) checkedDiagnosisCodes.add(codeStr);
+    else checkedDiagnosisCodes.delete(codeStr);
     const card = document.getElementById(`diag-card-${btoa(codeStr).replace(/=/g, '')}`);
-    if (card) {
-        card.classList.toggle('checked-item', isChecked);
-    }
+    if (card) card.classList.toggle('checked-item', isChecked);
 };
 
 function openDiagnosisModal(query) {
@@ -1026,7 +943,7 @@ function openDiagnosisModal(query) {
     let targetCodes = [];
     if (matchedBrandObj && matchedBrandObj.codes) {
         modalTitle.innerHTML = `<i class="fa-solid fa-microchip" style="color: var(--azure-primary); margin-right: 6px;"></i> Diagnosis: ${matchedBrandObj.brand.toUpperCase()}`;
-        modalSub.textContent = `Daftar kode & langkah cek resmi untuk: "${query}"`;
+        modalSub.textContent = `Daftar kode cek resmi brand: ${matchedBrandObj.brand.toUpperCase()}`;
         targetCodes = matchedBrandObj.codes.map(c => ({ code: c.code, name: c.description }));
     } else {
         modalTitle.innerHTML = `<i class="fa-solid fa-microchip" style="color: var(--azure-primary); margin-right: 6px;"></i> Diagnosis: ${query}`;
@@ -1065,7 +982,7 @@ window.closeDiagnosisModal = function() {
 };
 
 /* ========================================================== */
-/* LOGIKA KALKULATOR CEPAT KAS                                */
+/* KALKULATOR CEPAT KAS                                       */
 /* ========================================================== */
 window.openKasCalculator = function() {
     calcCurrentVal = "0";
@@ -1086,11 +1003,8 @@ function updateCalcDisplay() {
 }
 
 window.calcAppendNumber = function(num) {
-    if (calcCurrentVal === "0" && num !== ".") {
-        calcCurrentVal = num;
-    } else {
-        calcCurrentVal += num;
-    }
+    if (calcCurrentVal === "0" && num !== ".") calcCurrentVal = num;
+    else calcCurrentVal += num;
     updateCalcDisplay();
 };
 
@@ -1114,11 +1028,8 @@ window.calcClear = function() {
 };
 
 window.calcBackspace = function() {
-    if (calcCurrentVal.length > 1) {
-        calcCurrentVal = calcCurrentVal.slice(0, -1);
-    } else {
-        calcCurrentVal = "0";
-    }
+    if (calcCurrentVal.length > 1) calcCurrentVal = calcCurrentVal.slice(0, -1);
+    else calcCurrentVal = "0";
     updateCalcDisplay();
 };
 
@@ -1148,7 +1059,7 @@ window.applyCalculatorResult = function() {
 };
 
 /* ========================================================== */
-/* CUSTOM GLASS DROPDOWN & UTILITIES                          */
+/* CUSTOM GLASS DROPDOWN                                      */
 /* ========================================================== */
 function buildCustomDropdown(selectElem) {
     if (!selectElem) return;
@@ -1225,12 +1136,8 @@ function initAllCustomDropdowns() {
     });
 }
 
-function saveStokToStorage() { localStorage.setItem('npgalery_stok_masuk', JSON.stringify(daftarStokMasuk)); }
-function saveTerjualToStorage() { localStorage.setItem('npgalery_stok_terjual', JSON.stringify(daftarTerjual)); }
-function saveKasToStorage() { localStorage.setItem('npgalery_kas_pribadi', JSON.stringify(daftarKasPribadi)); }
-
 /* ========================================================== */
-/* UPDATE DASHBOARD STATS (MENGGUNAKAN FORMAT RUPIAH RINGKAS)  */
+/* STATISTIK DASHBOARD & KAS                                  */
 /* ========================================================== */
 function updateDashboardStats() {
     let sumStok = daftarStokMasuk.reduce((sum, item) => sum + parseInt(item.qty || 1), 0);
@@ -1252,25 +1159,18 @@ function updateDashboardStats() {
     if (keuntunganNominalElem) keuntunganNominalElem.textContent = formatRupiahRingkas(totalProfit);
 
     const stokReadyValElem = document.getElementById('stok-ready-val');
-    if (stokReadyValElem) {
-        stokReadyValElem.textContent = `${sumStok} Unit`;
-    }
+    if (stokReadyValElem) stokReadyValElem.textContent = `${sumStok} Unit`;
 
     const terjualValElem = document.getElementById('terjual-val');
     const terjualOmsetValElem = document.getElementById('terjual-omset-val');
-    if (terjualValElem) {
-        terjualValElem.textContent = `${sumTerjual} Unit`;
-    }
-    if (terjualOmsetValElem) {
-        terjualOmsetValElem.textContent = formatRupiahRingkas(totalOmset);
-    }
+    if (terjualValElem) terjualValElem.textContent = `${sumTerjual} Unit`;
+    if (terjualOmsetValElem) terjualOmsetValElem.textContent = formatRupiahRingkas(totalOmset);
 
     const badgeStokCount = document.getElementById('badge-stok-count');
     const modalBadgeStokCount = document.getElementById('modal-badge-stok-count');
     if (badgeStokCount) badgeStokCount.textContent = `${daftarStokMasuk.length} Unit`;
     if (modalBadgeStokCount) modalBadgeStokCount.textContent = `${daftarStokMasuk.length} Unit`;
 
-    // Sinkronisasi badge riwayat jual di sub-tab Notes
     const badgeRjual = document.getElementById('badge-rjual-count');
     const modalBadgeRjual = document.getElementById('modal-badge-rjual-count');
     if (badgeRjual) badgeRjual.textContent = `${sumTerjual}`;
@@ -1307,8 +1207,8 @@ function showToast(title, desc, isSuccess = true) {
     const container = document.getElementById('toast-container');
     if (!container) return;
     const toastId = 'toast-' + Date.now();
-    const iconClass = isSuccess ? 'fa-circle-check' : 'fa-triangle-exclamation';
     const borderColor = isSuccess ? 'var(--status-safe)' : 'var(--status-unsafe)';
+    const iconClass = isSuccess ? 'fa-circle-check' : 'fa-triangle-exclamation';
 
     const toastHtml = `
         <div id="${toastId}" class="toast-msg" style="border-left-color: ${borderColor};">
@@ -1322,12 +1222,14 @@ function showToast(title, desc, isSuccess = true) {
 }
 
 function getBrandStyle(brandName) {
-    const b = brandName.trim().toUpperCase();
+    const b = (brandName || '').trim().toUpperCase();
     let color = 'var(--azure-primary)', bg = 'var(--card-bg)', border = 'var(--border-subtle)';
     if (b.includes('INFINIX')) { color = '#10B981'; bg = 'rgba(16, 185, 129, 0.12)'; border = 'rgba(16, 185, 129, 0.3)'; } 
     else if (b.includes('SAMSUNG')) { color = '#3B82F6'; bg = 'rgba(59, 130, 246, 0.12)'; border = 'rgba(59, 130, 246, 0.3)'; }
     else if (b.includes('OPPO')) { color = '#059669'; bg = 'rgba(5, 150, 105, 0.12)'; border = 'rgba(5, 150, 105, 0.3)'; }
-    else if (b.includes('XIAOMI') || b.includes('POCO') || b.includes('REDMI')) { color = '#EF4444'; bg = 'rgba(239, 68, 68, 0.12)'; border = 'rgba(239, 68, 68, 0.3)'; }
+    else if (b.includes('XIAOMI')) { color = '#EF4444'; bg = 'rgba(239, 68, 68, 0.12)'; border = 'rgba(239, 68, 68, 0.3)'; }
+    else if (b.includes('REDMI')) { color = '#EF4444'; bg = 'rgba(239, 68, 68, 0.12)'; border = 'rgba(239, 68, 68, 0.3)'; }
+    else if (b.includes('POCO')) { color = '#EAB308'; bg = 'rgba(234, 179, 8, 0.12)'; border = 'rgba(234, 179, 8, 0.3)'; }
     else if (b.includes('VIVO')) { color = '#8B5CF6'; bg = 'rgba(139, 92, 246, 0.12)'; border = 'rgba(139, 92, 246, 0.3)'; }
     else if (b.includes('REALME')) { color = '#D97706'; bg = 'rgba(217, 119, 6, 0.12)'; border = 'rgba(217, 119, 6, 0.3)'; }
     else if (b.includes('TECNO')) { color = '#2563EB'; bg = 'rgba(37, 99, 235, 0.12)'; border = 'rgba(37, 99, 235, 0.3)'; }
@@ -1336,122 +1238,252 @@ function getBrandStyle(brandName) {
 }
 
 /* ========================================================== */
-/* PRICE LIST & KATALOG RINGKAS                               */
+/* PRICE LIST & KATALOG (100% CLOUD SUPABASE)                 */
 /* ========================================================== */
-window.addNewProduct = function() {
+window.openAddPriceListModal = function() {
+    document.getElementById('add-pricelist-modal')?.classList.add('show');
+};
+
+window.closeAddPriceListModal = function() {
+    document.getElementById('add-pricelist-modal')?.classList.remove('show');
+};
+
+window.addNewProduct = async function() {
     const nameInput = document.getElementById('add-input-name').value.trim();
     const jktInput = document.getElementById('add-input-jkt').value.trim();
     const sgcInput = document.getElementById('add-input-sgc').value.trim();
     const bnibInput = document.getElementById('add-input-bnib') ? document.getElementById('add-input-bnib').value.trim() : '';
     
-    if(nameInput === '') { showToast('Peringatan', 'Nama produk tidak boleh kosong!', false); return; }
+    if (nameInput === '') {
+        showToast('Peringatan', 'Nama produk tidak boleh kosong!', false);
+        return;
+    }
 
     const parts = nameInput.split(' ');
     const detectedBrand = parts[0].toUpperCase();
     const detectedModel = parts.length > 1 ? parts.slice(1).join(' ') : nameInput;
 
-    let maxId = 0;
-    rawPriceListData.forEach(item => { const idNum = parseInt(item.id); if(!isNaN(idNum) && idNum > maxId) maxId = idNum; });
-    
-    let newId = (maxId + 1).toString();
-    rawPriceListData.unshift({ 
-        id: newId, 
-        brand: detectedBrand, 
-        model: detectedModel, 
-        jkt: jktInput || '--', 
+    const newPriceItem = {
+        id: 'pl-' + Date.now(),
+        brand: detectedBrand,
+        model: detectedModel,
+        jkt: jktInput || '--',
         sgc: sgcInput || '--',
         bnib: bnibInput || '--'
-    });
-    selectedPriceListModelIds.add(newId);
+    };
 
-    initBrandDropdown(); initReportBrandDropdown(); filterPriceList(); renderLaporanKeuangan();
-    document.getElementById('add-input-name').value = ''; 
-    document.getElementById('add-input-jkt').value = ''; 
-    document.getElementById('add-input-sgc').value = ''; 
-    if (document.getElementById('add-input-bnib')) document.getElementById('add-input-bnib').value = '';
-    showToast('Berhasil!', `Produk baru masuk ke merek: ${detectedBrand}.`);
+    if (supabaseClient) {
+        setConnectionStatus('syncing');
+        try {
+            const { error } = await supabaseClient.from('pricelist').insert([newPriceItem]);
+            if (error) throw error;
+
+            rawPriceListData.unshift(newPriceItem);
+            selectedPriceListModelIds.add(newPriceItem.id);
+
+            initBrandDropdown(); 
+            initReportBrandDropdown(); 
+            filterPriceList(); 
+            renderLaporanKeuangan();
+
+            document.getElementById('add-input-name').value = ''; 
+            document.getElementById('add-input-jkt').value = ''; 
+            document.getElementById('add-input-sgc').value = ''; 
+            if (document.getElementById('add-input-bnib')) document.getElementById('add-input-bnib').value = '';
+            
+            closeAddPriceListModal();
+            setConnectionStatus('connected');
+            showToast('Berhasil!', `Produk baru tersimpan di cloud merek: ${detectedBrand}.`);
+        } catch (e) {
+            console.warn('Gagal menambah produk ke Supabase:', e);
+            setConnectionStatus('disconnected');
+            showToast('Gagal', 'Gagal menyimpan ke server Cloud.', false);
+        }
+    }
 };
 
-function createEditModalDOM() {
-    if (document.getElementById('edit-custom-modal')) return;
-    const modalHtml = `
-        <div class="custom-modal-overlay" id="edit-custom-modal">
-            <div class="custom-modal-card">
-                <div class="edit-modal-header"><h3>Edit Harga</h3><p id="edit-modal-subtitle" style="font-size:12px; color:var(--azure-primary);">Model HP</p></div>
-                <div class="edit-input-group"><label>Harga Jakarta</label><input type="text" id="edit-input-jkt"></div>
-                <div class="edit-input-group"><label>Harga Cikarang</label><input type="text" id="edit-input-sgc"></div>
-                <div class="edit-input-group"><label>Harga BNIB</label><input type="text" id="edit-input-bnib"></div>
-                <div class="edit-modal-actions"><button class="btn-cancel" onclick="closeEditModal()">Batal</button><button class="btn-save" onclick="saveEditModal()">Simpan</button></div>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
-
 window.editProduct = function(id) {
-    createEditModalDOM();
     const item = rawPriceListData.find(p => p.id === id);
-    if(item) {
+    if (item) {
         currentEditId = id;
-        document.getElementById('edit-modal-subtitle').textContent = `${item.brand} - ${item.model}`;
+        const subTitle = document.getElementById('edit-modal-subtitle');
+        if (subTitle) subTitle.textContent = `${item.brand} - ${item.model}`;
+
+        const fullNameInput = document.getElementById('edit-input-fullname');
+        if (fullNameInput) {
+            fullNameInput.value = `${item.brand} ${item.model}`.trim();
+        }
+
         document.getElementById('edit-input-jkt').value = item.jkt || '';
         document.getElementById('edit-input-sgc').value = item.sgc || '';
         if (document.getElementById('edit-input-bnib')) {
             document.getElementById('edit-input-bnib').value = item.bnib || '--';
         }
-        document.getElementById('edit-custom-modal').classList.add('show');
+        document.getElementById('edit-custom-modal')?.classList.add('show');
     }
 };
 
-window.closeEditModal = function() { document.getElementById('edit-custom-modal')?.classList.remove('show'); currentEditId = null; };
+window.closeEditModal = function() { 
+    document.getElementById('edit-custom-modal')?.classList.remove('show'); 
+    currentEditId = null; 
+};
 
-window.saveEditModal = function() {
+window.saveEditModal = async function() {
     if (!currentEditId) return;
     const item = rawPriceListData.find(p => p.id === currentEditId);
-    if(item) {
-        item.jkt = document.getElementById('edit-input-jkt').value.trim() || '--';
-        item.sgc = document.getElementById('edit-input-sgc').value.trim() || '--';
-        if (document.getElementById('edit-input-bnib')) {
-            item.bnib = document.getElementById('edit-input-bnib').value.trim() || '--';
-        }
-        closeEditModal(); 
-        filterPriceList(); 
-        showToast('Berhasil!', 'Perubahan harga disimpan.');
-        
-        const modal = document.getElementById('pricelist-detail-modal');
-        if (modal && modal.classList.contains('show')) {
-            openSingleProductPriceModal(item.id);
+    if (!item) return;
+
+    let updatedBrand = item.brand;
+    let updatedModel = item.model;
+
+    const fullNameInput = document.getElementById('edit-input-fullname');
+    if (fullNameInput && fullNameInput.value.trim() !== '') {
+        const parts = fullNameInput.value.trim().split(' ');
+        updatedBrand = parts[0].toUpperCase();
+        updatedModel = parts.length > 1 ? parts.slice(1).join(' ') : parts[0];
+    }
+
+    const updatedJkt = document.getElementById('edit-input-jkt').value.trim() || '--';
+    const updatedSgc = document.getElementById('edit-input-sgc').value.trim() || '--';
+    const updatedBnib = document.getElementById('edit-input-bnib') ? (document.getElementById('edit-input-bnib').value.trim() || '--') : '--';
+
+    if (supabaseClient) {
+        setConnectionStatus('syncing');
+        try {
+            const { error } = await supabaseClient
+                .from('pricelist')
+                .update({
+                    brand: updatedBrand,
+                    model: updatedModel,
+                    jkt: updatedJkt,
+                    sgc: updatedSgc,
+                    bnib: updatedBnib
+                })
+                .eq('id', currentEditId);
+
+            if (error) throw error;
+
+            item.brand = updatedBrand;
+            item.model = updatedModel;
+            item.jkt = updatedJkt;
+            item.sgc = updatedSgc;
+            item.bnib = updatedBnib;
+
+            closeEditModal(); 
+            initBrandDropdown();
+            initReportBrandDropdown();
+            filterPriceList(); 
+            renderLaporanKeuangan();
+            setConnectionStatus('connected');
+            showToast('Berhasil!', 'Perubahan produk & harga tersimpan di Cloud.');
+            
+            const modal = document.getElementById('pricelist-detail-modal');
+            if (modal && modal.classList.contains('show')) {
+                openSingleProductPriceModal(item.id);
+            }
+        } catch (e) {
+            console.warn('Gagal mengedit produk di Supabase:', e);
+            setConnectionStatus('disconnected');
+            showToast('Gagal', 'Tidak dapat memperbarui data di Cloud.', false);
         }
     }
 };
 
 window.deleteProduct = function(id) {
-    showCustomConfirm("Hapus Model", "Yakin ingin menghapus model dari katalog?", () => {
-        rawPriceListData = rawPriceListData.filter(p => p.id !== id);
-        selectedPriceListModelIds.delete(id);
-        initBrandDropdown(); initReportBrandDropdown(); filterPriceList(); renderLaporanKeuangan(); 
-        closePriceListModal();
-        showToast('Berhasil', 'Produk dihapus.', false);
+    showCustomConfirm("Hapus Model", "Yakin ingin menghapus model ini secara permanen dari server?", async () => {
+        if (supabaseClient) {
+            setConnectionStatus('syncing');
+            try {
+                const { error } = await supabaseClient.from('pricelist').delete().eq('id', id);
+                if (error) throw error;
+
+                rawPriceListData = rawPriceListData.filter(p => p.id !== id);
+                selectedPriceListModelIds.delete(id);
+
+                initBrandDropdown(); 
+                initReportBrandDropdown(); 
+                filterPriceList(); 
+                renderLaporanKeuangan(); 
+                closePriceListModal();
+                setConnectionStatus('connected');
+                showToast('Berhasil', 'Produk dihapus dari Cloud.');
+            } catch (e) {
+                console.warn('Gagal menghapus produk di Supabase:', e);
+                setConnectionStatus('disconnected');
+                showToast('Gagal', 'Gagal menghapus produk.', false);
+            }
+        }
     });
 };
+
+const ORDERED_BRANDS = [
+    'SAMSUNG',
+    'REALME',
+    'INFINIX',
+    'XIAOMI',
+    'REDMI',
+    'VIVO',
+    'POCO',
+    'OPPO',
+    'TECNO',
+    'ITEL'
+];
+
+function sortBrandsWithCustomOrder(brandList) {
+    const brandMap = new Map();
+    brandList.forEach(b => brandMap.set(b.trim().toUpperCase(), b.trim()));
+
+    const result = [];
+    ORDERED_BRANDS.forEach(target => {
+        if (brandMap.has(target)) {
+            result.push(brandMap.get(target));
+            brandMap.delete(target);
+        }
+    });
+
+    const remaining = Array.from(brandMap.values()).sort((a, b) => a.localeCompare(b));
+    return [...result, ...remaining];
+}
 
 function initBrandDropdown() {
     const brandSelect = document.getElementById('filter-brand-select');
     if (!brandSelect) return;
-    brandSelect.innerHTML = '<option value="ALL">Semua Merk</option>';
-    Array.from(new Set(rawPriceListData.map(item => item.brand.trim()))).sort().forEach(brand => {
-        const opt = document.createElement('option'); opt.value = brand; opt.textContent = brand; brandSelect.appendChild(opt);
+    
+    const currentVal = brandSelect.value || 'ALL';
+    brandSelect.innerHTML = '<option value="ALL">All Merek</option>';
+    
+    const uniqueBrands = Array.from(new Set(rawPriceListData.map(item => item.brand.trim()))).filter(Boolean);
+    const sortedBrands = sortBrandsWithCustomOrder(uniqueBrands);
+
+    sortedBrands.forEach(brand => {
+        const opt = document.createElement('option');
+        opt.value = brand;
+        opt.textContent = brand;
+        if (brand === currentVal) opt.selected = true;
+        brandSelect.appendChild(opt);
     });
+
     buildCustomDropdown(brandSelect);
 }
 
 function initReportBrandDropdown() {
     const brandSelect = document.getElementById('report-filter-brand-select');
     if (!brandSelect) return;
-    brandSelect.innerHTML = '<option value="ALL">Semua Merk</option>';
-    Array.from(new Set(rawPriceListData.map(item => item.brand.trim()))).sort().forEach(brand => {
-        const opt = document.createElement('option'); opt.value = brand; opt.textContent = brand; brandSelect.appendChild(opt);
+
+    const currentVal = brandSelect.value || 'ALL';
+    brandSelect.innerHTML = '<option value="ALL">All Merek</option>';
+    
+    const uniqueBrands = Array.from(new Set(rawPriceListData.map(item => item.brand.trim()))).filter(Boolean);
+    const sortedBrands = sortBrandsWithCustomOrder(uniqueBrands);
+
+    sortedBrands.forEach(brand => {
+        const opt = document.createElement('option');
+        opt.value = brand;
+        opt.textContent = brand;
+        if (brand === currentVal) opt.selected = true;
+        brandSelect.appendChild(opt);
     });
+
     buildCustomDropdown(brandSelect);
 }
 
@@ -1463,8 +1495,10 @@ function filterPriceList() {
         currentFilteredData = [];
     } else {
         currentFilteredData = rawPriceListData.filter(item => {
-            return (brandVal === 'ALL' || item.brand.trim() === brandVal) && 
-                   (item.model.toLowerCase().includes(searchVal) || item.brand.toLowerCase().includes(searchVal));
+            const itemBrand = (item.brand || '').trim().toUpperCase();
+            const filterBrand = brandVal.trim().toUpperCase();
+            return (brandVal === 'ALL' || itemBrand === filterBrand) && 
+                   ((item.model || '').toLowerCase().includes(searchVal) || (item.brand || '').toLowerCase().includes(searchVal));
         });
     }
     
@@ -1489,7 +1523,7 @@ function renderPage() {
                 <i class="fa-solid fa-magnifying-glass-arrow-right icon-placeholder" style="font-size: 32px; opacity: 0.6;"></i>
                 <h3 style="font-size: 14px; font-weight: 800; margin-top: 6px;">Cari Model Handphone</h3>
                 <p style="font-size: 11.5px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4;">
-                    Ketik model di atas (contoh: <b>Realme 11</b>) lalu tekan <b>Enter</b>, atau pilih merk untuk melihat daftar harga.
+                    Ketik model di atas lalu tekan <b>Enter</b>, atau pilih merk untuk melihat daftar harga.
                 </p>
             </div>
         `;
@@ -1557,7 +1591,7 @@ function generatePriceCardHTML(item) {
                     <div class="price-card-model" style="font-size: 13.5px; margin-top: 3px;">${item.model}</div>
                 </div>
                 <div class="price-card-actions">
-                    <button class="action-btn edit-btn" onclick="editProduct('${item.id}')" title="Edit Harga"><i class="fa-solid fa-pen"></i></button>
+                    <button class="action-btn edit-btn" onclick="editProduct('${item.id}')" title="Edit Produk & Harga"><i class="fa-solid fa-pen"></i></button>
                     <button class="action-btn delete-btn" onclick="deleteProduct('${item.id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>
@@ -1626,7 +1660,9 @@ window.closePriceListModal = function() {
     document.getElementById('pricelist-detail-modal')?.classList.remove('show');
 };
 
-/* NAVIGASI & AUTH */
+/* ========================================================== */
+/* NAVIGASI & AUTHENTIKASI SUPABASE                           */
+/* ========================================================== */
 function restartApp(btn) { btn?.classList.add('spinning'); setTimeout(() => window.location.reload(), 450); }
 function toggleTheme() {
     const isDark = document.body.classList.toggle('dark-mode');
@@ -1637,11 +1673,7 @@ function toggleTheme() {
 function handleLogout() {
     showCustomConfirm("Keluar", "Yakin ingin keluar?", async () => { 
         if (supabaseClient) {
-            try {
-                await supabaseClient.auth.signOut();
-            } catch (err) {
-                console.warn('Logout error Supabase:', err);
-            }
+            try { await supabaseClient.auth.signOut(); } catch (err) {}
         }
         localStorage.setItem('npgalery_logged_in', 'false'); 
         document.getElementById('auth-modal')?.classList.remove('hidden'); 
@@ -1677,10 +1709,8 @@ async function handleLogin(e) {
         if (document.getElementById('auth-password')) document.getElementById('auth-password').value = '';
         
         showToast('Login Berhasil', 'Selamat datang, Admin NPGalery!');
-        
         await syncFromSupabase();
     } catch (err) {
-        console.error("Login Error:", err);
         showToast('Akses Ditolak', 'Email atau Password salah!', false);
     }
 }
@@ -1690,13 +1720,13 @@ function switchTab(tabId, el) {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById(tabId)?.classList.add('active'); el?.classList.add('active');
 }
+
 function switchSubTab(subId, el) {
     const p = el.closest('.tab-content');
     p?.querySelectorAll('.sub-content').forEach(s => s.classList.remove('active'));
     p?.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(subId)?.classList.add('active'); el?.classList.add('active');
 
-    // AUTO-FETCH: Jika membuka sub-tab modal, otomatis tarik data terbaru dari cloud Supabase
     if (subId === 'sub-modal' && navigator.onLine && supabaseClient) {
         syncTransactionsFromSupabaseOnly();
     }
@@ -1739,7 +1769,7 @@ window.selectStokKatalog = function(val) {
     document.getElementById('stok-autocomplete-list')?.classList.add('hidden');
 };
 
-// SIMPAN STOK
+// SIMPAN STOK (100% CLOUD SUPABASE)
 window.simpanStokBaru = async function() {
     let produk = document.getElementById('stok-produk-input').value.trim();
     let imei = document.getElementById('stok-imei').value.trim();
@@ -1748,49 +1778,52 @@ window.simpanStokBaru = async function() {
 
     const newStockItem = {
         id: 'stok-' + Date.now(),
-        produk,
-        kondisi: document.getElementById('stok-kondisi').value,
-        kelengkapan: document.getElementById('stok-kelengkapan').value,
-        imei,
-        qty: document.getElementById('stok-qty').value || '1',
-        hargaModal: document.getElementById('stok-harga').value || '0',
-        hargaJual: '',
-        pembeli: '',
-        tanggal
+        name: produk,
+        condition: document.getElementById('stok-kondisi').value,
+        completeness: document.getElementById('stok-kelengkapan').value,
+        imei: imei,
+        qty: parseInt(document.getElementById('stok-qty').value) || 1,
+        buy_price: parseRawToNumeric(document.getElementById('stok-harga').value) || 0,
+        sell_price: 0,
+        status: 'ready',
+        buyer: '',
+        date: tanggal
     };
-
-    daftarStokMasuk.unshift(newStockItem);
-    saveStokToStorage();
-    renderDaftarStokMasuk();
-    updateDashboardStats();
-    renderLaporanKeuangan();
-    showToast('Tersimpan', 'Stok baru masuk.');
-
-    document.getElementById('stok-produk-input').value = '';
-    document.getElementById('stok-imei').value = '';
-    document.getElementById('stok-harga').value = '';
-
-    closeAddStokModal();
 
     if (supabaseClient) {
         setConnectionStatus('syncing');
         try {
-            await supabaseClient.from('product').insert([{
+            const { error } = await supabaseClient.from('product').insert([newStockItem]);
+            if (error) throw error;
+
+            daftarStokMasuk.unshift({
                 id: newStockItem.id,
-                name: newStockItem.produk,
-                condition: newStockItem.kondisi,
-                completeness: newStockItem.kelengkapan,
+                produk: newStockItem.name,
+                kondisi: newStockItem.condition,
+                kelengkapan: newStockItem.completeness,
                 imei: newStockItem.imei,
-                qty: parseInt(newStockItem.qty) || 1,
-                buy_price: parseRawToNumeric(newStockItem.hargaModal) || 0,
-                sell_price: 0,
-                status: 'ready',
-                date: newStockItem.tanggal
-            }]);
+                qty: String(newStockItem.qty),
+                hargaModal: String(newStockItem.buy_price),
+                hargaJual: '',
+                pembeli: '',
+                tanggal: newStockItem.date
+            });
+
+            renderDaftarStokMasuk();
+            updateDashboardStats();
+            renderLaporanKeuangan();
+
+            document.getElementById('stok-produk-input').value = '';
+            document.getElementById('stok-imei').value = '';
+            document.getElementById('stok-harga').value = '';
+            closeAddStokModal();
+
             setConnectionStatus('connected');
+            showToast('Tersimpan', 'Stok baru tersimpan di Cloud.');
         } catch (e) {
-            console.warn('Gagal sinkron stok ke Supabase:', e);
+            console.warn('Gagal simpan stok ke Supabase:', e);
             setConnectionStatus('disconnected');
+            showToast('Gagal', 'Gagal menyimpan stok ke server.', false);
         }
     }
 };
@@ -1825,7 +1858,7 @@ function createStokDetailModalDOM() {
                 <div class="stok-modal-header"><span class="modal-brand-tag" id="modal-detail-brand"></span><h3 id="modal-detail-title"></h3><p id="modal-detail-imei"></p></div>
                 <div class="stok-modal-body">
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">Kondisi</span><span class="stok-modal-info-val" id="modal-detail-kondisi"></span></div>
-                    <div class="stok-modal-info-label">Kelengkapan</span><span class="stok-modal-info-val" id="modal-detail-kelengkapan"></span></div>
+                    <div class="stok-modal-info-row"><span class="stok-modal-info-label">Kelengkapan</span><span class="stok-modal-info-val" id="modal-detail-kelengkapan"></span></div>
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">Tgl Masuk</span><span class="stok-modal-info-val" id="modal-detail-tanggal"></span></div>
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">QTY</span><span class="stok-modal-info-val" id="modal-detail-qty"></span></div>
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">Modal</span><span class="stok-modal-info-val" id="modal-detail-harga"></span></div>
@@ -1870,7 +1903,6 @@ window.updateHargaJualLive = function(val) {
     const item = daftarStokMasuk.find(s => s.id === activeDetailStokId);
     if (item) {
         item.hargaJual = val;
-        saveStokToStorage();
         if (supabaseClient) {
             supabaseClient.from('product').update({ sell_price: parseRawToNumeric(val) || 0 }).eq('id', item.id).then();
         }
@@ -1881,7 +1913,6 @@ window.updatePembeliLive = function(val) {
     const item = daftarStokMasuk.find(s => s.id === activeDetailStokId);
     if (item) {
         item.pembeli = val;
-        saveStokToStorage();
         if (supabaseClient) {
             supabaseClient.from('product').update({ buyer: val }).eq('id', item.id).then();
         }
@@ -1890,29 +1921,17 @@ window.updatePembeliLive = function(val) {
 
 window.closeStokDetailModal = function() { document.getElementById('stok-detail-modal')?.classList.remove('show'); activeDetailStokId = null; };
 
-// JUAL STOK
+// PROSES JUAL UNIT KE SUPABASE TRANSACTIONS
 window.jualStokItem = function(id) {
     const item = daftarStokMasuk.find(s => s.id === id);
     if (item) {
         showCustomConfirm("Penjualan", `Jual unit ${item.produk}?`, async () => {
-            daftarStokMasuk = daftarStokMasuk.filter(s => s.id !== id);
-            saveStokToStorage();
             let d = new Date(), tgl = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
             item.tanggalTerjualRaw = tgl; 
             item.modalStatus = 'belum';
-            daftarTerjual.unshift(item); 
-            saveTerjualToStorage();
 
             let profit = (parseRawToNumeric(item.hargaJual) || 0) - (parseRawToNumeric(item.hargaModal) || 0);
             let kasId = 'kas-' + Date.now();
-            if (profit > 0) {
-                daftarKasPribadi.unshift({ id: kasId, keterangan: `Laba Jual: ${item.produk}`, kategori: 'masuk', nominal: profit, tanggal: tgl });
-                saveKasToStorage();
-            }
-
-            renderDaftarStokMasuk(); renderDaftarTerjual(); renderDaftarModal(); renderManajemenKas(); updateDashboardStats(); updatePribadiStats(); renderLaporanKeuangan();
-            showToast('Berhasil', 'Unit terjual & laba masuk kas.');
-            openInvoiceModal(item);
 
             if (supabaseClient) {
                 setConnectionStatus('syncing');
@@ -1943,10 +1962,28 @@ window.jualStokItem = function(id) {
                             date: tgl
                         }]);
                     }
+
+                    daftarStokMasuk = daftarStokMasuk.filter(s => s.id !== id);
+                    daftarTerjual.unshift(item);
+                    if (profit > 0) {
+                        daftarKasPribadi.unshift({ id: kasId, keterangan: `Laba Jual: ${item.produk}`, kategori: 'masuk', nominal: profit, tanggal: tgl });
+                    }
+
+                    renderDaftarStokMasuk(); 
+                    renderDaftarTerjual(); 
+                    renderDaftarModal(); 
+                    renderManajemenKas(); 
+                    updateDashboardStats(); 
+                    updatePribadiStats(); 
+                    renderLaporanKeuangan();
+
                     setConnectionStatus('connected');
+                    showToast('Berhasil', 'Unit terjual & laba tercatat di Cloud.');
+                    openInvoiceModal(item);
                 } catch (err) {
                     console.warn('Gagal sinkron penjualan ke Supabase:', err);
                     setConnectionStatus('disconnected');
+                    showToast('Gagal', 'Terjadi kendala memproses penjualan di Cloud.', false);
                 }
             }
         });
@@ -1954,14 +1991,16 @@ window.jualStokItem = function(id) {
 };
 
 /* ========================================================== */
-/* INVOICE A4 (FORMAT NOMINAL NORMAL LENGKAP)                 */
+/* INVOICE NOTA A4 DENGAN KUSTOMISASI HARGA SEMENTARA         */
 /* ========================================================== */
-function generateInvoiceHTML(item) {
+function generateInvoiceHTML(item, overridePrice = null) {
     let invoiceNo = 'INV-' + (item.tanggalTerjualRaw ? item.tanggalTerjualRaw.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '')) + '-' + String(item.id).slice(-4);
     let customerName = item.pembeli && item.pembeli.trim() !== '' ? item.pembeli.trim() : 'Pelanggan Setia';
-    let numericJual = parseRawToNumeric(item.hargaJual) || 0;
-    let hargaTampil = formatRupiahLengkap(numericJual);
+    
+    // Gunakan harga penyesuaian sementara jika ada
+    let numericJual = (overridePrice !== null) ? overridePrice : (parseRawToNumeric(item.hargaJual) || 0);
     let qty = parseInt(item.qty || 1);
+    let hargaTotalTampil = formatRupiahLengkap(numericJual);
     let tglTampil = formatTanggalID(item.tanggalTerjualRaw || new Date().toISOString().slice(0, 10));
 
     return `
@@ -1972,6 +2011,11 @@ function generateInvoiceHTML(item) {
                     <div>
                         <h2 class="invoice-brand-title">NP - GALERY</h2>
                         <p class="invoice-brand-sub">Smartphone Store</p>
+                        <div class="invoice-contact-row">
+                            <span class="invoice-contact-item wa"><i class="fa-brands fa-whatsapp"></i> 0878 3313 3318</span>
+                            <span class="invoice-contact-divider">|</span>
+                            <span class="invoice-contact-item email"><i class="fa-solid fa-envelope"></i> helboynpgalery@gmail.com</span>
+                        </div>
                     </div>
                 </div>
                 <div class="invoice-num-badge">
@@ -1996,14 +2040,14 @@ function generateInvoiceHTML(item) {
                             <div class="invoice-item-imei">SN/IMEI: ${item.imei || '-'}</div>
                         </td>
                         <td align="center" style="font-weight: 700; font-size: 12px;">${qty}</td>
-                        <td align="right" style="font-weight: 800; color: #0077B6; font-size: 13px;">${hargaTampil}</td>
+                        <td align="right" style="font-weight: 800; color: #0077B6; font-size: 13px;">${hargaTotalTampil}</td>
                     </tr>
                 </tbody>
             </table>
 
             <div class="invoice-total-row">
                 <span class="invoice-total-label">TOTAL PEMBAYARAN (LUNAS)</span>
-                <span class="invoice-total-val">${hargaTampil}</span>
+                <span class="invoice-total-val">${hargaTotalTampil}</span>
             </div>
 
             <div class="invoice-footer-signatures">
@@ -2024,16 +2068,56 @@ function generateInvoiceHTML(item) {
 
 window.openInvoiceModal = function(item) {
     activeInvoiceData = item;
+    tempInvoiceOriginalItem = item;
+    tempInvoiceOverridePrice = null;
+
     const body = document.getElementById('invoice-preview-body');
     const modal = document.getElementById('invoice-modal');
+    const priceInput = document.getElementById('invoice-custom-price-input');
+
+    if (priceInput) {
+        let basePrice = parseRawToNumeric(item.hargaJual) || 0;
+        priceInput.value = basePrice ? basePrice.toLocaleString('id-ID') : '';
+    }
+
     if (!body || !modal) return;
     body.innerHTML = generateInvoiceHTML(item);
     modal.classList.add('show');
 };
 
+window.handleInvoiceCustomPriceChange = function(rawVal) {
+    if (!activeInvoiceData) return;
+    let numeric = parseRawToNumeric(rawVal);
+    tempInvoiceOverridePrice = numeric !== null ? numeric : 0;
+
+    const body = document.getElementById('invoice-preview-body');
+    if (body) {
+        body.innerHTML = generateInvoiceHTML(activeInvoiceData, tempInvoiceOverridePrice);
+    }
+};
+
+window.resetInvoicePriceToOriginal = function() {
+    if (!tempInvoiceOriginalItem) return;
+    let basePrice = parseRawToNumeric(tempInvoiceOriginalItem.hargaJual) || 0;
+    tempInvoiceOverridePrice = null;
+
+    const priceInput = document.getElementById('invoice-custom-price-input');
+    if (priceInput) {
+        priceInput.value = basePrice ? basePrice.toLocaleString('id-ID') : '';
+    }
+
+    const body = document.getElementById('invoice-preview-body');
+    if (body) {
+        body.innerHTML = generateInvoiceHTML(tempInvoiceOriginalItem);
+    }
+    showToast('Reset', 'Harga invoice dikembalikan ke nilai awal.');
+};
+
 window.closeInvoiceModal = function() {
     document.getElementById('invoice-modal')?.classList.remove('show');
     activeInvoiceData = null;
+    tempInvoiceOverridePrice = null;
+    tempInvoiceOriginalItem = null;
 };
 
 window.shareInvoiceWA = function() {
@@ -2041,7 +2125,9 @@ window.shareInvoiceWA = function() {
     let item = activeInvoiceData;
     let invoiceNo = 'INV-' + (item.tanggalTerjualRaw ? item.tanggalTerjualRaw.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '')) + '-' + String(item.id).slice(-4);
     let customerName = item.pembeli && item.pembeli.trim() !== '' ? item.pembeli.trim() : 'Pelanggan Setia';
-    let numericJual = parseRawToNumeric(item.hargaJual) || 0;
+    
+    // Pakai nominal kustom sementara jika ada
+    let numericJual = (tempInvoiceOverridePrice !== null) ? tempInvoiceOverridePrice : (parseRawToNumeric(item.hargaJual) || 0);
     let tglTampil = formatTanggalID(item.tanggalTerjualRaw || new Date().toISOString().slice(0, 10));
 
     let text = `🧾 *NOTA INVOICE RESMI - NP GALERY* 🧾\n`;
@@ -2056,6 +2142,9 @@ window.shareInvoiceWA = function() {
     text += `🔢 IMEI/SN     : ${item.imei || '-'}\n`;
     text += `───────────────────────\n`;
     text += `💰 Total Bayar : *${formatRupiahLengkap(numericJual)}* (LUNAS)\n`;
+    text += `───────────────────────\n`;
+    text += `📞 WhatsApp : 0878 3313 3318\n`;
+    text += `📧 Email    : helboynpgalery@gmail.com\n`;
     text += `───────────────────────\n`;
     text += `Terima kasih atas kepercayaan Anda bertransaksi di *NP - Galery Smartphone*! 🙏✨`;
 
@@ -2078,26 +2167,30 @@ window.downloadInvoiceImage = function() {
     const canvasWrap = document.getElementById('invoice-render-canvas');
     if (!canvasWrap) return;
 
-    canvasWrap.innerHTML = generateInvoiceHTML(activeInvoiceData);
+    // Render canvas dengan harga penyesuaian sementara jika ada
+    canvasWrap.innerHTML = generateInvoiceHTML(activeInvoiceData, tempInvoiceOverridePrice);
 
     html2canvas(canvasWrap, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true }).then(canvas => {
         let link = document.createElement('a');
         link.download = `Invoice_A4_NPGalery_${activeInvoiceData.produk.replace(/\s+/g, '_')}_${Date.now()}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
-        showToast('Berhasil!', 'Nota invoice format A4 diunduh sebagai gambar.');
+        showToast('Berhasil!', 'Nota invoice format A4 diunduh.');
     });
 };
 
 window.hapusStokItem = function(id) {
     showCustomConfirm("Hapus Stok", "Hapus unit ini?", async () => {
-        daftarStokMasuk = daftarStokMasuk.filter(s => s.id !== id);
-        saveStokToStorage(); renderDaftarStokMasuk(); updateDashboardStats(); renderLaporanKeuangan();
         if (supabaseClient) {
             setConnectionStatus('syncing');
             try { 
                 await supabaseClient.from('product').delete().eq('id', id); 
+                daftarStokMasuk = daftarStokMasuk.filter(s => s.id !== id);
+                renderDaftarStokMasuk(); 
+                updateDashboardStats(); 
+                renderLaporanKeuangan();
                 setConnectionStatus('connected');
+                showToast('Berhasil', 'Stok dihapus dari server.');
             } catch (e) {
                 setConnectionStatus('disconnected');
             }
@@ -2107,13 +2200,17 @@ window.hapusStokItem = function(id) {
 
 window.hapusRiwayatTerjual = function(id) {
     showCustomConfirm("Hapus Riwayat", "Hapus riwayat penjualan?", async () => {
-        daftarTerjual = daftarTerjual.filter(s => s.id !== id);
-        saveTerjualToStorage(); renderDaftarTerjual(); renderDaftarModal(); updateDashboardStats(); renderLaporanKeuangan();
         if (supabaseClient) {
             setConnectionStatus('syncing');
             try { 
                 await supabaseClient.from('transactions').delete().eq('id', id); 
+                daftarTerjual = daftarTerjual.filter(s => s.id !== id);
+                renderDaftarTerjual(); 
+                renderDaftarModal(); 
+                updateDashboardStats(); 
+                renderLaporanKeuangan();
                 setConnectionStatus('connected');
+                showToast('Berhasil', 'Riwayat penjualan dihapus dari Cloud.');
             } catch (e) {
                 setConnectionStatus('disconnected');
             }
@@ -2197,38 +2294,102 @@ function renderDaftarTerjual() {
     }).join('');
 }
 
+/* ========================================================== */
+/* RENDER SUB-TAB MODAL                                       */
+/* ========================================================== */
 function renderDaftarModal() {
-    const container = document.getElementById('sub-modal');
-    if (!container) return;
-    if (daftarTerjual.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-vault icon-placeholder"></i><h2>Manajemen Modal</h2></div>`; return; }
-    container.innerHTML = `
-        <div class="stok-masuk-header"><div class="header-left"><i class="fa-solid fa-vault"></i><h4>Status Kembali Modal</h4></div></div>
-        <div class="stok-masuk-container" style="max-height:550px;">
-            ${daftarTerjual.map(i => {
-                let s = i.modalStatus === 'sudah';
-                let disabledAttr = s ? 'disabled style="opacity: 0.85; cursor: not-allowed;"' : '';
+    let belumKembali = daftarTerjual.filter(i => i.modalStatus !== 'sudah');
+    let sudahKembali = daftarTerjual.filter(i => i.modalStatus === 'sudah');
+
+    let totalNominalBelum = belumKembali.reduce((sum, item) => sum + (parseRawToNumeric(item.hargaModal) || 0) * parseInt(item.qty || 1), 0);
+    let totalNominalSudah = sudahKembali.reduce((sum, item) => sum + (parseRawToNumeric(item.hargaModal) || 0) * parseInt(item.qty || 1), 0);
+
+    const belumNomElem = document.getElementById('modal-belum-nominal');
+    const sudahNomElem = document.getElementById('modal-sudah-nominal');
+
+    if (belumNomElem) belumNomElem.textContent = formatRupiahRingkas(totalNominalBelum);
+    if (sudahNomElem) sudahNomElem.textContent = formatRupiahRingkas(totalNominalSudah);
+
+    const badgeBelum = document.getElementById('badge-modal-belum-count');
+    const badgeSudah = document.getElementById('badge-modal-sudah-count');
+    if (badgeBelum) badgeBelum.textContent = `${belumKembali.length} Unit`;
+    if (badgeSudah) badgeSudah.textContent = `${sudahKembali.length} Unit`;
+
+    const containerBelum = document.getElementById('container-modal-belum-list');
+    if (containerBelum) {
+        if (belumKembali.length === 0) {
+            containerBelum.innerHTML = `<div class="empty-stok-msg">Semua modal unit telah kembali.</div>`;
+        } else {
+            containerBelum.innerHTML = belumKembali.map(i => {
+                let numericModal = parseRawToNumeric(i.hargaModal) || 0;
+                let namaPembeliText = i.pembeli && i.pembeli.trim() !== '' ? ` • Pembeli: <b>${i.pembeli}</b>` : '';
                 return `
                     <div class="stok-item-card" style="cursor:default;">
                         <div class="stok-item-top">
-                            <span class="stok-item-title">${i.produk}</span>
-                            <button onclick="toggleModalStatus('${i.id}')" ${disabledAttr} style="background:${s?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'}; color:${s?'var(--status-safe)':'var(--status-unsafe)'}; border:1px solid currentColor; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:${s?'not-allowed':'pointer'};">${s?'Sudah':'Belum'}</button>
+                            <div class="stok-title-group">
+                                <span class="kondisi-badge ${i.kondisi.toLowerCase()}">${i.kondisi}</span>
+                                <span class="stok-item-title">${i.produk}</span>
+                            </div>
+                            <button onclick="toggleModalStatus('${i.id}')" style="background: rgba(16, 185, 129, 0.12); color: var(--status-safe); border: 1px solid currentColor; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fa-solid fa-check"></i> Sudah
+                            </button>
+                        </div>
+                        <div class="stok-item-details">
+                            <span class="detail-badge imei-badge">IMEI: ${i.imei || '-'}</span>
+                            <span class="detail-badge">${formatTanggalID(i.tanggalTerjualRaw || i.tanggal)}</span>
+                            <span class="detail-badge qty-badge">${i.qty || 1} unit</span>
+                            <span class="detail-badge" style="font-size: 10px; color: var(--text-secondary);">${namaPembeliText}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px; font-weight:700;">
+                            <span style="color:var(--text-secondary);">Modal Unit:</span>
+                            <span style="color:#EF4444; font-family:var(--font-mono);">${formatRupiahRingkas(numericModal)}</span>
                         </div>
                     </div>
                 `;
-            }).join('')}
-        </div>
-    `;
+            }).join('');
+        }
+    }
+
+    const containerSudah = document.getElementById('container-modal-sudah-list');
+    if (containerSudah) {
+        if (sudahKembali.length === 0) {
+            containerSudah.innerHTML = `<div class="empty-stok-msg">Belum ada catatan modal yang kembali.</div>`;
+        } else {
+            containerSudah.innerHTML = sudahKembali.map(i => {
+                let numericModal = parseRawToNumeric(i.hargaModal) || 0;
+                let namaPembeliText = i.pembeli && i.pembeli.trim() !== '' ? ` • Pembeli: <b>${i.pembeli}</b>` : '';
+                return `
+                    <div class="stok-item-card" style="cursor:default;">
+                        <div class="stok-item-top">
+                            <div class="stok-title-group">
+                                <span class="kondisi-badge ${i.kondisi.toLowerCase()}">${i.kondisi}</span>
+                                <span class="stok-item-title">${i.produk}</span>
+                            </div>
+                            <span style="background: rgba(16, 185, 129, 0.12); color: var(--status-safe); border: 1px solid rgba(16, 185, 129, 0.3); padding: 3px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 800;">
+                                <i class="fa-solid fa-check-double"></i> Selesai
+                            </span>
+                        </div>
+                        <div class="stok-item-details">
+                            <span class="detail-badge imei-badge">IMEI: ${i.imei || '-'}</span>
+                            <span class="detail-badge">${formatTanggalID(i.tanggalTerjualRaw || i.tanggal)}</span>
+                            <span class="detail-badge qty-badge">${i.qty || 1} unit</span>
+                            <span class="detail-badge" style="font-size: 10px; color: var(--text-secondary);">${namaPembeliText}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px; font-weight:700;">
+                            <span style="color:var(--text-secondary);">Modal Kembali:</span>
+                            <span style="color:#10B981; font-family:var(--font-mono);">${formatRupiahRingkas(numericModal)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
 }
 
 window.toggleModalStatus = async function(id) {
     const item = daftarTerjual.find(s => s.id === id);
     if (item) {
-        if (item.modalStatus === 'sudah') return; // Cegah perubahan kembali jika sudah terkunci
-        
-        item.modalStatus = 'sudah';
-        saveTerjualToStorage();
-        renderDaftarModal();
-        showToast('Memperbarui', 'Menyimpan status modal ke cloud...');
+        if (item.modalStatus === 'sudah') return;
 
         if (supabaseClient) {
             setConnectionStatus('syncing');
@@ -2240,12 +2401,14 @@ window.toggleModalStatus = async function(id) {
 
                 if (error) throw error;
 
+                item.modalStatus = 'sudah';
+                renderDaftarModal();
                 setConnectionStatus('connected');
-                showToast('Berhasil', 'Status modal tersinkron ke cloud.');
+                showToast('Berhasil', 'Modal berhasil ditandai sudah kembali.');
             } catch (err) {
                 console.warn('Gagal sinkron status modal:', err);
                 setConnectionStatus('disconnected');
-                showToast('Offline', 'Perubahan tersimpan secara lokal.', false);
+                showToast('Gagal', 'Gagal memperbarui status modal.', false);
             }
         }
     }
@@ -2259,52 +2422,54 @@ window.tambahKasPribadi = async function() {
 
     const newKasItem = {
         id: 'kas-' + Date.now(),
-        keterangan: ket,
-        kategori: document.getElementById('kas-kategori').value,
-        nominal: nom,
-        tanggal: tgl
+        description: ket,
+        type: document.getElementById('kas-kategori').value,
+        amount: nom,
+        date: tgl
     };
-
-    daftarKasPribadi.unshift(newKasItem);
-    saveKasToStorage();
-    document.getElementById('kas-keterangan').value = '';
-    document.getElementById('kas-nominal').value = '';
-    closeAddKasModal();
-    renderManajemenKas();
-    updatePribadiStats();
-    renderLaporanKeuangan();
-    showToast('Berhasil', 'Kas ditambahkan.');
 
     if (supabaseClient) {
         setConnectionStatus('syncing');
         try {
-            await supabaseClient.from('cash_mutations').insert([{
+            const { error } = await supabaseClient.from('cash_mutations').insert([newKasItem]);
+            if (error) throw error;
+
+            daftarKasPribadi.unshift({
                 id: newKasItem.id,
-                description: newKasItem.keterangan,
-                type: newKasItem.kategori,
-                amount: newKasItem.nominal,
-                date: newKasItem.tanggal
-            }]);
+                keterangan: newKasItem.description,
+                kategori: newKasItem.type,
+                nominal: newKasItem.amount,
+                tanggal: newKasItem.date
+            });
+
+            document.getElementById('kas-keterangan').value = '';
+            document.getElementById('kas-nominal').value = '';
+            closeAddKasModal();
+            renderManajemenKas();
+            updatePribadiStats();
+            renderLaporanKeuangan();
             setConnectionStatus('connected');
+            showToast('Berhasil', 'Kas dicatat ke Cloud.');
         } catch (e) {
             console.warn('Gagal sinkron kas ke Supabase:', e);
             setConnectionStatus('disconnected');
+            showToast('Gagal', 'Gagal mencatat kas ke server.', false);
         }
     }
 };
 
 window.hapusKasPribadi = function(id) {
     showCustomConfirm("Hapus Kas", "Hapus catatan kas ini?", async () => {
-        daftarKasPribadi = daftarKasPribadi.filter(k => k.id !== id);
-        saveKasToStorage();
-        renderManajemenKas();
-        updatePribadiStats();
-        renderLaporanKeuangan();
         if (supabaseClient) {
             setConnectionStatus('syncing');
             try { 
                 await supabaseClient.from('cash_mutations').delete().eq('id', id); 
+                daftarKasPribadi = daftarKasPribadi.filter(k => k.id !== id);
+                renderManajemenKas();
+                updatePribadiStats();
+                renderLaporanKeuangan();
                 setConnectionStatus('connected');
+                showToast('Berhasil', 'Catatan kas dihapus.');
             } catch (e) {
                 setConnectionStatus('disconnected');
             }
@@ -2337,7 +2502,9 @@ window.renderManajemenKas = function() {
     `).join('');
 };
 
-/* BROADCAST WA & STORY BANNER */
+/* ========================================================== */
+/* BROADCAST WHATSAPP & BANNER STORY                          */
+/* ========================================================== */
 window.broadcastStokWA = function() {
     if (daftarStokMasuk.length === 0) {
         showToast('Info', 'Belum ada stok ready untuk dibagikan.', false);
@@ -2358,12 +2525,12 @@ window.broadcastStokWA = function() {
     });
 
     text += `───────────────────────\n`;
-    text += `⚡ Minat? Langsung kirim pesan / kontak ke admin sekarang!\n`;
+    text += `⚡ Minat? Langsung kontak ke admin sekarang!\n`;
     text += `📱 NP - Galery Smartphone`;
 
     if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => {
-            showToast('Tersalin!', 'Format nota WhatsApp disalin.');
+            showToast('Tersalin!', 'Format broadcast disalin.');
             setTimeout(() => {
                 window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
             }, 600);
@@ -2415,7 +2582,7 @@ function generateStoryBannerHTML() {
             </div>
 
             <div class="story-footer">
-                <span class="story-footer-info">Garansi Resmi Toko • Siap COD / Antar</span>
+                <span class="story-footer-info">Garansi Toko • Siap COD / Antar</span>
                 <span class="story-contact-badge"><i class="fa-brands fa-whatsapp"></i> Chat Admin</span>
             </div>
         </div>
@@ -2454,16 +2621,14 @@ window.executeDownloadStoryBanner = function() {
         link.download = `NPGalery_KatalogStory_${new Date().toISOString().slice(0, 10)}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
-        showToast('Berhasil!', 'Banner story katalog siap posting diunduh.');
+        showToast('Berhasil!', 'Banner story diunduh.');
         closeStoryPreview();
     });
 };
 
 /* ========================================================== */
-/* LAPORAN & EXPORT MODAL LOGIC                               */
+/* LAPORAN & REKAPITULASI                                     */
 /* ========================================================== */
-
-// PENGATURAN MODAL RINGKASAN LAPORAN
 window.openReportSummaryModal = function() {
     const modal = document.getElementById('report-summary-modal');
     if (modal) {
@@ -2476,7 +2641,6 @@ window.closeReportSummaryModal = function() {
     document.getElementById('report-summary-modal')?.classList.remove('show');
 };
 
-// PENGATURAN MODAL RINCIAN LAPORAN (SCROLLABLE)
 window.openReportDetailsModal = function() {
     const modal = document.getElementById('report-details-modal');
     if (modal) {
@@ -2489,10 +2653,8 @@ window.closeReportDetailsModal = function() {
     document.getElementById('report-details-modal')?.classList.remove('show');
 };
 
-// PENGATURAN MODAL FORMAT FILE & UNDUH
 window.openReportFormatModal = function() {
-    const modal = document.getElementById('report-format-modal');
-    if (modal) modal.classList.add('show');
+    document.getElementById('report-format-modal')?.classList.add('show');
 };
 
 window.closeReportFormatModal = function() {
@@ -2517,7 +2679,7 @@ window.openReportFilterModal = function() {
 
     if (subtitle) {
         let catTitles = { kas: 'Kas Pribadi', penjualan: 'Penjualan', stok: 'Stok Ready', pricelist: 'Price List' };
-        subtitle.textContent = `Pengaturan filter data: ${catTitles[activeReportCategory] || 'Laporan'}`;
+        subtitle.textContent = `Filter data: ${catTitles[activeReportCategory] || 'Laporan'}`;
     }
 
     if (filterKasArea) filterKasArea.style.display = (activeReportCategory === 'kas') ? 'flex' : 'none';
@@ -2545,8 +2707,10 @@ function getFilteredReportPriceListAll() {
     let brandVal = document.getElementById('report-filter-brand-select')?.value || 'ALL';
     let searchVal = document.getElementById('report-filter-model-input')?.value.toLowerCase().trim() || '';
     return rawPriceListData.filter(item => {
-        return (brandVal === 'ALL' || item.brand.trim() === brandVal) && 
-            (item.model.toLowerCase().includes(searchVal) || item.brand.toLowerCase().includes(searchVal));
+        const itemBrand = (item.brand || '').trim().toUpperCase();
+        const filterBrand = brandVal.trim().toUpperCase();
+        return (brandVal === 'ALL' || itemBrand === filterBrand) && 
+            ((item.model || '').toLowerCase().includes(searchVal) || (item.brand || '').toLowerCase().includes(searchVal));
     });
 }
 
@@ -2622,7 +2786,6 @@ window.onReportCategorySelectChanged = function(catKey) {
     renderLaporanKeuangan();
 };
 
-// RENDER ULANG MODAL RINGKASAN & RINCIAN SECARA DINAMIS
 window.renderLaporanKeuangan = function() {
     let d = getLaporanDataSummary();
     updateSelectionIndicator();
@@ -2704,7 +2867,7 @@ window.renderLaporanKeuangan = function() {
 
     } else if (activeReportCategory === 'stok') {
         if (sumTitle) sumTitle.innerHTML = `<i class="fa-solid fa-chart-pie" style="color: var(--azure-primary); margin-right: 6px;"></i> Ringkasan Stok Gudang`;
-        if (sumSubtitle) sumSubtitle.textContent = `Rekap jumlah unit yang siap diperjualbelikan`;
+        if (sumSubtitle) sumSubtitle.textContent = `Rekap jumlah unit ready`;
         if (sumBadge) sumBadge.textContent = `${d.sumStok} Ready`;
 
         if (sumBody) {
@@ -2717,7 +2880,7 @@ window.renderLaporanKeuangan = function() {
         }
 
         if (detTitle) detTitle.innerHTML = `<i class="fa-solid fa-list-check" style="color: var(--azure-primary); margin-right: 6px;"></i> Rincian Stok Ready`;
-        if (detSubtitle) detSubtitle.textContent = `Daftar ketersediaan unit di etalase/gudang`;
+        if (detSubtitle) detSubtitle.textContent = `Daftar ketersediaan unit di toko`;
         if (detBadge) detBadge.textContent = `${daftarStokMasuk.length} Unit`;
 
         if (detBody) {
@@ -2766,7 +2929,7 @@ window.renderLaporanKeuangan = function() {
     }
 };
 
-// DOKUMEN EKSPOR A4 (MEMAKAI FORMAT RUPIAH LENGKAP)
+// DOKUMEN EKSPOR A4
 function generateReportCardHTML() {
     let d = getLaporanDataSummary();
     let catTitles = { kas: 'Kas Pribadi', penjualan: 'Penjualan', stok: 'Stok Ready Gudang', pricelist: 'Katalog Price List' };
@@ -2880,7 +3043,6 @@ function generateReportCardHTML() {
     `;
 }
 
-// EKSPOR TXT (MEMAKAI FORMAT RUPIAH LENGKAP)
 function generatePlainTextReport() {
     let d = getLaporanDataSummary();
     let catNames = { kas: 'KAS PRIBADI', penjualan: 'PENJUALAN', stok: 'STOK READY', pricelist: 'PRICE LIST' };
@@ -2925,7 +3087,6 @@ function generatePlainTextReport() {
     return text;
 }
 
-// EKSPOR CSV (NILAI ASLI LENGKAP TANPA PEMOTONGAN)
 function generateCSVReport() {
     let d = getLaporanDataSummary();
     let currentCatKey = activeReportCategory;
@@ -3027,10 +3188,7 @@ function processFileDownload(format) {
                 <meta charset="utf-8">
                 <title>${filename}</title>
                 <style>
-                    @page Section1 {
-                        size: 210mm 297mm;
-                        margin: 1.5cm 1.5cm 1.5cm 1.5cm;
-                    }
+                    @page Section1 { size: 210mm 297mm; margin: 1.5cm 1.5cm 1.5cm 1.5cm; }
                     div.Section1 { page: Section1; }
                     body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #0F172A; }
                     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
@@ -3038,11 +3196,7 @@ function processFileDownload(format) {
                     td { padding: 8px; border: 1px solid #CBD5E1; font-size: 10pt; }
                 </style>
             </head>
-            <body>
-                <div class="Section1">
-                    ${bodyHtml}
-                </div>
-            </body>
+            <body><div class="Section1">${bodyHtml}</div></body>
             </html>
         `;
         downloadFileBlob(new Blob([docHtml], { type: 'application/msword;charset=utf-8' }), `${filename}.doc`);
@@ -3054,23 +3208,16 @@ function processFileDownload(format) {
         }
 
         renderCanvas.innerHTML = generateReportCardHTML();
-
         showToast('Memproses', 'Menyiapkan lembar gambar laporan A4...');
 
-        html2canvas(renderCanvas, {
-            scale: 2,
-            backgroundColor: '#FFFFFF',
-            useCORS: true,
-            logging: false
-        }).then(canvas => {
+        html2canvas(renderCanvas, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false }).then(canvas => {
             let link = document.createElement('a');
             link.download = `${filename}_A4.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-            showToast('Berhasil!', 'Laporan format gambar A4 (PNG) berhasil diunduh.');
-        }).catch(err => {
+            showToast('Berhasil!', 'Laporan format gambar A4 berhasil diunduh.');
+        }).catch(() => {
             showToast('Gagal', 'Gagal merender gambar laporan.', false);
-            console.error(err);
         });
     }
 }
