@@ -171,118 +171,88 @@
                     </div>
                 </div>
 
+                <!-- SUB-TAB DIAGNOSIS / SYSTEM CHECK: TEKS NAMA BRAND SAJA (COMPACT) -->
                 <div id="sub-diagnosis" class="sub-content">
-                    <div class="add-product-card compact-diagnosis-card" style="margin-top: 0;">
-                        <div class="add-header compact-header" style="margin-bottom: 12px;">
-                            <i class="fa-solid fa-microchip" style="font-size: 16px; color: var(--azure-primary);"></i>
-                            <h3>System check</h3>
-                        </div>
-                        
-                        <div class="diagnosis-search-stack">
-                            <div class="autocomplete-wrapper" style="flex: 1;">
-                                <i class="fa-solid fa-magnifying-glass icon-search-glass"></i>
-                                <input type="text" id="diagnosis-input-model" placeholder="Cari merk HP" autocomplete="off">
-                            </div>
-                            <button class="add-submit-btn compact-btn" onclick="triggerDiagnosisCheck()" style="width: 100% !important; margin-top: 0;">
-                                <i class="fa-solid fa-clipboard-check"></i> Tampilkan
+                    <div class="diagnosis-brands-wrapper">
+                        <div id="diagnosis-brand-grid" class="diagnosis-brand-grid">
+                            <button type="button" class="btn-brand-card brand-samsung" onclick="openDiagnosisBrand('Samsung')">
+                                <span>Samsung</span>
                             </button>
-                        </div>
-                    </div>
-
-                    <div class="stok-masuk-section" style="margin-top: 12px;">
-                        <div class="stok-masuk-header" style="margin-bottom: 8px;">
-                            <div class="header-left">
-                                <i class="fa-solid fa-list-check"></i>
-                                <h4>Brand</h4>
-                            </div>
-                        </div>
-                        <div class="stok-masuk-container" style="padding: 10px; display: flex; flex-direction: row; gap: 8px; flex-wrap: wrap;">
-                            <button type="button" class="btn-select-ctrl" onclick="quickDiagnosisBrand('Samsung')"><i class="fa-solid fa-mobile"></i> Samsung</button>
+                            <button type="button" class="btn-brand-card brand-oppo" onclick="openDiagnosisBrand('Oppo')">
+                                <span>Oppo</span>
+                            </button>
+                            <button type="button" class="btn-brand-card brand-xiaomi" onclick="openDiagnosisBrand('Xiaomi')">
+                                <span>Xiaomi / Poco</span>
+                            </button>
+                            <button type="button" class="btn-brand-card brand-vivo" onclick="openDiagnosisBrand('Vivo')">
+                                <span>Vivo</span>
+                            </button>
+                            <button type="button" class="btn-brand-card brand-realme" onclick="openDiagnosisBrand('Realme')">
+                                <span>Realme</span>
+                            </button>
+                            <button type="button" class="btn-brand-card brand-infinix" onclick="openDiagnosisBrand('Infinix')">
+                                <span>Infinix</span>
+                            </button>
+                            <button type="button" class="btn-brand-card brand-tecno" onclick="openDiagnosisBrand('Tecno')">
+                                <span>Tecno</span>
+                            </button>
+                            <button type="button" class="btn-brand-card brand-itel" onclick="openDiagnosisBrand('Itel')">
+                                <span>Itel</span>
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <div id="sub-modal" class="sub-content">
-                    <div class="empty-state">
-                        <i class="fa-solid fa-vault icon-placeholder"></i>
-                        <h2>Manajemen Modal</h2>
-                        <p>Catat dan pantau alokasi perputaran modal usaha.</p>
+                    <!-- DUA TOMBOL BERSEBELAHAN DENGAN UKURAN SAMA SEPERTI TOMBOL STOK -->
+                    <div class="stok-action-buttons-row">
+                        <button type="button" class="btn-stok-action-pill btn-modal-pill-belum" onclick="openModalBelumKembaliModal()" title="Buka Rincian Modal Belum Kembali">
+                            <i class="fa-solid fa-hourglass-half" style="color: #EF4444;"></i>
+                            <span id="modal-belum-nominal" style="font-family: var(--font-mono); font-weight: 800; color: #EF4444;">Rp 0</span>
+                        </button>
+                        <button type="button" class="btn-stok-action-pill btn-modal-pill-sudah" onclick="openModalSudahKembaliModal()" title="Buka Rincian Modal Sudah Kembali">
+                            <i class="fa-solid fa-circle-check" style="color: #10B981;"></i>
+                            <span id="modal-sudah-nominal" style="font-family: var(--font-mono); font-weight: 800; color: #10B981;">Rp 0</span>
+                        </button>
                     </div>
                 </div>
             </section>
 
+            <!-- SECTION PRICE LIST (TATA LETAK BARU: TOMBOL +, SEARCH, TOMBOL POP-UP, & FILTER SEJAJAR) -->
             <section id="section-pricelist" class="tab-content">
-                <!-- SUB-TAB PRICE LIST -->
-                <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('sub-banding-harga', this)">
-                        <i class="fa-solid fa-code-compare sub-tab-icon"></i>
-                        <span class="sub-tab-text">List Harga</span>
+                <div class="pricelist-filter-row">
+                    <!-- TOMBOL TAMBAH PRODUK BARU RINGKAS (IKON + SAJA) -->
+                    <button type="button" id="btn-pricelist-add" class="action-btn-square" onclick="openAddPriceListModal()" title="Tambah Model Baru">
+                        <i class="fa-solid fa-plus"></i>
                     </button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('sub-tambah-produk', this)">
-                        <i class="fa-solid fa-circle-plus sub-tab-icon"></i>
-                        <span class="sub-tab-text">Tambah Produk</span>
-                    </button>
-                </div>
 
-                <div id="sub-banding-harga" class="sub-content active">
-                    <div class="pricelist-filter-area">
-                        <div class="filter-search-box">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" id="filter-model-input" placeholder="Ketik model & tekan Enter..." oninput="filterPriceList()">
-                            <button type="button" class="action-btn" style="position: absolute; right: 8px; width: 26px; height: 26px;" onclick="triggerPriceListModalSearch()" title="Cari / Buka Pop-up">
-                                <i class="fa-solid fa-arrow-turn-down" style="transform: rotate(90deg); font-size: 11px;"></i>
-                            </button>
-                        </div>
-                        <div class="filter-select-box">
-                            <select id="filter-brand-select" class="form-select-glass" onchange="filterPriceList()">
-                                <option value="ALL">Semua Merk</option>
-                            </select>
-                        </div>
+                    <!-- AREA PENCARIAN -->
+                    <div class="filter-search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="filter-model-input" placeholder="Ketik model & tekan Enter..." oninput="filterPriceList()">
+                        <button type="button" class="action-btn" style="position: absolute; right: 8px; width: 26px; height: 26px;" onclick="triggerPriceListModalSearch()" title="Cari / Buka Pop-up">
+                            <i class="fa-solid fa-arrow-turn-down" style="transform: rotate(90deg); font-size: 11px;"></i>
+                        </button>
                     </div>
 
-                    <div class="pricelist-summary">
-                        <span id="pricelist-count-badge">Menampilkan 0 Item</span>
-                    </div>
+                    <!-- TOMBOL TAB BARU / POP-UP SEBELAH PENCARIAN -->
+                    <button type="button" id="btn-pricelist-action" class="action-btn-square" onclick="triggerPriceListModalSearch()" title="Lihat Hasil Pop-up">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </button>
 
-                    <div id="pricelist-container" class="pricelist-cards-wrapper">
+                    <!-- DROPDOWN FILTER MERK -->
+                    <div class="filter-select-box">
+                        <select id="filter-brand-select" class="form-select-glass" onchange="filterPriceList()">
+                            <option value="ALL">Semua Merk</option>
+                        </select>
                     </div>
                 </div>
 
-                <div id="sub-tambah-produk" class="sub-content">
-                    <div class="add-product-card">
-                        
-                        <div class="add-header compact-header">
-                            <i class="fa-solid fa-box-open"></i>
-                            <h3>Tambah Produk Baru</h3>
-                        </div>
+                <div class="pricelist-summary">
+                    <span id="pricelist-count-badge">Menampilkan 0 Item</span>
+                </div>
 
-                        <div class="add-form-group">
-                            <label>Nama Produk (Merek di awal kata)</label>
-                            <input type="text" id="add-input-name" placeholder="Contoh: Realme 8 Pro Plus (8/128)">
-                        </div>
-                        
-                        <div class="add-price-row">
-                            <div class="add-form-group half-width">
-                                <label>Harga Jakarta</label>
-                                <input type="text" id="add-input-jkt" placeholder="Contoh: 1.500">
-                            </div>
-                            <div class="add-form-group half-width">
-                                <label>Harga Cikarang</label>
-                                <input type="text" id="add-input-sgc" placeholder="Contoh: 1.450">
-                            </div>
-                        </div>
-
-                        <div class="add-form-group">
-                            <label>Harga BNIB</label>
-                            <input type="text" id="add-input-bnib" placeholder="Contoh: 1.600">
-                        </div>
-
-                        <div class="add-action-row">
-                            <button class="add-submit-btn compact-btn" onclick="addNewProduct()">
-                                <i class="fa-solid fa-plus"></i> Tambah
-                            </button>
-                        </div>
-                    </div>
+                <div id="pricelist-container" class="pricelist-cards-wrapper">
                 </div>
             </section>
 
@@ -456,6 +426,90 @@
             </button>
         </div>
     </nav>
+
+    <!-- MODAL POP-UP TAMBAH PRODUK BARU PRICE LIST -->
+    <div class="custom-modal-overlay" id="add-pricelist-modal">
+        <div class="custom-modal-card" style="max-width: 440px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                <h3 style="font-size: 15px; font-weight: 800;">
+                    <i class="fa-solid fa-box-open" style="color: var(--azure-primary); margin-right: 6px;"></i> Tambah Produk Baru
+                </h3>
+                <p style="font-size: 11px; color: var(--text-secondary);">Tambahkan model smartphone baru ke daftar harga</p>
+            </div>
+
+            <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+                <div class="add-form-group">
+                    <label>Nama Produk (Merek di awal kata)</label>
+                    <input type="text" id="add-input-name" placeholder="Contoh: Realme 8 Pro Plus (8/128)">
+                </div>
+                
+                <div class="add-price-row">
+                    <div class="add-form-group half-width">
+                        <label>Harga Jakarta</label>
+                        <input type="text" id="add-input-jkt" placeholder="Contoh: 1.500">
+                    </div>
+                    <div class="add-form-group half-width">
+                        <label>Harga Cikarang</label>
+                        <input type="text" id="add-input-sgc" placeholder="Contoh: 1.450">
+                    </div>
+                </div>
+
+                <div class="add-form-group">
+                    <label>Harga BNIB</label>
+                    <input type="text" id="add-input-bnib" placeholder="Contoh: 1.600">
+                </div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeAddPriceListModal()">Batal</button>
+                <button type="button" class="btn-save" onclick="addNewProduct()">
+                    <i class="fa-solid fa-plus"></i> Tambah Produk
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP EDIT PRODUK & HARGA (LENGKAP DENGAN NAMA PRODUK) -->
+    <div class="custom-modal-overlay" id="edit-custom-modal">
+        <div class="custom-modal-card" style="max-width: 440px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
+                <h3 style="font-size: 15px; font-weight: 800;">
+                    <i class="fa-solid fa-pen-to-square" style="color: var(--azure-primary); margin-right: 6px;"></i> Edit Produk & Harga
+                </h3>
+                <p id="edit-modal-subtitle" style="font-size: 11px; color: var(--text-secondary);">Perbarui nama smartphone atau rincian harga</p>
+            </div>
+
+            <div style="overflow-y: auto; flex: 1; padding-right: 4px;">
+                <div class="edit-input-group">
+                    <label>Nama Produk / Model</label>
+                    <input type="text" id="edit-input-fullname" placeholder="Contoh: Realme 8 Pro Plus (8/128)">
+                </div>
+
+                <div class="add-price-row">
+                    <div class="edit-input-group half-width" style="margin-bottom: 14px;">
+                        <label>Harga Jakarta</label>
+                        <input type="text" id="edit-input-jkt" placeholder="Contoh: 1.500">
+                    </div>
+                    <div class="edit-input-group half-width" style="margin-bottom: 14px;">
+                        <label>Harga Cikarang</label>
+                        <input type="text" id="edit-input-sgc" placeholder="Contoh: 1.450">
+                    </div>
+                </div>
+
+                <div class="edit-input-group">
+                    <label>Harga BNIB</label>
+                    <input type="text" id="edit-input-bnib" placeholder="Contoh: 1.600">
+                </div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">Batal</button>
+                <button type="button" class="btn-save" onclick="saveEditModal()">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL POP-UP 1: RINGKASAN LAPORAN -->
     <div class="custom-modal-overlay" id="report-summary-modal">
@@ -889,6 +943,14 @@
                     <i class="fa-solid fa-mobile-screen"></i>
                     <span>Xiaomi / Poco</span>
                 </button>
+                <button type="button" class="btn-imei-brand brand-vivo" onclick="window.open('https://www.vivo.com/id/support/IMEI', '_blank'); closeImeiCheckModal();">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                    <span>Vivo</span>
+                </button>
+                <button type="button" class="btn-imei-brand brand-iqoo" onclick="window.open('https://www.iqoo.com/id/support/IMEI', '_blank'); closeImeiCheckModal();">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                    <span>iQOO</span>
+                </button>
                 <button type="button" class="btn-imei-brand brand-carlcare" onclick="window.open('https://www.carlcare.com/id/warranty-check/', '_blank'); closeImeiCheckModal();">
                     <i class="fa-solid fa-screwdriver-wrench"></i>
                     <span>Infinix / Tecno / Itel</span>
@@ -1039,6 +1101,18 @@
                 <h3 style="font-size: 15px;"><i class="fa-solid fa-receipt" style="color: var(--azure-primary); margin-right: 6px;"></i> Invoice Penjualan A4</h3>
                 <p style="font-size: 11px; color: var(--text-secondary);">Bukti transaksi resmi NP - Galery Smartphone</p>
             </div>
+
+            <!-- PANEL PENYESUAIAN HARGA SEMENTARA INVOICE (OPSI 2) -->
+            <div class="invoice-edit-price-bar">
+                <div class="invoice-edit-price-left">
+                    <span class="invoice-edit-price-label"><i class="fa-solid fa-pen-clip"></i> Kustom Harga Nota:</span>
+                    <input type="text" id="invoice-custom-price-input" class="invoice-custom-price-input" placeholder="Rp 0" oninput="handleInvoiceCustomPriceChange(this.value)">
+                </div>
+                <button type="button" id="btn-reset-invoice-price" class="btn-reset-invoice-price" onclick="resetInvoicePriceToOriginal()" title="Kembalikan ke harga asli">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+            </div>
+
             <div id="invoice-preview-body" class="invoice-preview-scroll-area"></div>
             <div class="invoice-modal-actions" style="margin-top: 10px; display: flex; gap: 6px;">
                 <button class="btn-cancel" onclick="closeInvoiceModal()" style="flex: 0.7;">Selesai</button>
@@ -1074,6 +1148,52 @@
             <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
                 <button class="btn-cancel" onclick="closeStoryPreview()">Tutup</button>
                 <button class="btn-save" onclick="executeDownloadStoryBanner()"><i class="fa-solid fa-download"></i> Unduh Banner</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP 1: DAFTAR MODAL BELUM KEMBALI -->
+    <div class="custom-modal-overlay" id="modal-belum-kembali-popup">
+        <div class="custom-modal-card" style="max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 800;">
+                        <i class="fa-solid fa-hourglass-half" style="color: #EF4444; margin-right: 6px;"></i> Modal Belum Kembali
+                    </h3>
+                    <p style="font-size: 11px; color: var(--text-secondary);">Klik tombol "Sudah" jika modal unit telah kembali</p>
+                </div>
+                <span id="badge-modal-belum-count" class="badge-count" style="background: rgba(239, 68, 68, 0.12); color: #EF4444;">0 Unit</span>
+            </div>
+
+            <div id="container-modal-belum-list" class="stok-masuk-container" style="flex: 1; max-height: 60vh; overflow-y: auto;">
+                <div class="empty-stok-msg">Semua modal unit telah kembali.</div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeModalBelumKembaliModal()" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP 2: DAFTAR MODAL SUDAH KEMBALI -->
+    <div class="custom-modal-overlay" id="modal-sudah-kembali-popup">
+        <div class="custom-modal-card" style="max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;">
+            <div class="edit-modal-header" style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 800;">
+                        <i class="fa-solid fa-circle-check" style="color: #10B981; margin-right: 6px;"></i> Modal Sudah Kembali
+                    </h3>
+                    <p style="font-size: 11px; color: var(--text-secondary);">Daftar unit yang modal perputarannya telah lunas/kembali</p>
+                </div>
+                <span id="badge-modal-sudah-count" class="badge-count" style="background: rgba(16, 185, 129, 0.12); color: #10B981;">0 Unit</span>
+            </div>
+
+            <div id="container-modal-sudah-list" class="stok-masuk-container" style="flex: 1; max-height: 60vh; overflow-y: auto;">
+                <div class="empty-stok-msg">Belum ada catatan modal yang kembali.</div>
+            </div>
+
+            <div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <button type="button" class="btn-cancel" onclick="closeModalSudahKembaliModal()" style="width: 100%;">Tutup</button>
             </div>
         </div>
     </div>
