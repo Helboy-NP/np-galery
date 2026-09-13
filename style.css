@@ -72,11 +72,11 @@ body::before {
 }
 
 /* MICRO-INTERACTIONS UNIVERSAL */
-button, .nav-item, .action-btn, .custom-dropdown-trigger {
+button, .nav-item, .action-btn, .action-btn-square, .custom-dropdown-trigger {
     -webkit-tap-highlight-color: transparent;
     user-select: none;
 }
-button:active, .nav-item:active, .action-btn:active {
+button:active, .nav-item:active, .action-btn:active, .action-btn-square:active {
     transform: scale(0.96) !important;
 }
 
@@ -160,8 +160,18 @@ button:active, .nav-item:active, .action-btn:active {
 /* CONTENT & TABS */
 .content-container { width: 100%; max-width: 500px; padding: calc(85px + env(safe-area-inset-top)) 16px calc(105px + env(safe-area-inset-bottom)) 16px; min-height: 100vh; }
 .content-card { background: var(--card-bg); border-radius: 24px; padding: 20px; border: 1px solid var(--border-subtle); box-shadow: var(--card-shadow); transition: all 0.3s ease; }
-.tab-content { display: none; animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
-.tab-content.active { display: block; }
+
+/* REVISED: Micro-Slide & Fade Kilat (160ms) untuk Tab & Sub-Tab */
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: microSlideFade 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+.sub-content { display: none; }
+.sub-content.active { display: block; animation: microSlideFade 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+@keyframes microSlideFade {
+    0% { opacity: 0; transform: translateY(5px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
 
 /* ========================================================== */
 /* HERO TRANSAKSI (STATISTIK KIRI SEJAJAR & AKSI KANAN)      */
@@ -378,6 +388,43 @@ button:active, .nav-item:active, .action-btn:active {
     margin-left: 2px;
 }
 
+/* ========================================================== */
+/* TOMBOL PIL SUB-TAB MODAL (UKURAN SAMA PERSIS DENGAN STOK)  */
+/* ========================================================== */
+.btn-modal-pill-belum {
+    border-color: rgba(239, 68, 68, 0.35);
+    background: var(--card-bg);
+}
+.btn-modal-pill-belum:hover {
+    border-color: #EF4444 !important;
+    background: rgba(239, 68, 68, 0.05);
+    box-shadow: 0 5px 14px rgba(239, 68, 68, 0.15) !important;
+}
+
+.btn-modal-pill-sudah {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: var(--card-bg);
+}
+.btn-modal-pill-sudah:hover {
+    border-color: #10B981 !important;
+    background: rgba(16, 185, 129, 0.05);
+    box-shadow: 0 5px 14px rgba(16, 185, 129, 0.15) !important;
+}
+
+body.dark-mode .btn-modal-pill-belum {
+    border-color: rgba(239, 68, 68, 0.45);
+}
+body.dark-mode .btn-modal-pill-belum:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+body.dark-mode .btn-modal-pill-sudah {
+    border-color: rgba(16, 185, 129, 0.45);
+}
+body.dark-mode .btn-modal-pill-sudah:hover {
+    background: rgba(16, 185, 129, 0.1);
+}
+
 /* BARIS 3 TOMBOL POPUP SEJAJAR KHUSUS SUB-TAB LAPORAN */
 .report-tri-action-row {
     display: grid;
@@ -489,6 +536,78 @@ button:active, .nav-item:active, .action-btn:active {
 }
 .report-cat-card.active span {
     color: var(--azure-primary);
+}
+
+/* ========================================================== */
+/* SUB-TAB DIAGNOSIS / SYSTEM CHECK: GRID BRAND MINIMALIS     */
+/* ========================================================== */
+.diagnosis-brands-wrapper {
+    width: 100%;
+    padding: 2px 0 6px 0;
+}
+
+.diagnosis-brand-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 7px;
+    width: 100%;
+}
+
+.btn-brand-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 9px 8px;
+    font-family: var(--font-main);
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.btn-brand-card:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 12px rgba(0, 119, 182, 0.1);
+}
+
+/* Aksen Warna Teks & Border Masing-Masing Brand */
+.btn-brand-card.brand-samsung { color: #3B82F6; }
+.btn-brand-card.brand-samsung:hover { border-color: #3B82F6; background: rgba(59, 130, 246, 0.06); }
+
+.btn-brand-card.brand-oppo { color: #059669; }
+.btn-brand-card.brand-oppo:hover { border-color: #059669; background: rgba(5, 150, 105, 0.06); }
+
+.btn-brand-card.brand-xiaomi { color: #EF4444; }
+.btn-brand-card.brand-xiaomi:hover { border-color: #EF4444; background: rgba(239, 68, 68, 0.06); }
+
+.btn-brand-card.brand-vivo { color: #8B5CF6; }
+.btn-brand-card.brand-vivo:hover { border-color: #8B5CF6; background: rgba(139, 92, 246, 0.06); }
+
+.btn-brand-card.brand-realme { color: #D97706; }
+.btn-brand-card.brand-realme:hover { border-color: #D97706; background: rgba(217, 119, 6, 0.06); }
+
+.btn-brand-card.brand-infinix { color: #10B981; }
+.btn-brand-card.brand-infinix:hover { border-color: #10B981; background: rgba(16, 185, 129, 0.06); }
+
+.btn-brand-card.brand-tecno { color: #2563EB; }
+.btn-brand-card.brand-tecno:hover { border-color: #2563EB; background: rgba(37, 99, 235, 0.06); }
+
+.btn-brand-card.brand-itel { color: #DC2626; }
+.btn-brand-card.brand-itel:hover { border-color: #DC2626; background: rgba(220, 38, 38, 0.06); }
+
+body.dark-mode .btn-brand-card {
+    background: var(--card-bg);
+    border-color: var(--border-subtle);
+}
+body.dark-mode .btn-brand-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
 /* MODAL CEK IMEI & BRAND GRID */
@@ -671,31 +790,6 @@ button:active, .nav-item:active, .action-btn:active {
     50% { top: 85%; opacity: 1; }
 }
 
-/* COMPACT DIAGNOSIS FORM & INPUT REFINEMENT */
-.compact-diagnosis-card { padding: 16px 18px !important; }
-.diagnosis-search-stack { display: flex; flex-direction: column; gap: 10px; }
-.diagnosis-search-stack .autocomplete-wrapper { width: 100%; position: relative; }
-.diagnosis-search-stack .autocomplete-wrapper input {
-    width: 100%;
-    padding: 11px 14px 11px 38px !important;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    font-size: 13px;
-    font-family: var(--font-main);
-    color: var(--text-primary);
-    outline: none;
-    transition: all 0.2s ease;
-}
-body.dark-mode .diagnosis-search-stack .autocomplete-wrapper input {
-    background: rgba(0, 0, 0, 0.25);
-    color: #fff;
-}
-.diagnosis-search-stack .autocomplete-wrapper input:focus {
-    border-color: var(--azure-primary);
-    box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.12);
-}
-
 .stats-pribadi-grid { display: flex; gap: 10px; margin-bottom: 16px; }
 .pribadi-card { flex: 1; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--card-shadow); border: 1px solid var(--border-subtle); }
 .card-saldo { background: linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%); border-color: #BAE6FD; color: var(--text-primary); }
@@ -822,10 +916,65 @@ body.dark-mode .sub-tab-btn.active .sub-tab-badge {
     color: #0F172A;
 }
 
-.sub-content { display: none; animation: fadeIn 0.25s ease; }
-.sub-content.active { display: block; }
 .empty-state { text-align: center; padding: 32px 16px; }
 .icon-placeholder { font-size: 38px; color: var(--azure-primary); margin-bottom: 12px; }
+
+/* ========================================================== */
+/* PRICE LIST TATA LETAK SEJAJAR (BARIS MODERN TERPADU)       */
+/* ========================================================== */
+.pricelist-filter-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    align-items: center;
+    width: 100%;
+}
+
+/* TOMBOL KOTAK IKON TERPADU (+ DAN POP-UP) */
+.action-btn-square {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--azure-primary);
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.action-btn-square:hover {
+    border-color: var(--azure-primary);
+    background: var(--nav-active-bg);
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 10px rgba(0, 119, 182, 0.15);
+}
+
+.pricelist-filter-row .filter-search-box {
+    flex: 1.4;
+    min-width: 0;
+}
+
+.pricelist-filter-row .filter-select-box {
+    flex: 1.1;
+    min-width: 0;
+}
+
+.pricelist-filter-row .filter-search-box input {
+    height: 38px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.pricelist-filter-row .custom-dropdown-trigger {
+    height: 38px;
+    padding: 0 10px;
+}
 
 /* PRICE LIST & FORMS */
 .pricelist-filter-area { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -976,13 +1125,32 @@ body.dark-mode .price-compare-stack .price-box:last-child .price-box-val { color
 
 .custom-modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); z-index: 2500; display: flex; align-items: center; justify-content: center; padding: 16px; opacity: 0; visibility: hidden; transition: all 0.3s; }
 .custom-modal-overlay.show { opacity: 1; visibility: visible; }
-.custom-modal-card { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px; width: 100%; max-width: 340px; box-shadow: 0 16px 40px rgba(0,0,0,0.15); transform: translateY(20px) scale(0.95); transition: all 0.3s; }
+.custom-modal-card { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px; width: 100%; max-width: 360px; box-shadow: 0 16px 40px rgba(0,0,0,0.15); transform: translateY(20px) scale(0.95); transition: all 0.3s; }
 .custom-modal-overlay.show .custom-modal-card { transform: translateY(0) scale(1); }
 .edit-modal-header h3 { font-size: 18px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
 .edit-input-group { margin-bottom: 16px; }
 .edit-input-group label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; }
-.edit-input-group input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.6); border: 1px solid var(--border-subtle); border-radius: 12px; font-size: 13.5px; color: var(--text-primary); outline: none; }
-body.dark-mode .edit-input-group input { background: rgba(0,0,0,0.25); color: #fff; }
+.edit-input-group input, .edit-input-group textarea { 
+    width: 100%; 
+    padding: 10px 14px; 
+    background: rgba(255,255,255,0.75); 
+    border: 1px solid var(--border-subtle); 
+    border-radius: 12px; 
+    font-size: 13px; 
+    font-family: var(--font-main);
+    color: var(--text-primary); 
+    outline: none; 
+    transition: all 0.2s ease;
+}
+.edit-input-group input:focus, .edit-input-group textarea:focus {
+    border-color: var(--azure-primary);
+    box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.12);
+}
+body.dark-mode .edit-input-group input, body.dark-mode .edit-input-group textarea { 
+    background: rgba(0,0,0,0.3); 
+    color: #fff; 
+}
+.edit-input-group.half-width { flex: 1; margin-bottom: 0; }
 .edit-modal-actions { display: flex; gap: 10px; margin-top: 24px; }
 .btn-cancel, .btn-save { flex: 1; padding: 10px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; font-family: var(--font-main); }
 .btn-cancel { background: var(--bg-page); color: var(--text-secondary); border: 1px solid var(--border-subtle); }
@@ -994,12 +1162,112 @@ body.dark-mode .edit-input-group input { background: rgba(0,0,0,0.25); color: #f
 
 .invoice-btn-wa { flex: 1; padding: 10px 12px; border-radius: 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; border: none; font-family: var(--font-main); background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #fff; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); }
 
+/* ========================================================== */
+/* PANEL PENYESUAIAN HARGA SEMENTARA INVOICE (OPSI 2)        */
+/* ========================================================== */
+.invoice-edit-price-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: var(--bg-page);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 7px 10px;
+    margin-bottom: 8px;
+}
+.invoice-edit-price-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+.invoice-edit-price-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.invoice-edit-price-label i {
+    color: var(--azure-primary);
+    font-size: 11.5px;
+}
+.invoice-custom-price-input {
+    flex: 1;
+    min-width: 100px;
+    padding: 6px 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--azure-primary);
+    outline: none;
+    transition: all 0.2s ease;
+}
+.invoice-custom-price-input:focus {
+    border-color: var(--azure-primary);
+    box-shadow: 0 0 0 2.5px rgba(0, 119, 182, 0.15);
+}
+.btn-reset-invoice-price {
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 6px 9px;
+    font-family: var(--font-main);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+.btn-reset-invoice-price:hover {
+    color: var(--azure-primary);
+    border-color: var(--azure-primary);
+    background: var(--nav-active-bg);
+}
+body.dark-mode .invoice-custom-price-input {
+    background: rgba(0, 0, 0, 0.25);
+    color: #38BDF8;
+}
+
 .elegant-invoice-card { background: #FFFFFF; color: #0F172A; font-family: var(--font-main); padding: 38px 36px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; width: 100%; min-height: 520px; border: 2px solid #BAE6FD; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 119, 182, 0.08); }
 .invoice-header-box { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #0077B6; padding-bottom: 16px; }
 .invoice-brand-wrap { display: flex; align-items: center; gap: 14px; }
 .invoice-brand-logo { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; border: 1px solid #BAE6FD; }
 .invoice-brand-title { font-family: 'ARCO', var(--font-main); font-size: 19px; color: #0077B6; margin: 0; }
 .invoice-brand-sub { font-size: 11px; color: #64748B; margin-top: 2px; font-weight: 600; }
+
+/* STYLING TAMBAHAN INFO KONTAK INVOICE (WHATSAPP & EMAIL BERJAJAR KE SAMPING) */
+.invoice-contact-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #475569;
+}
+.invoice-contact-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.invoice-contact-item.wa i { color: #10B981; }
+.invoice-contact-item.email i { color: #0284C7; }
+.invoice-contact-divider {
+    color: #CBD5E1;
+    font-weight: 400;
+}
+
 .invoice-num-badge { text-align: right; }
 .invoice-num-title { font-size: 12.5px; font-weight: 800; color: #0077B6; font-family: var(--font-mono); }
 .invoice-num-date { font-size: 10.5px; color: #64748B; margin-top: 3px; font-weight: 600; }
@@ -1031,7 +1299,21 @@ body.dark-mode .edit-input-group input { background: rgba(0,0,0,0.25); color: #f
 
 .add-form-group { margin-bottom: 14px; }
 .add-form-group label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; }
-.add-form-group input { width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.7); border: 1px solid var(--border-subtle); border-radius: 12px; font-size: 13px; color: var(--text-primary); outline: none; }
+.add-form-group input { 
+    width: 100%; 
+    padding: 11px 14px; 
+    background: rgba(255,255,255,0.7); 
+    border: 1px solid var(--border-subtle); 
+    border-radius: 12px; 
+    font-size: 13px; 
+    color: var(--text-primary); 
+    outline: none; 
+    transition: all 0.2s ease;
+}
+.add-form-group input:focus {
+    border-color: var(--azure-primary);
+    box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.12);
+}
 body.dark-mode .add-form-group input { background: rgba(0,0,0,0.2); color: #fff; }
 .add-price-row { display: flex; gap: 10px; }
 .add-price-row .half-width { flex: 1; margin-bottom: 14px; position: relative; }
@@ -1058,7 +1340,7 @@ body.dark-mode .add-form-group input { background: rgba(0,0,0,0.2); color: #fff;
 .calc-input-wrapper { position: relative; display: flex; align-items: center; }
 .calc-input-wrapper input { padding-right: 44px !important; }
 .btn-calc-trigger { 
-    position: absolute right: 4px; background: var(--nav-active-bg); border: none; 
+    position: absolute; right: 4px; background: var(--nav-active-bg); border: none; 
     color: var(--azure-primary); width: 34px; height: 34px; border-radius: 8px; 
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     font-size: 14px; transition: all 0.2s ease;
@@ -1109,11 +1391,6 @@ body.dark-mode .add-form-group input { background: rgba(0,0,0,0.2); color: #fff;
 .add-submit-btn { width: 100%; padding: 12px; margin-top: 10px; background: linear-gradient(135deg, #38BDF8 0%, #0284C7 100%) !important; border: 1px solid rgba(255,255,255,0.5) !important; border-radius: 12px; color: #fff !important; font-size: 13.5px; font-weight: 700; cursor: pointer; }
 .compact-btn { width: auto !important; min-width: 140px; padding: 10px 18px !important; }
 
-.stok-masuk-section { margin-top: 14px; }
-.stok-masuk-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px; }
-.header-left { display: flex; align-items: center; gap: 8px; color: var(--text-primary); }
-.header-left i { font-size: 16px; color: var(--azure-primary); }
-.header-left h4 { font-size: 14px; font-weight: 800; }
 .badge-count { font-size: 11px; font-weight: 700; background: var(--nav-active-bg); color: var(--azure-primary); padding: 4px 10px; border-radius: 8px; }
 
 .stok-masuk-container { background: var(--card-bg); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; }
@@ -1310,5 +1587,4 @@ body.dark-mode .notes-textarea-glass {
     word-break: break-word;
 }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spinRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
