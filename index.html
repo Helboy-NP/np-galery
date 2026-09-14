@@ -83,7 +83,7 @@
                         <div class="stat-card-uniform">
                             <div class="stat-icon-wrap"><i class="fa-solid fa-wallet"></i></div>
                             <div class="stat-meta-wrap">
-                                <span class="stat-title-label">Keuntungan</span>
+                                <span class="stat-title-label">Profit</span>
                                 <h4 class="stat-value-text" id="keuntungan-nominal">Rp 0</h4>
                                 <span class="stat-sub-text" id="keuntungan-qty">0 Unit</span>
                             </div>
@@ -92,49 +92,36 @@
                         <div class="stat-card-uniform">
                             <div class="stat-icon-wrap"><i class="fa-solid fa-box-open"></i></div>
                             <div class="stat-meta-wrap">
-                                <span class="stat-title-label">Stok Ready</span>
+                                <span class="stat-title-label">Stock</span>
                                 <h4 class="stat-value-text" id="stok-ready-val">0 Unit</h4>
-                                <span class="stat-sub-text">Tersedia</span>
+                                <span class="stat-sub-text">Ready</span>
                             </div>
                         </div>
 
                         <div class="stat-card-uniform">
                             <div class="stat-icon-wrap"><i class="fa-solid fa-bag-shopping"></i></div>
                             <div class="stat-meta-wrap">
-                                <span class="stat-title-label">Terjual</span>
+                                <span class="stat-title-label">Sold</span>
                                 <h4 class="stat-value-text" id="terjual-val">0 Unit</h4>
                                 <span class="stat-sub-text" id="terjual-omset-val">Rp 0</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- SISI KANAN: TOMBOL AKSI DENGAN BROADCAST & STORY PALING ATAS -->
+                    <!-- SISI KANAN: 3 TOMBOL AKSI SEJAJAR SEUKURAN SUB-TAB -->
                     <div class="hero-right-actions">
-                        <!-- BARIS ATAS: BROADCAST & STORY -->
-                        <div class="right-actions-top-row">
-                            <button type="button" class="promo-btn btn-broadcast-wa" onclick="broadcastStokWA()" title="Salin dan buka format broadcast WhatsApp">
+                        <div class="hero-promo-tri-grid">
+                            <button type="button" class="hero-action-pill btn-hero-broadcast" onclick="broadcastStokWA()" title="Salin dan buka format broadcast WhatsApp">
                                 <i class="fa-brands fa-whatsapp"></i>
-                                <span>Broadcast</span>
+                                <span>Broadcast Teks</span>
                             </button>
-                            <button type="button" class="promo-btn btn-story-banner" onclick="previewStoryBanner()" title="Lihat pratinjau banner katalog story">
+                            <button type="button" class="hero-action-pill btn-hero-story" onclick="previewStoryBanner()" title="Lihat pratinjau banner katalog story">
                                 <i class="fa-solid fa-image"></i>
-                                <span>Story</span>
+                                <span>Story Picture</span>
                             </button>
-                        </div>
-
-                        <!-- BARIS BAWAH: WHATSAPP, CEK IMEI, TANYA AI -->
-                        <div class="right-actions-bottom-row">
-                            <button type="button" class="btn-quick-shortcut btn-quick-shortcut-wa" onclick="openDirectWaModal()" title="Kirim Pesan WhatsApp Cepat">
+                            <button type="button" class="hero-action-pill btn-hero-wa" onclick="openDirectWaModal()" title="Kirim Pesan WhatsApp Cepat">
                                 <i class="fa-brands fa-whatsapp"></i>
                                 <span>WhatsApp</span>
-                            </button>
-                            <button type="button" class="btn-quick-shortcut btn-quick-shortcut-imei" onclick="openImeiCheckModal()" title="Cek Garansi & Keaslian IMEI Resmi Brand">
-                                <i class="fa-solid fa-shield-virus"></i>
-                                <span>Cek IMEI</span>
-                            </button>
-                            <button type="button" class="btn-quick-shortcut btn-quick-shortcut-ai" onclick="window.open('https://www.google.com/search?udm=50&q=', '_blank')" title="Buka Mode AI Google Search">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i>
-                                <span>Tanya AI</span>
                             </button>
                         </div>
                     </div>
@@ -144,15 +131,15 @@
                 <div class="sub-tab-container sub-tab-grid-3">
                     <button class="sub-tab-btn active" onclick="switchSubTab('sub-stok-jual', this)">
                         <i class="fa-solid fa-boxes-stacked sub-tab-icon"></i>
-                        <span class="sub-tab-text">Stok</span>
+                        <span class="sub-tab-text">Inventory</span>
                     </button>
                     <button class="sub-tab-btn" onclick="switchSubTab('sub-diagnosis', this)">
                         <i class="fa-solid fa-microchip sub-tab-icon"></i>
-                        <span class="sub-tab-text">System Check</span>
+                        <span class="sub-tab-text">Test Mode</span>
                     </button>
                     <button class="sub-tab-btn" onclick="switchSubTab('sub-modal', this)">
                         <i class="fa-solid fa-vault sub-tab-icon"></i>
-                        <span class="sub-tab-text">Modal</span>
+                        <span class="sub-tab-text">Funds</span>
                     </button>
                 </div>
 
@@ -161,43 +148,43 @@
                     <div class="stok-action-buttons-row">
                         <button type="button" class="btn-stok-action-pill" onclick="openAddStokModal()" title="Buka Form Tambah Stok">
                             <i class="fa-solid fa-circle-plus"></i>
-                            <span>Tambah Stok</span>
+                            <span>Stock Entry</span>
                         </button>
                         <button type="button" class="btn-stok-action-pill" onclick="openDaftarStokModal()" title="Buka Daftar Semua Stok">
                             <i class="fa-solid fa-clipboard-list"></i>
-                            <span>Daftar Stok</span>
+                            <span>Stok List</span>
                             <span id="badge-stok-count" class="badge-count-pill">0 Unit</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- SUB-TAB DIAGNOSIS / SYSTEM CHECK: TEKS NAMA BRAND SAJA (COMPACT) -->
+                <!-- SUB-TAB TEST MODE: TEKS NAMA BRAND SAJA (COMPACT) -->
                 <div id="sub-diagnosis" class="sub-content">
                     <div class="diagnosis-brands-wrapper">
                         <div id="diagnosis-brand-grid" class="diagnosis-brand-grid">
                             <button type="button" class="btn-brand-card brand-samsung" onclick="openDiagnosisBrand('Samsung')">
-                                <span>Samsung</span>
+                                <span>SAMSUNG</span>
                             </button>
                             <button type="button" class="btn-brand-card brand-oppo" onclick="openDiagnosisBrand('Oppo')">
-                                <span>Oppo</span>
+                                <span>OPPO</span>
                             </button>
                             <button type="button" class="btn-brand-card brand-xiaomi" onclick="openDiagnosisBrand('Xiaomi')">
-                                <span>Xiaomi / Poco</span>
+                                <span>XIAOMI / POCO</span>
                             </button>
                             <button type="button" class="btn-brand-card brand-vivo" onclick="openDiagnosisBrand('Vivo')">
-                                <span>Vivo</span>
+                                <span>VIVO</span>
                             </button>
                             <button type="button" class="btn-brand-card brand-realme" onclick="openDiagnosisBrand('Realme')">
-                                <span>Realme</span>
+                                <span>REALME</span>
                             </button>
                             <button type="button" class="btn-brand-card brand-infinix" onclick="openDiagnosisBrand('Infinix')">
-                                <span>Infinix</span>
+                                <span>INFINIX</span>
                             </button>
                             <button type="button" class="btn-brand-card brand-tecno" onclick="openDiagnosisBrand('Tecno')">
-                                <span>Tecno</span>
+                                <span>TECNO</span>
                             </button>
                             <button type="button" class="btn-brand-card brand-itel" onclick="openDiagnosisBrand('Itel')">
-                                <span>Itel</span>
+                                <span>ITEL</span>
                             </button>
                         </div>
                     </div>
@@ -229,7 +216,7 @@
                     <!-- AREA PENCARIAN -->
                     <div class="filter-search-box">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="filter-model-input" placeholder="Ketik model & tekan Enter..." oninput="filterPriceList()">
+                        <input type="text" id="filter-model-input" placeholder="Search..." oninput="filterPriceList()">
                         <button type="button" class="action-btn" style="position: absolute; right: 8px; width: 26px; height: 26px;" onclick="triggerPriceListModalSearch()" title="Cari / Buka Pop-up">
                             <i class="fa-solid fa-arrow-turn-down" style="transform: rotate(90deg); font-size: 11px;"></i>
                         </button>
@@ -260,7 +247,7 @@
                 <div class="stats-pribadi-grid">
                     <div class="pribadi-card card-saldo">
                         <div class="pribadi-card-header">
-                            <span class="pribadi-label">Saldo Aktif</span>
+                            <span class="pribadi-label">Balance</span>
                             <i class="fa-solid fa-vault pribadi-icon-bg"></i>
                         </div>
                         <h3 class="pribadi-value">Rp 0</h3>
@@ -268,7 +255,7 @@
 
                     <div class="pribadi-card card-pengeluaran">
                         <div class="pribadi-card-header">
-                            <span class="pribadi-label">Pengeluaran</span>
+                            <span class="pribadi-label">Expenditure</span>
                             <i class="fa-solid fa-money-bill-transfer pribadi-icon-bg"></i>
                         </div>
                         <h3 class="pribadi-value">Rp 0</h3>
@@ -407,6 +394,11 @@
 
         </div>
     </main>
+
+    <!-- FLOATING ACTION BUTTON (FAB) TANYA AI MELAYANG -->
+    <button type="button" id="btn-floating-ai" class="floating-ai-fab" onclick="window.open('https://www.google.com/search?udm=50&q=', '_blank')" title="Tanya AI (Google Search)">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+    </button>
 
     <nav class="floating-nav-container">
         <div class="floating-nav">
@@ -920,57 +912,6 @@
         </div>
     </div>
 
-    <!-- MODAL POP-UP PILIHAN BRAND CEK IMEI -->
-    <div class="custom-modal-overlay" id="imei-check-modal">
-        <div class="custom-modal-card" style="max-width: 380px;">
-            <div class="edit-modal-header" style="text-align: left; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
-                <h3 style="font-size: 15px; font-weight: 800;">
-                    <i class="fa-solid fa-shield-virus" style="color: var(--azure-primary); margin-right: 6px;"></i> Cek IMEI & Garansi
-                </h3>
-                <p style="font-size: 11px; color: var(--text-secondary);">Pilih merek untuk membuka portal pengecekan resmi</p>
-            </div>
-            
-            <div class="imei-brand-grid">
-                <button type="button" class="btn-imei-brand brand-samsung" onclick="window.open('https://imeicheck.com/id/samsung-imei-check', '_blank'); closeImeiCheckModal();">
-                    <i class="fa-solid fa-mobile-screen"></i>
-                    <span>Samsung</span>
-                </button>
-                <button type="button" class="btn-imei-brand brand-oppo" onclick="window.open('https://support.oppo.com/id/check/', '_blank'); closeImeiCheckModal();">
-                    <i class="fa-solid fa-mobile-screen"></i>
-                    <span>Oppo</span>
-                </button>
-                <button type="button" class="btn-imei-brand brand-xiaomi" onclick="window.open('https://www.mi.com/global/verify', '_blank'); closeImeiCheckModal();">
-                    <i class="fa-solid fa-mobile-screen"></i>
-                    <span>Xiaomi / Poco</span>
-                </button>
-                <button type="button" class="btn-imei-brand brand-vivo" onclick="window.open('https://www.vivo.com/id/support/IMEI', '_blank'); closeImeiCheckModal();">
-                    <i class="fa-solid fa-mobile-screen"></i>
-                    <span>Vivo</span>
-                </button>
-                <button type="button" class="btn-imei-brand brand-iqoo" onclick="window.open('https://www.iqoo.com/id/support/IMEI', '_blank'); closeImeiCheckModal();">
-                    <i class="fa-solid fa-mobile-screen"></i>
-                    <span>iQOO</span>
-                </button>
-                <button type="button" class="btn-imei-brand brand-carlcare" onclick="window.open('https://www.carlcare.com/id/warranty-check/', '_blank'); closeImeiCheckModal();">
-                    <i class="fa-solid fa-screwdriver-wrench"></i>
-                    <span>Infinix / Tecno / Itel</span>
-                </button>
-                <button type="button" class="btn-imei-brand brand-realme" onclick="window.open('https://www.realme.com/id/support/phonecheck', '_blank'); closeImeiCheckModal();">
-                    <i class="fa-solid fa-mobile-screen"></i>
-                    <span>Realme</span>
-                </button>
-                <button type="button" class="btn-imei-brand brand-asus" onclick="window.open('https://www.asus.com/id/support/warranty-status-inquiry/', '_blank'); closeImeiCheckModal();">
-                    <i class="fa-solid fa-laptop"></i>
-                    <span>Asus</span>
-                </button>
-            </div>
-
-            <div class="edit-modal-actions" style="margin-top: 14px;">
-                <button type="button" class="btn-cancel" onclick="closeImeiCheckModal()" style="width: 100%;">Tutup</button>
-            </div>
-        </div>
-    </div>
-
     <!-- MODAL WEB VIEWER IN-APP -->
     <div class="custom-modal-overlay" id="imei-web-modal">
         <div class="custom-modal-card inapp-webview-card">
@@ -1036,7 +977,7 @@
         </div>
     </div>
 
-    <!-- MODAL POP-UP DIAGNOSIS KODE DIAL DENGAN CHECKBOX -->
+    <!-- MODAL POP-UP DIAGNOSIS KODE DIAL DENGAN CHECKBOX & CEK IMEI RESMI -->
     <div class="custom-modal-overlay" id="diagnosis-modal">
         <div class="custom-modal-card" style="max-width: 420px; max-height: 85vh; display: flex; flex-direction: column;">
             <div class="edit-modal-header" style="margin-bottom: 10px; text-align: left; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
@@ -1071,21 +1012,21 @@
                 <button type="button" class="calc-btn" onclick="calcAppendNumber('7')">7</button>
                 <button type="button" class="calc-btn" onclick="calcAppendNumber('8')">8</button>
                 <button type="button" class="calc-btn" onclick="calcAppendNumber('9')">9</button>
-                <button type="button" class="calc-btn calc-btn-op" onclick="calcAppendOp('-')">-</button>
+                <button type="button" class="calc-btn" onclick="calcAppendOp('-')">-</button>
 
                 <button type="button" class="calc-btn" onclick="calcAppendNumber('4')">4</button>
                 <button type="button" class="calc-btn" onclick="calcAppendNumber('5')">5</button>
                 <button type="button" class="calc-btn" onclick="calcAppendNumber('6')">6</button>
-                <button type="button" class="calc-btn calc-btn-op" onclick="calcAppendOp('+')">+</button>
+                <button type="button" class="calc-btn" onclick="calcAppendOp('+')">+</button>
 
                 <button type="button" class="calc-btn" onclick="calcAppendNumber('1')">1</button>
                 <button type="button" class="calc-btn" onclick="calcAppendNumber('2')">2</button>
                 <button type="button" class="calc-btn" onclick="calcAppendNumber('3')">3</button>
-                <button type="button" class="calc-btn calc-btn-eq" onclick="calcCalculate()">=</button>
+                <button type="button" class="calc-btn" onclick="calcAppendDot()">.</button>
 
                 <button type="button" class="calc-btn" onclick="calcAppendNumber('0')">0</button>
                 <button type="button" class="calc-btn" onclick="calcAppendNumber('000')">000</button>
-                <button type="button" class="calc-btn" onclick="calcAppendDot()">.</button>
+                <button type="button" class="calc-btn calc-btn-eq" onclick="calcCalculate()" style="grid-column: span 2;">=</button>
             </div>
             <div class="calc-actions-footer">
                 <button type="button" class="btn-cancel" onclick="closeKasCalculator()" style="flex: 0.8;">Batal</button>
