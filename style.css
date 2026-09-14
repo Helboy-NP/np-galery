@@ -179,8 +179,8 @@ button:active, .nav-item:active, .action-btn:active, .action-btn-square:active {
 .transaksi-hero-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
 /* SISI KIRI: 3 KOTAK STATISTIK */
@@ -249,90 +249,133 @@ button:active, .nav-item:active, .action-btn:active, .action-btn-square:active {
     margin-top: 1px;
 }
 
-/* SISI KANAN: TOMBOL AKSI & PROMOSI */
+/* SISI KANAN: TOMBOL AKSI 3 KOLOM SEJAJAR (UKURAN SUB-TAB) */
 .hero-right-actions {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
     width: 100%;
 }
 
-.right-actions-top-row {
-    display: flex;
-    gap: 8px;
+.hero-promo-tri-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
     width: 100%;
 }
-.right-actions-top-row .promo-btn {
+
+.hero-action-pill {
     flex: 1;
-    margin: 0 !important;
-    padding: 9px 12px;
-}
-
-.right-actions-bottom-row {
-    display: flex;
-    gap: 6px;
-    width: 100%;
-}
-.right-actions-bottom-row .btn-quick-shortcut {
-    flex: 1;
-    margin: 0 !important;
-    padding: 8px 6px;
-    font-size: 11px;
-}
-
-/* TOMBOL PINTASAN CEPAT */
-.btn-quick-shortcut {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7.5px 5px;
     background: var(--bg-page);
     border: 1px solid var(--border-subtle);
-    border-radius: 12px;
+    border-radius: 11px;
     font-family: var(--font-main);
+    font-size: 11px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--text-secondary);
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.02);
 }
-.btn-quick-shortcut:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-}
-.btn-quick-shortcut-wa i { color: #10B981; font-size: 13.5px; }
-.btn-quick-shortcut-wa:hover { border-color: #10B981; background: rgba(16, 185, 129, 0.08); color: #10B981; }
-.btn-quick-shortcut-imei i { color: var(--azure-primary); font-size: 13px; }
-.btn-quick-shortcut-imei:hover { border-color: var(--azure-primary); background: var(--nav-active-bg); color: var(--azure-primary); }
-.btn-quick-shortcut-ai i { color: var(--azure-primary); font-size: 13px; }
-.btn-quick-shortcut-ai:hover { border-color: var(--azure-primary); background: var(--nav-active-bg); color: var(--azure-primary); }
 
-.promo-btn {
-    display: inline-flex;
+.hero-action-pill i {
+    font-size: 11.5px;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-action-pill span {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1px;
+}
+
+.hero-action-pill:hover {
+    transform: translateY(-1px);
+}
+.hero-action-pill:hover i {
+    transform: scale(1.1);
+}
+
+/* Aksen Warna Tombol Hero (Broadcast: Merah, Story: Biru, WhatsApp: Hijau) */
+.btn-hero-broadcast i, .btn-hero-broadcast span { color: #6b0262 !important; }
+.btn-hero-broadcast:hover {
+    border-color: rgba(234, 0, 255, 0.4);
+    background: var(--card-bg);
+}
+
+.btn-hero-story i, .btn-hero-story span { color: var(--azure-primary) !important; }
+.btn-hero-story:hover {
+    border-color: rgba(0, 119, 182, 0.4);
+    background: var(--card-bg);
+}
+
+.btn-hero-wa i, .btn-hero-wa span { color: #10B981 !important; }
+.btn-hero-wa:hover {
+    border-color: rgba(16, 185, 129, 0.4);
+    background: var(--card-bg);
+}
+
+/* ========================================================== */
+/* FLOATING ACTION BUTTON (FAB) TANYA AI BULAT & GLOW         */
+/* ========================================================== */
+.floating-ai-fab {
+    position: fixed;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    right: 20px;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0077B6 0%, #38BDF8 100%);
+    color: #FFFFFF;
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 24px rgba(0, 119, 182, 0.35);
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    border-radius: 12px;
-    font-family: var(--font-main);
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 18px;
     cursor: pointer;
-    border: none;
-    transition: all 0.2s ease;
+    z-index: 1200;
+    outline: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: pulseGlowFab 3s infinite ease-in-out;
 }
-.btn-broadcast-wa {
-    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    color: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+
+@media (min-width: 540px) {
+    .floating-ai-fab {
+        right: calc(50% - 235px);
+    }
 }
-.btn-story-banner {
-    background: linear-gradient(135deg, #0077B6 0%, #0284C7 100%);
-    color: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(0, 119, 182, 0.2);
+
+.floating-ai-fab:hover {
+    transform: translateY(-2.5px) scale(1.06);
+    box-shadow: 0 12px 28px rgba(0, 119, 182, 0.45);
+    filter: brightness(1.08);
 }
-.promo-btn:hover {
-    transform: translateY(-1.5px);
-    filter: brightness(1.06);
+
+.floating-ai-fab:active {
+    transform: scale(0.92) !important;
+}
+
+body.dark-mode .floating-ai-fab {
+    background: linear-gradient(135deg, #0284C7 0%, #38BDF8 100%);
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 24px rgba(56, 189, 248, 0.35);
+}
+
+@keyframes pulseGlowFab {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 119, 182, 0.45), 0 8px 24px rgba(0, 119, 182, 0.35);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(0, 119, 182, 0), 0 10px 26px rgba(0, 119, 182, 0.4);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 119, 182, 0.45), 0 8px 24px rgba(0, 119, 182, 0.35);
+    }
 }
 
 /* ========================================================== */
@@ -1386,6 +1429,60 @@ body.dark-mode .add-form-group input { background: rgba(0,0,0,0.2); color: #fff;
 }
 .diag-left-wrap {
     display: flex; align-items: center; gap: 10px; flex: 1;
+}
+
+/* ========================================================== */
+/* TOMBOL & CARD CEK IMEI DI PALING BAWAH MODAL SYSTEM CHECK  */
+/* ========================================================== */
+.diag-imei-box {
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-subtle);
+    width: 100%;
+}
+.btn-diag-imei-action {
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--azure-primary);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-family: var(--font-main);
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--azure-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 119, 182, 0.08);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-diag-imei-action:hover {
+    background: linear-gradient(135deg, #0077B6 0%, #0284C7 100%);
+    color: #FFFFFF;
+    border-color: transparent;
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 18px rgba(0, 119, 182, 0.25);
+}
+.btn-diag-imei-action:hover i {
+    color: #FFFFFF;
+}
+.btn-diag-imei-action i {
+    font-size: 14px;
+    transition: color 0.2s ease;
+}
+body.dark-mode .btn-diag-imei-action {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: var(--azure-primary);
+    color: var(--azure-primary);
+}
+body.dark-mode .btn-diag-imei-action:hover {
+    background: linear-gradient(135deg, #0284C7 0%, #38BDF8 100%);
+    color: #0F172A;
+}
+body.dark-mode .btn-diag-imei-action:hover i {
+    color: #0F172A;
 }
 
 .add-submit-btn { width: 100%; padding: 12px; margin-top: 10px; background: linear-gradient(135deg, #38BDF8 0%, #0284C7 100%) !important; border: 1px solid rgba(255,255,255,0.5) !important; border-radius: 12px; color: #fff !important; font-size: 13.5px; font-weight: 700; cursor: pointer; }
