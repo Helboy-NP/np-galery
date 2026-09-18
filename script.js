@@ -24,6 +24,7 @@ let currentPage = 1;
 const itemsPerPage = 10;
 let currentFilteredData = [];
 let currentEditId = null;
+let editOpenedFromDetail = false; // Penanda alur buka edit dari modal detail
 
 let activeReportCategory = 'kas';
 let selectedPriceListModelIds = new Set();
@@ -42,6 +43,19 @@ let checkedDiagnosisCodes = new Set();
 // STATE KALKULATOR KAS
 let calcCurrentVal = "0";
 let calcEquation = "";
+
+// MAPPING LINK RESMI CEK IMEI PER BRAND
+const BRAND_IMEI_LINKS = {
+    'SAMSUNG': { name: 'Samsung', url: 'https://imeicheck.com/id/samsung-imei-check' },
+    'OPPO': { name: 'Oppo', url: 'https://support.oppo.com/id/check/' },
+    'XIAOMI': { name: 'Xiaomi / Poco', url: 'https://www.mi.com/global/verify' },
+    'VIVO': { name: 'Vivo', url: 'https://www.vivo.com/id/support/IMEI' },
+    'REALME': { name: 'Realme', url: 'https://www.realme.com/id/support/phonecheck' },
+    'INFINIX': { name: 'Infinix (Carlcare)', url: 'https://www.carlcare.com/id/warranty-check/' },
+    'TECNO': { name: 'Tecno (Carlcare)', url: 'https://www.carlcare.com/id/warranty-check/' },
+    'ITEL': { name: 'Itel (Carlcare)', url: 'https://www.carlcare.com/id/warranty-check/' },
+    'ASUS': { name: 'Asus', url: 'https://www.asus.com/id/support/warranty-status-inquiry/' }
+};
 
 /* ========================================================== */
 /* SISTEM INDIKATOR STATUS KONEKSI & REAL-TIME SYNC           */
@@ -122,14 +136,14 @@ async function syncFromSupabase() {
 /* FUNGSI SINKRONISASI MASING-MASING TABEL KE SUPABASE        */
 /* ========================================================== */
 
-// 1. TABEL PRICELIST
+// 1. TABEL PRICELIST (URUTAN TERKUNCI TETAP KONSISTEN)
 async function syncPriceListFromSupabaseOnly() {
     if (!supabaseClient) return;
     try {
         const { data, error } = await supabaseClient
             .from('pricelist')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: true }); // Menggunakan ascending agar urutan awal selalu stabil
 
         if (!error && data) {
             if (data.length === 0) {
@@ -420,6 +434,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 });
+
+/* ========================================================== */
+/* PINTASAN PENCARIAN TANYA AI                                */
+/* ========================================================== */
+window.openAiSearch = function() {
+    window.open('https://www.google.com/search?udm=50&q=', '_blank');
+};
 
 /* ========================================================== */
 /* LOGIKA PEMFORMATAN RUPIAH                                  */
@@ -783,14 +804,30 @@ window.closeModalSudahKembaliModal = function() {
 };
 
 /* ========================================================== */
-/* FITUR CEK IMEI                                             */
+/* FITUR PORTAL CEK IMEI SPESIFIK BRAND (IN-APP WEBVIEW)      */
 /* ========================================================== */
-window.openImeiCheckModal = function() {
-    document.getElementById('imei-check-modal')?.classList.add('show');
+window.openBrandImeiPortal = function(brandKey) {
+    const key = (brandKey || '').trim().toUpperCase();
+    const portal = BRAND_IMEI_LINKS[key] || { name: brandKey, url: 'https://imeicheck.com/' };
+
+    const inAppModal = document.getElementById('imei-web-modal');
+    const inAppFrame = document.getElementById('imei-webview-frame');
+    const inAppTitle = document.getElementById('inapp-webview-title');
+
+    if (inAppModal && inAppFrame) {
+        if (inAppTitle) inAppTitle.textContent = `Portal IMEI: ${portal.name}`;
+        inAppFrame.src = portal.url;
+        inAppModal.classList.add('show');
+    } else {
+        window.open(portal.url, '_blank');
+    }
 };
 
-window.closeImeiCheckModal = function() {
-    document.getElementById('imei-check-modal')?.classList.remove('show');
+window.closeImeiWebModal = function() {
+    const inAppModal = document.getElementById('imei-web-modal');
+    const inAppFrame = document.getElementById('imei-webview-frame');
+    if (inAppFrame) inAppFrame.src = 'about:blank';
+    if (inAppModal) inAppModal.classList.remove('show');
 };
 
 /* ========================================================== */
@@ -915,7 +952,7 @@ window.submitDirectWa = function() {
 };
 
 /* ========================================================== */
-/* SUB-TAB DIAGNOSIS / SYSTEM CHECK                           */
+/* SUB-TAB DIAGNOSIS / SYSTEM CHECK DENGAN CEK IMEI DI BAWAH  */
 /* ========================================================== */
 window.openDiagnosisBrand = function(brandName) {
     if (!brandName) return;
@@ -941,11 +978,15 @@ function openDiagnosisModal(query) {
     let matchedBrandObj = rawDiagnosisData.find(b => upperQuery.includes(b.brand.toUpperCase()));
 
     let targetCodes = [];
+    let detectedBrandKey = 'SAMSUNG';
+
     if (matchedBrandObj && matchedBrandObj.codes) {
+        detectedBrandKey = matchedBrandObj.brand.toUpperCase();
         modalTitle.innerHTML = `<i class="fa-solid fa-microchip" style="color: var(--azure-primary); margin-right: 6px;"></i> Diagnosis: ${matchedBrandObj.brand.toUpperCase()}`;
         modalSub.textContent = `Daftar kode cek resmi brand: ${matchedBrandObj.brand.toUpperCase()}`;
         targetCodes = matchedBrandObj.codes.map(c => ({ code: c.code, name: c.description }));
     } else {
+        detectedBrandKey = upperQuery;
         modalTitle.innerHTML = `<i class="fa-solid fa-microchip" style="color: var(--azure-primary); margin-right: 6px;"></i> Diagnosis: ${query}`;
         modalSub.textContent = `Daftar kode dial umum perangkat`;
         targetCodes = [
@@ -954,6 +995,7 @@ function openDiagnosisModal(query) {
         ];
     }
 
+    // Render daftar checklist kode dial
     let codesHtml = targetCodes.map(c => {
         const isChecked = checkedDiagnosisCodes.has(c.code);
         const domId = `diag-card-${btoa(c.code).replace(/=/g, '')}`;
@@ -973,7 +1015,30 @@ function openDiagnosisModal(query) {
         `;
     }).join('');
 
-    modalBody.innerHTML = codesHtml;
+    // Cari portal resmi Cek IMEI sesuai brand
+    let imeiInfo = BRAND_IMEI_LINKS[detectedBrandKey];
+    if (!imeiInfo) {
+        if (detectedBrandKey.includes('XIAOMI') || detectedBrandKey.includes('POCO')) imeiInfo = BRAND_IMEI_LINKS['XIAOMI'];
+        else if (detectedBrandKey.includes('INFINIX')) imeiInfo = BRAND_IMEI_LINKS['INFINIX'];
+        else if (detectedBrandKey.includes('TECNO')) imeiInfo = BRAND_IMEI_LINKS['TECNO'];
+        else if (detectedBrandKey.includes('ITEL')) imeiInfo = BRAND_IMEI_LINKS['ITEL'];
+        else imeiInfo = { name: query, url: 'https://imeicheck.com/' };
+    }
+
+    // Tombol Cek IMEI Resmi di baris paling bawah modal
+    let imeiBottomHtml = `
+        <div class="diag-imei-box">
+            <button type="button" class="btn-diag-imei-action" onclick="openBrandImeiPortal('${detectedBrandKey}')" title="Buka Portal Cek Garansi Resmi">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-shield-virus"></i>
+                    <span>Cek IMEI & Garansi ${imeiInfo.name}</span>
+                </span>
+                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px;"></i>
+            </button>
+        </div>
+    `;
+
+    modalBody.innerHTML = codesHtml + imeiBottomHtml;
     modal.classList.add('show');
 }
 
@@ -1306,6 +1371,16 @@ window.editProduct = function(id) {
     const item = rawPriceListData.find(p => p.id === id);
     if (item) {
         currentEditId = id;
+
+        // Cek apakah modal detail sedang aktif saat tombol edit ditekan
+        const detailModal = document.getElementById('pricelist-detail-modal');
+        if (detailModal && detailModal.classList.contains('show')) {
+            editOpenedFromDetail = true;
+            closePriceListModal(); // Tutup modal detail agar halaman langsung beralih ke form edit
+        } else {
+            editOpenedFromDetail = false;
+        }
+
         const subTitle = document.getElementById('edit-modal-subtitle');
         if (subTitle) subTitle.textContent = `${item.brand} - ${item.model}`;
 
@@ -1324,23 +1399,42 @@ window.editProduct = function(id) {
 };
 
 window.closeEditModal = function() { 
+    const previousEditId = currentEditId;
     document.getElementById('edit-custom-modal')?.classList.remove('show'); 
     currentEditId = null; 
+
+    // Jika pengguna membatalkan edit tapi sebelumnya dibuka dari pop-up detail, kembalikan ke detail
+    if (editOpenedFromDetail && previousEditId) {
+        openSingleProductPriceModal(previousEditId);
+    }
+    editOpenedFromDetail = false;
 };
 
 window.saveEditModal = async function() {
     if (!currentEditId) return;
-    const item = rawPriceListData.find(p => p.id === currentEditId);
-    if (!item) return;
+    
+    // Cari index posisi asli produk agar urutan barisnya tetap terkunci di tempatnya semula
+    const itemIndex = rawPriceListData.findIndex(p => p.id === currentEditId);
+    if (itemIndex === -1) return;
+    const item = rawPriceListData[itemIndex];
 
     let updatedBrand = item.brand;
     let updatedModel = item.model;
 
     const fullNameInput = document.getElementById('edit-input-fullname');
     if (fullNameInput && fullNameInput.value.trim() !== '') {
-        const parts = fullNameInput.value.trim().split(' ');
-        updatedBrand = parts[0].toUpperCase();
-        updatedModel = parts.length > 1 ? parts.slice(1).join(' ') : parts[0];
+        const fullVal = fullNameInput.value.trim();
+        const parts = fullVal.split(' ');
+        
+        // Cek apakah kata pertama sengaja ditulis brand atau langsung nama model ringkas (misal: "10 (4/64)")
+        if (parts.length > 1 && parts[0].toUpperCase() === item.brand) {
+            updatedBrand = item.brand;
+            updatedModel = parts.slice(1).join(' ').trim();
+        } else {
+            // Tetap pertahankan brand awal agar tidak melompat ke kategori lain
+            updatedBrand = item.brand;
+            updatedModel = fullVal;
+        }
     }
 
     const updatedJkt = document.getElementById('edit-input-jkt').value.trim() || '--';
@@ -1363,13 +1457,21 @@ window.saveEditModal = async function() {
 
             if (error) throw error;
 
-            item.brand = updatedBrand;
-            item.model = updatedModel;
-            item.jkt = updatedJkt;
-            item.sgc = updatedSgc;
-            item.bnib = updatedBnib;
+            // In-place update: perbarui objek tepat di index aslinya tanpa menggeser urutan array
+            rawPriceListData[itemIndex].brand = updatedBrand;
+            rawPriceListData[itemIndex].model = updatedModel;
+            rawPriceListData[itemIndex].jkt = updatedJkt;
+            rawPriceListData[itemIndex].sgc = updatedSgc;
+            rawPriceListData[itemIndex].bnib = updatedBnib;
 
-            closeEditModal(); 
+            const savedItemId = item.id;
+            const wasFromDetail = editOpenedFromDetail;
+
+            // Tutup form modal edit
+            document.getElementById('edit-custom-modal')?.classList.remove('show'); 
+            currentEditId = null; 
+            editOpenedFromDetail = false;
+
             initBrandDropdown();
             initReportBrandDropdown();
             filterPriceList(); 
@@ -1377,9 +1479,9 @@ window.saveEditModal = async function() {
             setConnectionStatus('connected');
             showToast('Berhasil!', 'Perubahan produk & harga tersimpan di Cloud.');
             
-            const modal = document.getElementById('pricelist-detail-modal');
-            if (modal && modal.classList.contains('show')) {
-                openSingleProductPriceModal(item.id);
+            // Buka kembali detail model agar pengguna langsung melihat perubahan barunya
+            if (wasFromDetail) {
+                openSingleProductPriceModal(savedItemId);
             }
         } catch (e) {
             console.warn('Gagal mengedit produk di Supabase:', e);
@@ -1502,7 +1604,10 @@ function filterPriceList() {
         });
     }
     
-    currentPage = 1; 
+    // Pertahankan halaman aktif saat filter ulang kecuali melebihi total halaman
+    const totalPages = Math.ceil(currentFilteredData.length / itemsPerPage) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+
     renderPage();
 }
 
@@ -3229,4 +3334,4 @@ function downloadFileBlob(blob, filename) {
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(url);
     showToast('Berhasil', `File ${filename} diunduh.`);
-}
+}   
