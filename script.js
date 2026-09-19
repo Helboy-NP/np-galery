@@ -88,7 +88,6 @@ function sortPriceListConsistently(list) {
         const indexA = ORDERED_BRANDS.indexOf(brandA);
         const indexB = ORDERED_BRANDS.indexOf(brandB);
 
-        // Jika kedua merek ada di daftar ORDERED_BRANDS, pakai urutan prioritas brand
         if (indexA !== -1 && indexB !== -1) {
             if (indexA !== indexB) return indexA - indexB;
         } else if (indexA !== -1) {
@@ -99,7 +98,6 @@ function sortPriceListConsistently(list) {
             return brandA.localeCompare(brandB);
         }
 
-        // Urutkan model secara alfanumerik (dari angka/karakter terkecil ke terbesar)
         return naturalModelCompare(a.model, b.model);
     });
 }
@@ -183,7 +181,7 @@ async function syncFromSupabase() {
 /* FUNGSI SINKRONISASI MASING-MASING TABEL KE SUPABASE        */
 /* ========================================================== */
 
-// 1. TABEL PRICELIST (URUTAN TERKUNCI & KONSISTEN)
+// 1. TABEL PRICELIST
 async function syncPriceListFromSupabaseOnly() {
     if (!supabaseClient) return;
     try {
@@ -205,7 +203,6 @@ async function syncPriceListFromSupabaseOnly() {
                 bnib: item.bnib || '--'
             }));
 
-            // Kunci urutan secara alfanumerik dari terkecil ke terbesar
             sortPriceListConsistently(rawPriceListData);
 
             selectedPriceListModelIds = new Set(rawPriceListData.map(p => p.id));
@@ -281,7 +278,7 @@ async function initialMigratePriceListToSupabase() {
     }
 }
 
-// 2. TABEL PRODUCT (STOK READY + FOTO UNIT)
+// 2. TABEL PRODUCT
 async function syncProductsFromSupabaseOnly() {
     if (!supabaseClient) return;
     const { data: prods, error: errProds } = await supabaseClient
@@ -299,6 +296,8 @@ async function syncProductsFromSupabaseOnly() {
             qty: String(p.qty || 1),
             hargaModal: String(p.buy_price || 0),
             hargaJual: String(p.sell_price || ''),
+            hargaDisplay: String(p.display_price || ''),
+            isNego: p.is_nego !== undefined ? Boolean(p.is_nego) : true,
             pembeli: p.buyer || '',
             tanggal: p.date || (p.created_at ? p.created_at.slice(0, 10) : ''),
             imageUrl: p.image_url || null
@@ -310,7 +309,7 @@ async function syncProductsFromSupabaseOnly() {
     }
 }
 
-// 3. TABEL TRANSACTIONS (TERJUAL)
+// 3. TABEL TRANSACTIONS
 async function syncTransactionsFromSupabaseOnly() {
     if (!supabaseClient) return;
     const { data: trx, error: errTrx } = await supabaseClient
@@ -340,7 +339,7 @@ async function syncTransactionsFromSupabaseOnly() {
     }
 }
 
-// 4. TABEL CASH_MUTATIONS (KAS PRIBADI)
+// 4. TABEL CASH_MUTATIONS
 async function syncCashFromSupabaseOnly() {
     if (!supabaseClient) return;
     const { data: mutasi, error: errMutasi } = await supabaseClient
@@ -362,7 +361,7 @@ async function syncCashFromSupabaseOnly() {
     }
 }
 
-// 5. TABEL NOTES (MEMO TOKO)
+// 5. TABEL NOTES
 async function syncNotesFromSupabaseOnly() {
     if (!supabaseClient) return;
     try {
@@ -385,7 +384,7 @@ async function syncNotesFromSupabaseOnly() {
     }
 }
 
-// SETUP SUPABASE REALTIME MULTI-DEVICE (5 TABEL SEKALIGUS)
+// SETUP SUPABASE REALTIME
 function setupSupabaseRealtime() {
     if (!supabaseClient) {
         setConnectionStatus('disconnected');
@@ -545,13 +544,12 @@ function getHighestNumericPrice(priceString) {
 }
 
 /* ========================================================== */
-/* FITUR MANAJEMEN FOTO UNIT (KOMPRESI & UPLOAD STORAGE)      */
+/* FITUR MANAJEMEN FOTO UNIT                                  */
 /* ========================================================== */
 window.handleStockPhotoSelect = function(inputEl) {
     if (!inputEl.files || inputEl.files.length === 0) return;
     const file = inputEl.files[0];
     
-    // Tampilkan preview lokal instan
     const reader = new FileReader();
     reader.onload = function(e) {
         const previewBox = document.getElementById('stok-foto-preview-box');
@@ -563,7 +561,6 @@ window.handleStockPhotoSelect = function(inputEl) {
     };
     reader.readAsDataURL(file);
 
-    // Kompres otomatis via HTML5 Canvas agar ringan (~150KB)
     compressImageFile(file, 900, 0.78, (compressedBlob) => {
         selectedStockPhotoFile = compressedBlob;
     });
@@ -639,7 +636,7 @@ async function uploadProductPhotoToStorage(blobOrFile, productId) {
 }
 
 /* ========================================================== */
-/* FITUR DISPLAY TOKO / ETALASE DIGITAL (SHOWCASE PUBLIK)     */
+/* FITUR DISPLAY TOKO / ETALASE DIGITAL                       */
 /* ========================================================== */
 window.openStoreShowcaseModal = function() {
     initShowcaseBrandDropdown();
@@ -666,7 +663,6 @@ function initShowcaseBrandDropdown() {
         select.appendChild(opt);
     });
 
-    // Re-build custom dropdown kaca agar styling-nya menyatu sempurna
     buildCustomDropdown(select);
 }
 
@@ -701,26 +697,39 @@ window.renderStoreShowcase = function() {
     grid.innerHTML = filtered.map(item => {
         const brand = item.produk.split(' ')[0].toUpperCase();
         const modelName = item.produk.split(' ').slice(1).join(' ') || item.produk;
-        const hargaTampil = item.hargaJual ? formatRupiahLengkap(parseRawToNumeric(item.hargaJual)) : 'Chat Admin';
+        
+        let hargaDisplayNum = parseRawToNumeric(item.hargaDisplay);
+        let hargaJualNum = parseRawToNumeric(item.hargaJual);
+        
+        let hargaTampil = 'Chat Admin';
+        if (hargaDisplayNum) {
+            hargaTampil = formatRupiahLengkap(hargaDisplayNum);
+        } else if (hargaJualNum) {
+            hargaTampil = formatRupiahLengkap(hargaJualNum);
+        }
+
         const imgDisplay = item.imageUrl || 'logo-np.jpg';
+        const negoBadgeHtml = (item.isNego && hargaTampil !== 'Chat Admin') 
+            ? `<span class="badge-nego-tag">Bisa Nego</span>` 
+            : ``;
 
         return `
-            <div class="showcase-item-card">
+            <div class="showcase-item-card" onclick="openShowcaseDetail('${item.id}')" title="Klik untuk lihat detail unit">
                 <div class="showcase-card-img-wrap">
                     <img src="${imgDisplay}" alt="${item.produk}" loading="lazy" onerror="this.src='logo-np.jpg';">
                     <span class="showcase-condition-pill ${item.kondisi.toLowerCase()}">${item.kondisi}</span>
                 </div>
                 <div class="showcase-card-body">
-                    <div>
+                    <div class="showcase-card-meta">
                         <span class="showcase-card-brand-tag" style="${getBrandStyle(brand)}">${brand}</span>
                         <h4 class="showcase-card-title">${modelName}</h4>
                         <span class="showcase-card-completeness">${item.kelengkapan}</span>
                     </div>
                     <div class="showcase-card-footer">
-                        <span class="showcase-card-price">${hargaTampil}</span>
-                        <button type="button" class="btn-showcase-order-wa" onclick="orderShowcaseUnitWA('${item.produk}', '${hargaTampil}')" title="Tanya / Beli Unit Ini">
-                            <i class="fa-brands fa-whatsapp"></i>
-                        </button>
+                        <div class="showcase-price-group">
+                            <span class="showcase-card-price">${hargaTampil}</span>
+                            ${negoBadgeHtml}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -728,12 +737,70 @@ window.renderStoreShowcase = function() {
     }).join('');
 };
 
-window.orderShowcaseUnitWA = function(namaUnit, hargaTampil) {
-    let text = `Halo Admin NP - Galery! Saya tertarik dengan unit di etalase:\n\n`;
-    text += `📱 *${namaUnit}*\n`;
-    text += `💰 Harga: *${hargaTampil}*\n\n`;
-    text += `Apakah unit ini masih ready?`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+/* ========================================================== */
+/* POP-UP DETAIL UNIT ETALASE KATALOG                         */
+/* ========================================================== */
+window.openShowcaseDetail = function(id) {
+    const item = daftarStokMasuk.find(s => s.id === id);
+    if (!item) return;
+
+    const brand = item.produk.split(' ')[0].toUpperCase();
+    const modelName = item.produk.split(' ').slice(1).join(' ') || item.produk;
+
+    const brandBadge = document.getElementById('modal-showcase-brand-badge');
+    const photoBox = document.getElementById('modal-showcase-photo-box');
+    const photoImg = document.getElementById('modal-showcase-photo-img');
+    const modelEl = document.getElementById('modal-showcase-model');
+    const kondisiEl = document.getElementById('modal-showcase-kondisi');
+    const kelengkapanEl = document.getElementById('modal-showcase-kelengkapan');
+    const imeiEl = document.getElementById('modal-showcase-imei');
+    const tanggalEl = document.getElementById('modal-showcase-tanggal');
+    const hargaEl = document.getElementById('modal-showcase-harga');
+    const negoBadgeEl = document.getElementById('modal-showcase-nego-badge');
+
+    if (brandBadge) {
+        brandBadge.textContent = brand;
+        brandBadge.style.cssText = getBrandStyle(brand);
+    }
+
+    if (photoImg && photoBox) {
+        photoImg.src = item.imageUrl || 'logo-np.jpg';
+        photoImg.onerror = function() {
+            this.src = 'logo-np.jpg';
+        };
+    }
+
+    if (modelEl) modelEl.textContent = modelName;
+    if (kondisiEl) kondisiEl.textContent = item.kondisi;
+    if (kelengkapanEl) kelengkapanEl.textContent = item.kelengkapan;
+    if (imeiEl) imeiEl.textContent = item.imei || '-';
+    if (tanggalEl) tanggalEl.textContent = formatTanggalID(item.tanggal);
+
+    let hargaDisplayNum = parseRawToNumeric(item.hargaDisplay);
+    let hargaJualNum = parseRawToNumeric(item.hargaJual);
+    let hargaTampil = 'Chat Admin';
+    if (hargaDisplayNum) {
+        hargaTampil = formatRupiahLengkap(hargaDisplayNum);
+    } else if (hargaJualNum) {
+        hargaTampil = formatRupiahLengkap(hargaJualNum);
+    }
+
+    if (hargaEl) hargaEl.textContent = hargaTampil;
+
+    if (negoBadgeEl) {
+        if (item.isNego && hargaTampil !== 'Chat Admin') {
+            negoBadgeEl.style.display = 'inline-block';
+            negoBadgeEl.textContent = 'Bisa Nego';
+        } else {
+            negoBadgeEl.style.display = 'none';
+        }
+    }
+
+    document.getElementById('showcase-detail-modal')?.classList.add('show');
+};
+
+window.closeShowcaseDetailModal = function() {
+    document.getElementById('showcase-detail-modal')?.classList.remove('show');
 };
 
 /* ========================================================== */
@@ -966,7 +1033,7 @@ window.simpanPerubahanCatatan = async function() {
 };
 
 /* ========================================================== */
-/* MODAL POP-UP STOK (TAMBAH STOK & DAFTAR STOK)              */
+/* MODAL POP-UP STOK                                          */
 /* ========================================================== */
 window.openAddStokModal = function() {
     const tglInput = document.getElementById('stok-tanggal');
@@ -993,7 +1060,7 @@ window.closeDaftarStokModal = function() {
 };
 
 /* ========================================================== */
-/* MODAL POP-UP KAS (CATAT KAS & RIWAYAT KAS)                 */
+/* MODAL POP-UP KAS                                           */
 /* ========================================================== */
 window.openAddKasModal = function() {
     const tglInput = document.getElementById('kas-tanggal');
@@ -1030,7 +1097,7 @@ window.closeRiwayatJualModal = function() {
 };
 
 /* ========================================================== */
-/* MODAL POP-UP SUB-TAB MODAL (BELUM & SUDAH KEMBALI)         */
+/* MODAL POP-UP SUB-TAB MODAL                                 */
 /* ========================================================== */
 window.openModalBelumKembaliModal = function() {
     renderDaftarModal();
@@ -1051,7 +1118,7 @@ window.closeModalSudahKembaliModal = function() {
 };
 
 /* ========================================================== */
-/* FITUR PORTAL CEK IMEI SPESIFIK BRAND (IN-APP WEBVIEW / TAB)*/
+/* FITUR PORTAL CEK IMEI SPESIFIK BRAND                       */
 /* ========================================================== */
 window.openBrandImeiPortal = function(brandKey) {
     closeDiagnosisModal();
@@ -1206,7 +1273,7 @@ window.submitDirectWa = function() {
 };
 
 /* ========================================================== */
-/* SUB-TAB DIAGNOSIS / SYSTEM CHECK DENGAN CEK IMEI DI BAWAH  */
+/* SUB-TAB DIAGNOSIS / SYSTEM CHECK                           */
 /* ========================================================== */
 window.openDiagnosisBrand = function(brandName) {
     if (!brandName) return;
@@ -1555,7 +1622,7 @@ function getBrandStyle(brandName) {
 }
 
 /* ========================================================== */
-/* PRICE LIST & KATALOG (100% CLOUD SUPABASE)                 */
+/* PRICE LIST & KATALOG                                       */
 /* ========================================================== */
 window.openAddPriceListModal = function() {
     document.getElementById('add-pricelist-modal')?.classList.add('show');
@@ -2108,7 +2175,7 @@ window.selectStokKatalog = function(val) {
     document.getElementById('stok-autocomplete-list')?.classList.add('hidden');
 };
 
-// SIMPAN STOK DENGAN DUKUNGAN UNGGAH FOTO FISIK UNIT (100% SUPABASE STORAGE & REALTIME)
+// SIMPAN STOK DENGAN DUKUNGAN UNGGAH FOTO FISIK UNIT, HARGA DISPLAY, & NEGO
 window.simpanStokBaru = async function() {
     let produk = document.getElementById('stok-produk-input').value.trim();
     let imei = document.getElementById('stok-imei').value.trim();
@@ -2129,6 +2196,10 @@ window.simpanStokBaru = async function() {
         uploadedImageUrl = await uploadProductPhotoToStorage(selectedStockPhotoFile, newId);
     }
 
+    const displayPriceInputVal = document.getElementById('stok-display-harga')?.value.trim() || '';
+    const isNegoCheckbox = document.getElementById('stok-is-nego');
+    const isNegoVal = isNegoCheckbox ? isNegoCheckbox.checked : true;
+
     const newStockItem = {
         id: newId,
         name: produk,
@@ -2138,6 +2209,8 @@ window.simpanStokBaru = async function() {
         qty: parseInt(document.getElementById('stok-qty').value) || 1,
         buy_price: parseRawToNumeric(document.getElementById('stok-harga').value) || 0,
         sell_price: 0,
+        display_price: parseRawToNumeric(displayPriceInputVal) || 0,
+        is_nego: isNegoVal,
         status: 'ready',
         buyer: '',
         date: tanggal,
@@ -2159,6 +2232,8 @@ window.simpanStokBaru = async function() {
                 qty: String(newStockItem.qty),
                 hargaModal: String(newStockItem.buy_price),
                 hargaJual: '',
+                hargaDisplay: String(newStockItem.display_price),
+                isNego: newStockItem.is_nego,
                 pembeli: '',
                 tanggal: newStockItem.date,
                 imageUrl: uploadedImageUrl
@@ -2172,11 +2247,12 @@ window.simpanStokBaru = async function() {
             document.getElementById('stok-produk-input').value = '';
             document.getElementById('stok-imei').value = '';
             document.getElementById('stok-harga').value = '';
+            if (document.getElementById('stok-display-harga')) document.getElementById('stok-display-harga').value = '';
             removeStockPhotoSelection();
             closeAddStokModal();
 
             setConnectionStatus('connected');
-            showToast('Tersimpan', 'Stok & foto unit tersimpan di Cloud.');
+            showToast('Tersimpan', 'Stok, display price, & foto unit tersimpan di Cloud.');
         } catch (e) {
             console.warn('Gagal simpan stok ke Supabase:', e);
             setConnectionStatus('disconnected');
@@ -2227,8 +2303,19 @@ function createStokDetailModalDOM() {
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">Tgl Masuk</span><span class="stok-modal-info-val" id="modal-detail-tanggal"></span></div>
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">QTY</span><span class="stok-modal-info-val" id="modal-detail-qty"></span></div>
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">Modal</span><span class="stok-modal-info-val" id="modal-detail-harga"></span></div>
+                    <div class="stok-modal-info-row">
+                        <span class="stok-modal-info-label"><i class="fa-solid fa-store" style="color:var(--azure-primary);"></i> Harga Display</span>
+                        <input type="text" class="modal-input-harga-jual" id="modal-input-harga-display" placeholder="Contoh: 1.850.000" oninput="updateHargaDisplayLive(this.value)">
+                    </div>
+                    <div class="stok-modal-info-row">
+                        <span class="stok-modal-info-label">Status Nego</span>
+                        <label class="checkbox-model-item" style="width: auto; margin-bottom: 0;">
+                            <input type="checkbox" id="modal-check-is-nego" onchange="updateIsNegoLive(this.checked)">
+                            <span style="font-size: 11px; font-weight: 700;">Bisa Nego</span>
+                        </label>
+                    </div>
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">Nama Pembeli</span><input type="text" class="modal-input-customer" id="modal-input-customer" placeholder="Nama Pelanggan" oninput="updatePembeliLive(this.value)"></div>
-                    <div class="stok-modal-info-row"><span class="stok-modal-info-label">Harga Jual</span><input type="text" class="modal-input-harga-jual" id="modal-input-harga-jual" placeholder="Contoh: 1.850.000" oninput="updateHargaJualLive(this.value)"></div>
+                    <div class="stok-modal-info-row"><span class="stok-modal-info-label">Harga Deal (Jual)</span><input type="text" class="modal-input-harga-jual" id="modal-input-harga-jual" placeholder="Contoh: 1.750.000" oninput="updateHargaJualLive(this.value)"></div>
                 </div>
                 <div class="stok-modal-actions"><button class="modal-action-btn sell-btn" id="modal-btn-jual">Jual</button><button class="modal-action-btn delete-btn" id="modal-btn-hapus">Hapus</button></div>
                 <button class="modal-action-btn close-btn" onclick="closeStokDetailModal()">Tutup</button>
@@ -2269,9 +2356,39 @@ window.openStokDetail = function(id) {
     document.getElementById('modal-input-customer').value = item.pembeli || '';
     document.getElementById('modal-input-harga-jual').value = item.hargaJual || '';
 
+    const displayInput = document.getElementById('modal-input-harga-display');
+    const negoCheck = document.getElementById('modal-check-is-nego');
+    if (displayInput) {
+        let numDisp = parseRawToNumeric(item.hargaDisplay);
+        displayInput.value = numDisp ? numDisp.toLocaleString('id-ID') : (item.hargaDisplay || '');
+    }
+    if (negoCheck) {
+        negoCheck.checked = (item.isNego !== undefined) ? item.isNego : true;
+    }
+
     document.getElementById('modal-btn-jual').onclick = () => { closeStokDetailModal(); jualStokItem(item.id); };
     document.getElementById('modal-btn-hapus').onclick = () => { closeStokDetailModal(); hapusStokItem(item.id); };
     document.getElementById('stok-detail-modal').classList.add('show');
+};
+
+window.updateHargaDisplayLive = function(val) {
+    const item = daftarStokMasuk.find(s => s.id === activeDetailStokId);
+    if (item) {
+        item.hargaDisplay = val;
+        if (supabaseClient) {
+            supabaseClient.from('product').update({ display_price: parseRawToNumeric(val) || 0 }).eq('id', item.id).then();
+        }
+    }
+};
+
+window.updateIsNegoLive = function(isChecked) {
+    const item = daftarStokMasuk.find(s => s.id === activeDetailStokId);
+    if (item) {
+        item.isNego = isChecked;
+        if (supabaseClient) {
+            supabaseClient.from('product').update({ is_nego: isChecked }).eq('id', item.id).then();
+        }
+    }
 };
 
 window.updateHargaJualLive = function(val) {
@@ -2367,7 +2484,7 @@ window.jualStokItem = function(id) {
 };
 
 /* ========================================================== */
-/* INVOICE NOTA A4 DENGAN KUSTOMISASI HARGA SEMENTARA         */
+/* INVOICE NOTA A4 (SLATE STEEL & NEON ORANGE)                */
 /* ========================================================== */
 function generateInvoiceHTML(item, overridePrice = null) {
     let invoiceNo = 'INV-' + (item.tanggalTerjualRaw ? item.tanggalTerjualRaw.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '')) + '-' + String(item.id).slice(-4);
@@ -2415,7 +2532,7 @@ function generateInvoiceHTML(item, overridePrice = null) {
                             <div class="invoice-item-imei">SN/IMEI: ${item.imei || '-'}</div>
                         </td>
                         <td align="center" style="font-weight: 700; font-size: 12px;">${qty}</td>
-                        <td align="right" style="font-weight: 800; color: #0077B6; font-size: 13px;">${hargaTotalTampil}</td>
+                        <td align="right" style="font-weight: 800; color: #EA580C; font-size: 13px;">${hargaTotalTampil}</td>
                     </tr>
                 </tbody>
             </table>
@@ -2899,11 +3016,20 @@ window.broadcastStokWA = function() {
     text += `───────────────────────\n\n`;
 
     daftarStokMasuk.forEach((item, idx) => {
-        let hargaTampil = item.hargaJual ? formatRupiahLengkap(parseRawToNumeric(item.hargaJual)) : 'Chat Admin';
+        let hargaDisplayNum = parseRawToNumeric(item.hargaDisplay);
+        let hargaJualNum = parseRawToNumeric(item.hargaJual);
+        let hargaTampil = 'Chat Admin';
+        if (hargaDisplayNum) {
+            hargaTampil = formatRupiahLengkap(hargaDisplayNum);
+        } else if (hargaJualNum) {
+            hargaTampil = formatRupiahLengkap(hargaJualNum);
+        }
+        let negoInfo = (item.isNego && hargaTampil !== 'Chat Admin') ? ' (Bisa Nego)' : '';
+
         text += `${idx + 1}. *${item.produk}*\n`;
         text += `   • Kondisi: ${item.kondisi}\n`;
         text += `   • Kelengkapan: ${item.kelengkapan}\n`;
-        text += `   • Harga: *${hargaTampil}*\n\n`;
+        text += `   • Harga: *${hargaTampil}*${negoInfo}\n\n`;
     });
 
     text += `───────────────────────\n`;
@@ -2926,7 +3052,15 @@ window.broadcastStokWA = function() {
 
 function generateStoryBannerHTML() {
     let itemsHtml = daftarStokMasuk.slice(0, 8).map((item) => {
-        let hargaTampil = item.hargaJual ? formatRupiahLengkap(parseRawToNumeric(item.hargaJual)) : 'Ready Siap Pakai';
+        let hargaDisplayNum = parseRawToNumeric(item.hargaDisplay);
+        let hargaJualNum = parseRawToNumeric(item.hargaJual);
+        let hargaTampil = 'Ready Siap Pakai';
+        if (hargaDisplayNum) {
+            hargaTampil = formatRupiahLengkap(hargaDisplayNum);
+        } else if (hargaJualNum) {
+            hargaTampil = formatRupiahLengkap(hargaJualNum);
+        }
+
         return `
             <div class="story-unit-card">
                 <div class="story-unit-left">
@@ -2998,7 +3132,7 @@ window.executeDownloadStoryBanner = function() {
 
     canvasElem.innerHTML = generateStoryBannerHTML();
 
-    html2canvas(canvasElem, { scale: 2, backgroundColor: '#F0F9FF', useCORS: true }).then(canvas => {
+    html2canvas(canvasElem, { scale: 2, backgroundColor: '#FFF7ED', useCORS: true }).then(canvas => {
         let link = document.createElement('a');
         link.download = `NPGalery_KatalogStory_${new Date().toISOString().slice(0, 10)}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -3311,7 +3445,7 @@ window.renderLaporanKeuangan = function() {
     }
 };
 
-// DOKUMEN EKSPOR A4
+// DOKUMEN EKSPOR A4 (SLATE STEEL & NEON ORANGE)
 function generateReportCardHTML() {
     let d = getLaporanDataSummary();
     let catTitles = { kas: 'Kas Pribadi', penjualan: 'Penjualan', stok: 'Stok Ready Gudang', pricelist: 'Katalog Price List' };
@@ -3325,7 +3459,7 @@ function generateReportCardHTML() {
         summaryCardsHtml = `
             <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Pemasukan</span><h4 style="color: #10B981; font-size: 13.5px; margin-top:2px;">+ ${formatRupiahLengkap(d.totalMasuk)}</h4></div>
             <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Pengeluaran</span><h4 style="color: #EF4444; font-size: 13.5px; margin-top:2px;">- ${formatRupiahLengkap(d.totalKeluar)}</h4></div>
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Saldo Akhir</span><h4 style="color: #0077B6; font-size: 13.5px; margin-top:2px;">${formatRupiahLengkap(d.saldoAktif)}</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Saldo Akhir</span><h4 style="color: #EA580C; font-size: 13.5px; margin-top:2px;">${formatRupiahLengkap(d.saldoAktif)}</h4></div>
         `;
         tableRowsHtml = d.filteredKas.length === 0 ? `<tr><td colspan="4" align="center" style="color:#64748B;">Tidak ada catatan kas.</td></tr>` : d.filteredKas.map((k, i) => `
             <tr>
@@ -3338,7 +3472,7 @@ function generateReportCardHTML() {
     } else if (activeReportCategory === 'penjualan') {
         summaryCardsHtml = `
             <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Unit Terjual</span><h4 style="color: #0F172A; font-size: 13.5px; margin-top:2px;">${d.sumTerjual} Unit</h4></div>
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Omset Transaksi</span><h4 style="color: #0077B6; font-size: 13.5px; margin-top:2px;">${formatRupiahLengkap(d.totalOmset)}</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Omset Transaksi</span><h4 style="color: #EA580C; font-size: 13.5px; margin-top:2px;">${formatRupiahLengkap(d.totalOmset)}</h4></div>
             <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Laba Bersih</span><h4 style="color: #10B981; font-size: 13.5px; margin-top:2px;">+ ${formatRupiahLengkap(d.totalProfit)}</h4></div>
         `;
         tableRowsHtml = daftarTerjual.length === 0 ? `<tr><td colspan="4" align="center" style="color:#64748B;">Belum ada data penjualan.</td></tr>` : daftarTerjual.map((t, i) => {
@@ -3354,19 +3488,19 @@ function generateReportCardHTML() {
         }).join('');
     } else if (activeReportCategory === 'stok') {
         summaryCardsHtml = `
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Stok Gudang</span><h4 style="color: #0077B6; font-size: 13.5px; margin-top:2px;">${d.sumStok} Unit Ready</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Stok Gudang</span><h4 style="color: #EA580C; font-size: 13.5px; margin-top:2px;">${d.sumStok} Unit Ready</h4></div>
         `;
         tableRowsHtml = daftarStokMasuk.length === 0 ? `<tr><td colspan="4" align="center" style="color:#64748B;">Belum ada unit ready.</td></tr>` : daftarStokMasuk.map((s, i) => `
             <tr>
                 <td align="center">${i + 1}</td>
                 <td><b>${s.produk}</b><br><span style="font-size:9.5px; color:#64748B;">Kondisi: ${s.kondisi} • ${s.kelengkapan}</span></td>
                 <td>IMEI: ${s.imei || '-'}<br>Tgl: ${formatTanggalID(s.tanggal)}</td>
-                <td align="center" style="font-weight:800; color:#0077B6;">${s.qty || 1} Unit</td>
+                <td align="center" style="font-weight:800; color:#EA580C;">${s.qty || 1} Unit</td>
             </tr>
         `).join('');
     } else if (activeReportCategory === 'pricelist') {
         summaryCardsHtml = `
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Model Dipilih</span><h4 style="color: #0077B6; font-size: 13.5px; margin-top:2px;">${d.filteredPLSelected.length} Model</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Model Dipilih</span><h4 style="color: #EA580C; font-size: 13.5px; margin-top:2px;">${d.filteredPLSelected.length} Model</h4></div>
         `;
         tableRowsHtml = d.filteredPLSelected.length === 0 ? `<tr><td colspan="4" align="center" style="color:#64748B;">Tidak ada model terpilih.</td></tr>` : d.filteredPLSelected.map((p, i) => `
             <tr>
@@ -3379,7 +3513,7 @@ function generateReportCardHTML() {
     }
 
     return `
-        <div class="elegant-export-card" style="background:#FFFFFF; color:#0F172A; padding:32px 34px; border:2px solid #BAE6FD; border-radius:14px; box-sizing:border-box; width:100%; min-height: 1050px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="elegant-export-card" style="background:#FFFFFF; color:#0F172A; padding:32px 34px; border:2px solid #FED7AA; border-radius:14px; box-sizing:border-box; width:100%; min-height: 1050px; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
                 <div class="doc-header-kop">
                     <img src="logo-np.jpg" alt="Logo NP" class="doc-logo-img">
@@ -3574,7 +3708,7 @@ function processFileDownload(format) {
                     div.Section1 { page: Section1; }
                     body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #0F172A; }
                     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-                    th { background-color: #0077B6; color: #FFFFFF; padding: 8px; border: 1px solid #0077B6; }
+                    th { background-color: #EA580C; color: #FFFFFF; padding: 8px; border: 1px solid #EA580C; }
                     td { padding: 8px; border: 1px solid #CBD5E1; font-size: 10pt; }
                 </style>
             </head>
