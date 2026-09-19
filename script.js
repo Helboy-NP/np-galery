@@ -44,6 +44,9 @@ let checkedDiagnosisCodes = new Set();
 let calcCurrentVal = "0";
 let calcEquation = "";
 
+// STATE FOTO FISIK UNIT STOK
+let selectedStockPhotoFile = null;
+
 // MAPPING LINK RESMI CEK IMEI PER BRAND
 const BRAND_IMEI_LINKS = {
     'SAMSUNG': { name: 'Samsung', url: 'https://imeicheck.com/id/samsung-imei-check' },
@@ -56,6 +59,50 @@ const BRAND_IMEI_LINKS = {
     'ITEL': { name: 'Itel (Carlcare)', url: 'https://www.carlcare.com/id/warranty-check/' },
     'ASUS': { name: 'Asus', url: 'https://www.asus.com/id/support/warranty-status-inquiry/' }
 };
+
+const ORDERED_BRANDS = [
+    'SAMSUNG',
+    'REALME',
+    'INFINIX',
+    'XIAOMI',
+    'REDMI',
+    'VIVO',
+    'POCO',
+    'OPPO',
+    'TECNO',
+    'ITEL'
+];
+
+/* ========================================================== */
+/* FUNGSI PENGURUTAN ALFANUMERIK NATURAL KONSISTEN            */
+/* ========================================================== */
+function naturalModelCompare(a, b) {
+    return (a || '').localeCompare(b || '', undefined, { numeric: true, sensitivity: 'base' });
+}
+
+function sortPriceListConsistently(list) {
+    return list.sort((a, b) => {
+        const brandA = (a.brand || '').trim().toUpperCase();
+        const brandB = (b.brand || '').trim().toUpperCase();
+
+        const indexA = ORDERED_BRANDS.indexOf(brandA);
+        const indexB = ORDERED_BRANDS.indexOf(brandB);
+
+        // Jika kedua merek ada di daftar ORDERED_BRANDS, pakai urutan prioritas brand
+        if (indexA !== -1 && indexB !== -1) {
+            if (indexA !== indexB) return indexA - indexB;
+        } else if (indexA !== -1) {
+            return -1;
+        } else if (indexB !== -1) {
+            return 1;
+        } else if (brandA !== brandB) {
+            return brandA.localeCompare(brandB);
+        }
+
+        // Urutkan model secara alfanumerik (dari angka/karakter terkecil ke terbesar)
+        return naturalModelCompare(a.model, b.model);
+    });
+}
 
 /* ========================================================== */
 /* SISTEM INDIKATOR STATUS KONEKSI & REAL-TIME SYNC           */
@@ -136,14 +183,13 @@ async function syncFromSupabase() {
 /* FUNGSI SINKRONISASI MASING-MASING TABEL KE SUPABASE        */
 /* ========================================================== */
 
-// 1. TABEL PRICELIST (URUTAN TERKUNCI TETAP KONSISTEN)
+// 1. TABEL PRICELIST (URUTAN TERKUNCI & KONSISTEN)
 async function syncPriceListFromSupabaseOnly() {
     if (!supabaseClient) return;
     try {
         const { data, error } = await supabaseClient
             .from('pricelist')
-            .select('*')
-            .order('created_at', { ascending: true }); // Menggunakan ascending agar urutan awal selalu stabil
+            .select('*');
 
         if (!error && data) {
             if (data.length === 0) {
@@ -158,6 +204,10 @@ async function syncPriceListFromSupabaseOnly() {
                 sgc: item.sgc || '--',
                 bnib: item.bnib || '--'
             }));
+
+            // Kunci urutan secara alfanumerik dari terkecil ke terbesar
+            sortPriceListConsistently(rawPriceListData);
+
             selectedPriceListModelIds = new Set(rawPriceListData.map(p => p.id));
             initBrandDropdown();
             initReportBrandDropdown();
@@ -218,6 +268,7 @@ async function initialMigratePriceListToSupabase() {
             const { error } = await supabaseClient.from('pricelist').upsert(initialList);
             if (!error) {
                 rawPriceListData = initialList;
+                sortPriceListConsistently(rawPriceListData);
                 selectedPriceListModelIds = new Set(rawPriceListData.map(p => p.id));
                 initBrandDropdown();
                 initReportBrandDropdown();
@@ -230,7 +281,7 @@ async function initialMigratePriceListToSupabase() {
     }
 }
 
-// 2. TABEL PRODUCT (STOK READY)
+// 2. TABEL PRODUCT (STOK READY + FOTO UNIT)
 async function syncProductsFromSupabaseOnly() {
     if (!supabaseClient) return;
     const { data: prods, error: errProds } = await supabaseClient
@@ -249,11 +300,13 @@ async function syncProductsFromSupabaseOnly() {
             hargaModal: String(p.buy_price || 0),
             hargaJual: String(p.sell_price || ''),
             pembeli: p.buyer || '',
-            tanggal: p.date || (p.created_at ? p.created_at.slice(0, 10) : '')
+            tanggal: p.date || (p.created_at ? p.created_at.slice(0, 10) : ''),
+            imageUrl: p.image_url || null
         }));
         renderDaftarStokMasuk();
         updateDashboardStats();
         renderLaporanKeuangan();
+        initShowcaseBrandDropdown();
     }
 }
 
@@ -490,6 +543,198 @@ function getHighestNumericPrice(priceString) {
     });
     return maxVal;
 }
+
+/* ========================================================== */
+/* FITUR MANAJEMEN FOTO UNIT (KOMPRESI & UPLOAD STORAGE)      */
+/* ========================================================== */
+window.handleStockPhotoSelect = function(inputEl) {
+    if (!inputEl.files || inputEl.files.length === 0) return;
+    const file = inputEl.files[0];
+    
+    // Tampilkan preview lokal instan
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const previewBox = document.getElementById('stok-foto-preview-box');
+        const previewImg = document.getElementById('stok-foto-preview-img');
+        if (previewImg && previewBox) {
+            previewImg.src = e.target.result;
+            previewBox.classList.remove('hidden');
+        }
+    };
+    reader.readAsDataURL(file);
+
+    // Kompres otomatis via HTML5 Canvas agar ringan (~150KB)
+    compressImageFile(file, 900, 0.78, (compressedBlob) => {
+        selectedStockPhotoFile = compressedBlob;
+    });
+};
+
+window.removeStockPhotoSelection = function() {
+    selectedStockPhotoFile = null;
+    const inputEl = document.getElementById('stok-foto-input');
+    const previewBox = document.getElementById('stok-foto-preview-box');
+    const previewImg = document.getElementById('stok-foto-preview-img');
+    if (inputEl) inputEl.value = '';
+    if (previewImg) previewImg.src = '';
+    if (previewBox) previewBox.classList.add('hidden');
+};
+
+function compressImageFile(file, maxDimension, quality, callback) {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function(event) {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = function() {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > maxDimension) {
+                    height = Math.round((height * maxDimension) / width);
+                    width = maxDimension;
+                }
+            } else {
+                if (height > maxDimension) {
+                    width = Math.round((width * maxDimension) / height);
+                    height = maxDimension;
+                }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob((blob) => {
+                callback(blob || file);
+            }, 'image/jpeg', quality);
+        };
+    };
+}
+
+async function uploadProductPhotoToStorage(blobOrFile, productId) {
+    if (!supabaseClient || !blobOrFile) return null;
+    try {
+        const filePath = `units/${productId}_${Date.now()}.jpg`;
+        const { error: uploadError } = await supabaseClient.storage
+            .from('product-images')
+            .upload(filePath, blobOrFile, {
+                contentType: 'image/jpeg',
+                upsert: true
+            });
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabaseClient.storage
+            .from('product-images')
+            .getPublicUrl(filePath);
+
+        return publicUrlData ? publicUrlData.publicUrl : null;
+    } catch (err) {
+        console.warn('Gagal unggah foto ke Storage Supabase:', err);
+        return null;
+    }
+}
+
+/* ========================================================== */
+/* FITUR DISPLAY TOKO / ETALASE DIGITAL (SHOWCASE PUBLIK)     */
+/* ========================================================== */
+window.openStoreShowcaseModal = function() {
+    initShowcaseBrandDropdown();
+    renderStoreShowcase();
+    document.getElementById('store-showcase-modal')?.classList.add('show');
+};
+
+window.closeStoreShowcaseModal = function() {
+    document.getElementById('store-showcase-modal')?.classList.remove('show');
+};
+
+function initShowcaseBrandDropdown() {
+    const select = document.getElementById('showcase-brand-select');
+    if (!select) return;
+    const currentVal = select.value || 'ALL';
+    select.innerHTML = '<option value="ALL">Semua Merk</option>';
+
+    const brands = Array.from(new Set(daftarStokMasuk.map(i => i.produk.split(' ')[0].toUpperCase()))).filter(Boolean);
+    brands.sort().forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b;
+        opt.textContent = b;
+        if (b === currentVal) opt.selected = true;
+        select.appendChild(opt);
+    });
+
+    // Re-build custom dropdown kaca agar styling-nya menyatu sempurna
+    buildCustomDropdown(select);
+}
+
+window.renderStoreShowcase = function() {
+    const grid = document.getElementById('store-showcase-grid');
+    const badge = document.getElementById('showcase-count-badge');
+    if (!grid) return;
+
+    const searchVal = (document.getElementById('showcase-search-input')?.value || '').toLowerCase().trim();
+    const brandVal = document.getElementById('showcase-brand-select')?.value || 'ALL';
+
+    const filtered = daftarStokMasuk.filter(item => {
+        const brand = item.produk.split(' ')[0].toUpperCase();
+        const matchesBrand = (brandVal === 'ALL' || brand === brandVal);
+        const matchesSearch = item.produk.toLowerCase().includes(searchVal);
+        return matchesBrand && matchesSearch;
+    });
+
+    if (badge) badge.textContent = `${filtered.length} Unit Tersedia`;
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state" style="grid-column: span 2; padding: 36px 12px;">
+                <i class="fa-solid fa-box-open icon-placeholder" style="font-size: 32px;"></i>
+                <h4 style="font-size: 13.5px; font-weight: 800; margin-top: 6px;">Unit Tidak Ditemukan</h4>
+                <p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">Tidak ada unit ready sesuai filter.</p>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = filtered.map(item => {
+        const brand = item.produk.split(' ')[0].toUpperCase();
+        const modelName = item.produk.split(' ').slice(1).join(' ') || item.produk;
+        const hargaTampil = item.hargaJual ? formatRupiahLengkap(parseRawToNumeric(item.hargaJual)) : 'Chat Admin';
+        const imgDisplay = item.imageUrl || 'logo-np.jpg';
+
+        return `
+            <div class="showcase-item-card">
+                <div class="showcase-card-img-wrap">
+                    <img src="${imgDisplay}" alt="${item.produk}" loading="lazy" onerror="this.src='logo-np.jpg';">
+                    <span class="showcase-condition-pill ${item.kondisi.toLowerCase()}">${item.kondisi}</span>
+                </div>
+                <div class="showcase-card-body">
+                    <div>
+                        <span class="showcase-card-brand-tag" style="${getBrandStyle(brand)}">${brand}</span>
+                        <h4 class="showcase-card-title">${modelName}</h4>
+                        <span class="showcase-card-completeness">${item.kelengkapan}</span>
+                    </div>
+                    <div class="showcase-card-footer">
+                        <span class="showcase-card-price">${hargaTampil}</span>
+                        <button type="button" class="btn-showcase-order-wa" onclick="orderShowcaseUnitWA('${item.produk}', '${hargaTampil}')" title="Tanya / Beli Unit Ini">
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+window.orderShowcaseUnitWA = function(namaUnit, hargaTampil) {
+    let text = `Halo Admin NP - Galery! Saya tertarik dengan unit di etalase:\n\n`;
+    text += `📱 *${namaUnit}*\n`;
+    text += `💰 Harga: *${hargaTampil}*\n\n`;
+    text += `Apakah unit ini masih ready?`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+};
 
 /* ========================================================== */
 /* FITUR MANAJEMEN NOTES                                      */
@@ -729,10 +974,12 @@ window.openAddStokModal = function() {
         let d = new Date();
         tglInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
+    removeStockPhotoSelection();
     document.getElementById('add-stok-modal')?.classList.add('show');
 };
 
 window.closeAddStokModal = function() {
+    removeStockPhotoSelection();
     document.getElementById('add-stok-modal')?.classList.remove('show');
 };
 
@@ -804,11 +1051,18 @@ window.closeModalSudahKembaliModal = function() {
 };
 
 /* ========================================================== */
-/* FITUR PORTAL CEK IMEI SPESIFIK BRAND (IN-APP WEBVIEW)      */
+/* FITUR PORTAL CEK IMEI SPESIFIK BRAND (IN-APP WEBVIEW / TAB)*/
 /* ========================================================== */
 window.openBrandImeiPortal = function(brandKey) {
+    closeDiagnosisModal();
+
     const key = (brandKey || '').trim().toUpperCase();
     const portal = BRAND_IMEI_LINKS[key] || { name: brandKey, url: 'https://imeicheck.com/' };
+
+    if (key.includes('XIAOMI') || key.includes('POCO')) {
+        window.open(portal.url, '_blank');
+        return;
+    }
 
     const inAppModal = document.getElementById('imei-web-modal');
     const inAppFrame = document.getElementById('imei-webview-frame');
@@ -995,7 +1249,6 @@ function openDiagnosisModal(query) {
         ];
     }
 
-    // Render daftar checklist kode dial
     let codesHtml = targetCodes.map(c => {
         const isChecked = checkedDiagnosisCodes.has(c.code);
         const domId = `diag-card-${btoa(c.code).replace(/=/g, '')}`;
@@ -1015,7 +1268,6 @@ function openDiagnosisModal(query) {
         `;
     }).join('');
 
-    // Cari portal resmi Cek IMEI sesuai brand
     let imeiInfo = BRAND_IMEI_LINKS[detectedBrandKey];
     if (!imeiInfo) {
         if (detectedBrandKey.includes('XIAOMI') || detectedBrandKey.includes('POCO')) imeiInfo = BRAND_IMEI_LINKS['XIAOMI'];
@@ -1025,7 +1277,6 @@ function openDiagnosisModal(query) {
         else imeiInfo = { name: query, url: 'https://imeicheck.com/' };
     }
 
-    // Tombol Cek IMEI Resmi di baris paling bawah modal
     let imeiBottomHtml = `
         <div class="diag-imei-box">
             <button type="button" class="btn-diag-imei-action" onclick="openBrandImeiPortal('${detectedBrandKey}')" title="Buka Portal Cek Garansi Resmi">
@@ -1193,7 +1444,8 @@ function initAllCustomDropdowns() {
         '#kas-kategori',
         '#export-format-select',
         '#report-filter-kas-kategori',
-        '#report-filter-brand-select'
+        '#report-filter-brand-select',
+        '#showcase-brand-select'
     ];
     targets.forEach(sel => {
         const el = document.querySelector(sel);
@@ -1343,7 +1595,9 @@ window.addNewProduct = async function() {
             const { error } = await supabaseClient.from('pricelist').insert([newPriceItem]);
             if (error) throw error;
 
-            rawPriceListData.unshift(newPriceItem);
+            rawPriceListData.push(newPriceItem);
+            sortPriceListConsistently(rawPriceListData);
+
             selectedPriceListModelIds.add(newPriceItem.id);
 
             initBrandDropdown(); 
@@ -1372,11 +1626,10 @@ window.editProduct = function(id) {
     if (item) {
         currentEditId = id;
 
-        // Cek apakah modal detail sedang aktif saat tombol edit ditekan
         const detailModal = document.getElementById('pricelist-detail-modal');
         if (detailModal && detailModal.classList.contains('show')) {
             editOpenedFromDetail = true;
-            closePriceListModal(); // Tutup modal detail agar halaman langsung beralih ke form edit
+            closePriceListModal();
         } else {
             editOpenedFromDetail = false;
         }
@@ -1403,7 +1656,6 @@ window.closeEditModal = function() {
     document.getElementById('edit-custom-modal')?.classList.remove('show'); 
     currentEditId = null; 
 
-    // Jika pengguna membatalkan edit tapi sebelumnya dibuka dari pop-up detail, kembalikan ke detail
     if (editOpenedFromDetail && previousEditId) {
         openSingleProductPriceModal(previousEditId);
     }
@@ -1413,7 +1665,6 @@ window.closeEditModal = function() {
 window.saveEditModal = async function() {
     if (!currentEditId) return;
     
-    // Cari index posisi asli produk agar urutan barisnya tetap terkunci di tempatnya semula
     const itemIndex = rawPriceListData.findIndex(p => p.id === currentEditId);
     if (itemIndex === -1) return;
     const item = rawPriceListData[itemIndex];
@@ -1426,12 +1677,10 @@ window.saveEditModal = async function() {
         const fullVal = fullNameInput.value.trim();
         const parts = fullVal.split(' ');
         
-        // Cek apakah kata pertama sengaja ditulis brand atau langsung nama model ringkas (misal: "10 (4/64)")
         if (parts.length > 1 && parts[0].toUpperCase() === item.brand) {
             updatedBrand = item.brand;
             updatedModel = parts.slice(1).join(' ').trim();
         } else {
-            // Tetap pertahankan brand awal agar tidak melompat ke kategori lain
             updatedBrand = item.brand;
             updatedModel = fullVal;
         }
@@ -1457,17 +1706,17 @@ window.saveEditModal = async function() {
 
             if (error) throw error;
 
-            // In-place update: perbarui objek tepat di index aslinya tanpa menggeser urutan array
             rawPriceListData[itemIndex].brand = updatedBrand;
             rawPriceListData[itemIndex].model = updatedModel;
             rawPriceListData[itemIndex].jkt = updatedJkt;
             rawPriceListData[itemIndex].sgc = updatedSgc;
             rawPriceListData[itemIndex].bnib = updatedBnib;
 
+            sortPriceListConsistently(rawPriceListData);
+
             const savedItemId = item.id;
             const wasFromDetail = editOpenedFromDetail;
 
-            // Tutup form modal edit
             document.getElementById('edit-custom-modal')?.classList.remove('show'); 
             currentEditId = null; 
             editOpenedFromDetail = false;
@@ -1479,7 +1728,6 @@ window.saveEditModal = async function() {
             setConnectionStatus('connected');
             showToast('Berhasil!', 'Perubahan produk & harga tersimpan di Cloud.');
             
-            // Buka kembali detail model agar pengguna langsung melihat perubahan barunya
             if (wasFromDetail) {
                 openSingleProductPriceModal(savedItemId);
             }
@@ -1517,19 +1765,6 @@ window.deleteProduct = function(id) {
         }
     });
 };
-
-const ORDERED_BRANDS = [
-    'SAMSUNG',
-    'REALME',
-    'INFINIX',
-    'XIAOMI',
-    'REDMI',
-    'VIVO',
-    'POCO',
-    'OPPO',
-    'TECNO',
-    'ITEL'
-];
 
 function sortBrandsWithCustomOrder(brandList) {
     const brandMap = new Map();
@@ -1604,7 +1839,6 @@ function filterPriceList() {
         });
     }
     
-    // Pertahankan halaman aktif saat filter ulang kecuali melebihi total halaman
     const totalPages = Math.ceil(currentFilteredData.length / itemsPerPage) || 1;
     if (currentPage > totalPages) currentPage = totalPages;
 
@@ -1874,15 +2108,29 @@ window.selectStokKatalog = function(val) {
     document.getElementById('stok-autocomplete-list')?.classList.add('hidden');
 };
 
-// SIMPAN STOK (100% CLOUD SUPABASE)
+// SIMPAN STOK DENGAN DUKUNGAN UNGGAH FOTO FISIK UNIT (100% SUPABASE STORAGE & REALTIME)
 window.simpanStokBaru = async function() {
     let produk = document.getElementById('stok-produk-input').value.trim();
     let imei = document.getElementById('stok-imei').value.trim();
     let tanggal = document.getElementById('stok-tanggal').value;
     if (!produk || !imei || !tanggal) { showToast('Gagal', 'Lengkapi form stok!', false); return; }
 
+    const saveBtn = document.getElementById('btn-save-stok');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+    }
+
+    const newId = 'stok-' + Date.now();
+    let uploadedImageUrl = null;
+
+    if (selectedStockPhotoFile) {
+        setConnectionStatus('syncing');
+        uploadedImageUrl = await uploadProductPhotoToStorage(selectedStockPhotoFile, newId);
+    }
+
     const newStockItem = {
-        id: 'stok-' + Date.now(),
+        id: newId,
         name: produk,
         condition: document.getElementById('stok-kondisi').value,
         completeness: document.getElementById('stok-kelengkapan').value,
@@ -1892,7 +2140,8 @@ window.simpanStokBaru = async function() {
         sell_price: 0,
         status: 'ready',
         buyer: '',
-        date: tanggal
+        date: tanggal,
+        image_url: uploadedImageUrl
     };
 
     if (supabaseClient) {
@@ -1911,24 +2160,32 @@ window.simpanStokBaru = async function() {
                 hargaModal: String(newStockItem.buy_price),
                 hargaJual: '',
                 pembeli: '',
-                tanggal: newStockItem.date
+                tanggal: newStockItem.date,
+                imageUrl: uploadedImageUrl
             });
 
             renderDaftarStokMasuk();
             updateDashboardStats();
             renderLaporanKeuangan();
+            initShowcaseBrandDropdown();
 
             document.getElementById('stok-produk-input').value = '';
             document.getElementById('stok-imei').value = '';
             document.getElementById('stok-harga').value = '';
+            removeStockPhotoSelection();
             closeAddStokModal();
 
             setConnectionStatus('connected');
-            showToast('Tersimpan', 'Stok baru tersimpan di Cloud.');
+            showToast('Tersimpan', 'Stok & foto unit tersimpan di Cloud.');
         } catch (e) {
             console.warn('Gagal simpan stok ke Supabase:', e);
             setConnectionStatus('disconnected');
             showToast('Gagal', 'Gagal menyimpan stok ke server.', false);
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save`;
+            }
         }
     }
 };
@@ -1959,7 +2216,10 @@ function createStokDetailModalDOM() {
     if (document.getElementById('stok-detail-modal')) return;
     document.body.insertAdjacentHTML('beforeend', `
         <div class="stok-modal-overlay" id="stok-detail-modal">
-            <div class="stok-modal-card">
+            <div class="stok-modal-card" style="max-height: 90vh; overflow-y: auto;">
+                <div id="modal-detail-photo-container" class="modal-detail-photo-wrap" style="display: none;">
+                    <img id="modal-detail-photo-img" src="" alt="Foto Unit">
+                </div>
                 <div class="stok-modal-header"><span class="modal-brand-tag" id="modal-detail-brand"></span><h3 id="modal-detail-title"></h3><p id="modal-detail-imei"></p></div>
                 <div class="stok-modal-body">
                     <div class="stok-modal-info-row"><span class="stok-modal-info-label">Kondisi</span><span class="stok-modal-info-val" id="modal-detail-kondisi"></span></div>
@@ -1984,6 +2244,16 @@ window.openStokDetail = function(id) {
     if (!item) return;
     activeDetailStokId = id;
     const brand = item.produk.split(' ')[0].toUpperCase();
+
+    const photoWrap = document.getElementById('modal-detail-photo-container');
+    const photoImg = document.getElementById('modal-detail-photo-img');
+    if (item.imageUrl) {
+        if (photoImg) photoImg.src = item.imageUrl;
+        if (photoWrap) photoWrap.style.display = 'flex';
+    } else {
+        if (photoWrap) photoWrap.style.display = 'none';
+    }
+
     document.getElementById('modal-detail-brand').textContent = brand;
     document.getElementById('modal-detail-brand').style.cssText = getBrandStyle(brand);
     document.getElementById('modal-detail-title').textContent = item.produk.split(' ').slice(1).join(' ');
@@ -2081,6 +2351,7 @@ window.jualStokItem = function(id) {
                     updateDashboardStats(); 
                     updatePribadiStats(); 
                     renderLaporanKeuangan();
+                    initShowcaseBrandDropdown();
 
                     setConnectionStatus('connected');
                     showToast('Berhasil', 'Unit terjual & laba tercatat di Cloud.');
@@ -2102,7 +2373,6 @@ function generateInvoiceHTML(item, overridePrice = null) {
     let invoiceNo = 'INV-' + (item.tanggalTerjualRaw ? item.tanggalTerjualRaw.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '')) + '-' + String(item.id).slice(-4);
     let customerName = item.pembeli && item.pembeli.trim() !== '' ? item.pembeli.trim() : 'Pelanggan Setia';
     
-    // Gunakan harga penyesuaian sementara jika ada
     let numericJual = (overridePrice !== null) ? overridePrice : (parseRawToNumeric(item.hargaJual) || 0);
     let qty = parseInt(item.qty || 1);
     let hargaTotalTampil = formatRupiahLengkap(numericJual);
@@ -2141,7 +2411,7 @@ function generateInvoiceHTML(item, overridePrice = null) {
                     <tr>
                         <td>
                             <div class="invoice-item-unit">${item.produk}</div>
-                            <div class="invoice-item-spec">${item.kondisi} • ${item.kelengkapan}</div>
+                            <div class="invoice-item-spec">${item.kondisi} •${item.kelengkapan}</div>
                             <div class="invoice-item-imei">SN/IMEI: ${item.imei || '-'}</div>
                         </td>
                         <td align="center" style="font-weight: 700; font-size: 12px;">${qty}</td>
@@ -2231,7 +2501,6 @@ window.shareInvoiceWA = function() {
     let invoiceNo = 'INV-' + (item.tanggalTerjualRaw ? item.tanggalTerjualRaw.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '')) + '-' + String(item.id).slice(-4);
     let customerName = item.pembeli && item.pembeli.trim() !== '' ? item.pembeli.trim() : 'Pelanggan Setia';
     
-    // Pakai nominal kustom sementara jika ada
     let numericJual = (tempInvoiceOverridePrice !== null) ? tempInvoiceOverridePrice : (parseRawToNumeric(item.hargaJual) || 0);
     let tglTampil = formatTanggalID(item.tanggalTerjualRaw || new Date().toISOString().slice(0, 10));
 
@@ -2272,7 +2541,6 @@ window.downloadInvoiceImage = function() {
     const canvasWrap = document.getElementById('invoice-render-canvas');
     if (!canvasWrap) return;
 
-    // Render canvas dengan harga penyesuaian sementara jika ada
     canvasWrap.innerHTML = generateInvoiceHTML(activeInvoiceData, tempInvoiceOverridePrice);
 
     html2canvas(canvasWrap, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true }).then(canvas => {
@@ -2294,6 +2562,7 @@ window.hapusStokItem = function(id) {
                 renderDaftarStokMasuk(); 
                 updateDashboardStats(); 
                 renderLaporanKeuangan();
+                initShowcaseBrandDropdown();
                 setConnectionStatus('connected');
                 showToast('Berhasil', 'Stok dihapus dari server.');
             } catch (e) {
@@ -2337,22 +2606,30 @@ function renderDaftarStokMasuk() {
         return; 
     }
     
-    container.innerHTML = daftarStokMasuk.map(i => `
-        <div class="stok-item-card" onclick="openStokDetail('${i.id}')">
-            <div class="stok-item-top">
-                <div class="stok-title-group">
-                    <span class="kondisi-badge ${i.kondisi.toLowerCase()}">${i.kondisi}</span>
-                    <span class="stok-item-title">${i.produk}</span>
-                    <span class="stok-kelengkapan-sub">${i.kelengkapan}</span>
+    container.innerHTML = daftarStokMasuk.map(i => {
+        const thumbHtml = i.imageUrl 
+            ? `<img src="${i.imageUrl}" class="stok-thumb-mini" alt="${i.produk}" onerror="this.style.display='none';">` 
+            : ``;
+        return `
+            <div class="stok-item-card" onclick="openStokDetail('${i.id}')">
+                <div class="stok-item-top" style="display: flex; gap: 10px; align-items: center;">
+                    ${thumbHtml}
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <div class="stok-title-group">
+                            <span class="kondisi-badge ${i.kondisi.toLowerCase()}">${i.kondisi}</span>
+                            <span class="stok-item-title">${i.produk}</span>
+                            <span class="stok-kelengkapan-sub">${i.kelengkapan}</span>
+                        </div>
+                        <div class="stok-item-details">
+                            <span class="detail-badge imei-badge">IMEI: ${i.imei}</span>
+                            <span class="detail-badge">${formatTanggalID(i.tanggal)}</span>
+                            <span class="detail-badge qty-badge">${i.qty} unit</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="stok-item-details">
-                <span class="detail-badge imei-badge">IMEI: ${i.imei}</span>
-                <span class="detail-badge">${formatTanggalID(i.tanggal)}</span>
-                <span class="detail-badge qty-badge">${i.qty} unit</span>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function renderDaftarTerjual() {
@@ -3334,4 +3611,4 @@ function downloadFileBlob(blob, filename) {
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(url);
     showToast('Berhasil', `File ${filename} diunduh.`);
-}   
+}
