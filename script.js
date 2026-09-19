@@ -1,6 +1,7 @@
 /**
  * NPGALERY - CORE SCRIPT & PRICE LIST PERBANDINGAN HARGA
  * FULLY CLOUD-NATIVE VIA SUPABASE & REALTIME SYNC (5 TABEL UTAMA)
+ * THEME: DEEP OBSIDIAN & TITANIUM PLATINUM (ELECTRIC STEEL BLUE ACCENT)
  */
 
 // KONFIGURASI KONEKSI SUPABASE
@@ -1608,16 +1609,15 @@ function showToast(title, desc, isSuccess = true) {
 function getBrandStyle(brandName) {
     const b = (brandName || '').trim().toUpperCase();
     let color = 'var(--azure-primary)', bg = 'var(--card-bg)', border = 'var(--border-subtle)';
-    if (b.includes('INFINIX')) { color = '#10B981'; bg = 'rgba(16, 185, 129, 0.12)'; border = 'rgba(16, 185, 129, 0.3)'; } 
-    else if (b.includes('SAMSUNG')) { color = '#3B82F6'; bg = 'rgba(59, 130, 246, 0.12)'; border = 'rgba(59, 130, 246, 0.3)'; }
-    else if (b.includes('OPPO')) { color = '#059669'; bg = 'rgba(5, 150, 105, 0.12)'; border = 'rgba(5, 150, 105, 0.3)'; }
-    else if (b.includes('XIAOMI')) { color = '#EF4444'; bg = 'rgba(239, 68, 68, 0.12)'; border = 'rgba(239, 68, 68, 0.3)'; }
-    else if (b.includes('REDMI')) { color = '#EF4444'; bg = 'rgba(239, 68, 68, 0.12)'; border = 'rgba(239, 68, 68, 0.3)'; }
-    else if (b.includes('POCO')) { color = '#EAB308'; bg = 'rgba(234, 179, 8, 0.12)'; border = 'rgba(234, 179, 8, 0.3)'; }
-    else if (b.includes('VIVO')) { color = '#8B5CF6'; bg = 'rgba(139, 92, 246, 0.12)'; border = 'rgba(139, 92, 246, 0.3)'; }
-    else if (b.includes('REALME')) { color = '#D97706'; bg = 'rgba(217, 119, 6, 0.12)'; border = 'rgba(217, 119, 6, 0.3)'; }
-    else if (b.includes('TECNO')) { color = '#2563EB'; bg = 'rgba(37, 99, 235, 0.12)'; border = 'rgba(37, 99, 235, 0.3)'; }
-    else if (b.includes('ITEL')) { color = '#DC2626'; bg = 'rgba(220, 38, 38, 0.12)'; border = 'rgba(220, 38, 38, 0.3)'; }
+    if (b.includes('INFINIX')) { color = '#059669'; bg = 'rgba(5, 150, 105, 0.1)'; border = 'rgba(5, 150, 105, 0.25)'; } 
+    else if (b.includes('SAMSUNG')) { color = '#38BDF8'; bg = 'rgba(56, 189, 248, 0.1)'; border = 'rgba(56, 189, 248, 0.25)'; }
+    else if (b.includes('OPPO')) { color = '#10B981'; bg = 'rgba(16, 185, 129, 0.1)'; border = 'rgba(16, 185, 129, 0.25)'; }
+    else if (b.includes('XIAOMI') || b.includes('REDMI')) { color = '#F43F5E'; bg = 'rgba(244, 63, 94, 0.1)'; border = 'rgba(244, 63, 94, 0.25)'; }
+    else if (b.includes('POCO')) { color = '#F59E0B'; bg = 'rgba(245, 158, 11, 0.1)'; border = 'rgba(245, 158, 11, 0.25)'; }
+    else if (b.includes('VIVO')) { color = '#A855F7'; bg = 'rgba(168, 85, 247, 0.1)'; border = 'rgba(168, 85, 247, 0.25)'; }
+    else if (b.includes('REALME')) { color = '#F59E0B'; bg = 'rgba(245, 158, 11, 0.1)'; border = 'rgba(245, 158, 11, 0.25)'; }
+    else if (b.includes('TECNO')) { color = '#0284C7'; bg = 'rgba(2, 132, 199, 0.1)'; border = 'rgba(2, 132, 199, 0.25)'; }
+    else if (b.includes('ITEL')) { color = '#E11D48'; bg = 'rgba(225, 29, 72, 0.1)'; border = 'rgba(225, 29, 72, 0.25)'; }
     return `color: ${color}; background-color: ${bg}; border-color: ${border};`;
 }
 
@@ -2484,7 +2484,7 @@ window.jualStokItem = function(id) {
 };
 
 /* ========================================================== */
-/* INVOICE NOTA A4 (SLATE STEEL & NEON ORANGE)                */
+/* INVOICE NOTA A4 (TITANIUM PLATINUM & STEEL BLUE)           */
 /* ========================================================== */
 function generateInvoiceHTML(item, overridePrice = null) {
     let invoiceNo = 'INV-' + (item.tanggalTerjualRaw ? item.tanggalTerjualRaw.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '')) + '-' + String(item.id).slice(-4);
@@ -2502,7 +2502,7 @@ function generateInvoiceHTML(item, overridePrice = null) {
                     <img src="logo-np.jpg" alt="Logo NP" class="invoice-brand-logo">
                     <div>
                         <h2 class="invoice-brand-title">NP - GALERY</h2>
-                        <p class="invoice-brand-sub">Smartphone Store</p>
+                        <p class="invoice-brand-sub">Smartphone Store & Premium Gadget</p>
                         <div class="invoice-contact-row">
                             <span class="invoice-contact-item wa"><i class="fa-brands fa-whatsapp"></i> 0878 3313 3318</span>
                             <span class="invoice-contact-divider">|</span>
@@ -2532,7 +2532,7 @@ function generateInvoiceHTML(item, overridePrice = null) {
                             <div class="invoice-item-imei">SN/IMEI: ${item.imei || '-'}</div>
                         </td>
                         <td align="center" style="font-weight: 700; font-size: 12px;">${qty}</td>
-                        <td align="right" style="font-weight: 800; color: #EA580C; font-size: 13px;">${hargaTotalTampil}</td>
+                        <td align="right" style="font-weight: 800; color: #0284C7; font-size: 13px;">${hargaTotalTampil}</td>
                     </tr>
                 </tbody>
             </table>
@@ -2841,7 +2841,7 @@ function renderDaftarModal() {
                         </div>
                         <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px; font-weight:700;">
                             <span style="color:var(--text-secondary);">Modal Unit:</span>
-                            <span style="color:#EF4444; font-family:var(--font-mono);">${formatRupiahRingkas(numericModal)}</span>
+                            <span style="color:#F43F5E; font-family:var(--font-mono);">${formatRupiahRingkas(numericModal)}</span>
                         </div>
                     </div>
                 `;
@@ -2995,7 +2995,7 @@ window.renderManajemenKas = function() {
     
     container.innerHTML = filtered.map(i => `
         <div class="stok-item-card" style="cursor:default;">
-            <div class="stok-item-top"><span style="font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:4px; background:${i.kategori==='masuk'?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'}; color:${i.kategori==='masuk'?'var(--status-safe)':'var(--status-unsafe)'}">${i.kategori==='masuk'?'Masuk':'Keluar'}</span><span class="stok-item-title">${i.keterangan}</span><button onclick="hapusKasPribadi('${i.id}')" class="action-btn delete-btn"><i class="fa-solid fa-trash"></i></button></div>
+            <div class="stok-item-top"><span style="font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:4px; background:${i.kategori==='masuk'?'rgba(16,185,129,0.12)':'rgba(244,63,94,0.12)'}; color:${i.kategori==='masuk'?'var(--status-safe)':'var(--status-unsafe)'}">${i.kategori==='masuk'?'Masuk':'Keluar'}</span><span class="stok-item-title">${i.keterangan}</span><button onclick="hapusKasPribadi('${i.id}')" class="action-btn delete-btn"><i class="fa-solid fa-trash"></i></button></div>
             <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px;"><span style="color:var(--text-secondary)">${formatTanggalID(i.tanggal)}</span><span style="font-weight:800; color:${i.kategori==='masuk'?'var(--status-safe)':'var(--status-unsafe)'}">${i.kategori==='masuk'?'+':'-'} ${formatRupiahRingkas(i.nominal)}</span></div>
         </div>
     `).join('');
@@ -3132,7 +3132,7 @@ window.executeDownloadStoryBanner = function() {
 
     canvasElem.innerHTML = generateStoryBannerHTML();
 
-    html2canvas(canvasElem, { scale: 2, backgroundColor: '#FFF7ED', useCORS: true }).then(canvas => {
+    html2canvas(canvasElem, { scale: 2, backgroundColor: '#F0F9FF', useCORS: true }).then(canvas => {
         let link = document.createElement('a');
         link.download = `NPGalery_KatalogStory_${new Date().toISOString().slice(0, 10)}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -3445,7 +3445,7 @@ window.renderLaporanKeuangan = function() {
     }
 };
 
-// DOKUMEN EKSPOR A4 (SLATE STEEL & NEON ORANGE)
+// DOKUMEN EKSPOR A4 (TITANIUM PLATINUM & STEEL BLUE)
 function generateReportCardHTML() {
     let d = getLaporanDataSummary();
     let catTitles = { kas: 'Kas Pribadi', penjualan: 'Penjualan', stok: 'Stok Ready Gudang', pricelist: 'Katalog Price List' };
@@ -3458,21 +3458,21 @@ function generateReportCardHTML() {
     if (activeReportCategory === 'kas') {
         summaryCardsHtml = `
             <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Pemasukan</span><h4 style="color: #10B981; font-size: 13.5px; margin-top:2px;">+ ${formatRupiahLengkap(d.totalMasuk)}</h4></div>
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Pengeluaran</span><h4 style="color: #EF4444; font-size: 13.5px; margin-top:2px;">- ${formatRupiahLengkap(d.totalKeluar)}</h4></div>
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Saldo Akhir</span><h4 style="color: #EA580C; font-size: 13.5px; margin-top:2px;">${formatRupiahLengkap(d.saldoAktif)}</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Pengeluaran</span><h4 style="color: #F43F5E; font-size: 13.5px; margin-top:2px;">- ${formatRupiahLengkap(d.totalKeluar)}</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Saldo Akhir</span><h4 style="color: #0284C7; font-size: 13.5px; margin-top:2px;">${formatRupiahLengkap(d.saldoAktif)}</h4></div>
         `;
         tableRowsHtml = d.filteredKas.length === 0 ? `<tr><td colspan="4" align="center" style="color:#64748B;">Tidak ada catatan kas.</td></tr>` : d.filteredKas.map((k, i) => `
             <tr>
                 <td align="center">${i + 1}</td>
                 <td><b>${k.keterangan}</b></td>
                 <td>${formatTanggalID(k.tanggal)} (${k.kategori.toUpperCase()})</td>
-                <td align="right" style="font-weight:700; color:${k.kategori==='masuk'?'#10B981':'#EF4444'}; font-family:var(--font-mono);">${k.kategori==='masuk'?'+':'-'} ${formatRupiahLengkap(k.nominal)}</td>
+                <td align="right" style="font-weight:700; color:${k.kategori==='masuk'?'#10B981':'#F43F5E'}; font-family:var(--font-mono);">${k.kategori==='masuk'?'+':'-'} ${formatRupiahLengkap(k.nominal)}</td>
             </tr>
         `).join('');
     } else if (activeReportCategory === 'penjualan') {
         summaryCardsHtml = `
             <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Unit Terjual</span><h4 style="color: #0F172A; font-size: 13.5px; margin-top:2px;">${d.sumTerjual} Unit</h4></div>
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Omset Transaksi</span><h4 style="color: #EA580C; font-size: 13.5px; margin-top:2px;">${formatRupiahLengkap(d.totalOmset)}</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Omset Transaksi</span><h4 style="color: #0284C7; font-size: 13.5px; margin-top:2px;">${formatRupiahLengkap(d.totalOmset)}</h4></div>
             <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Laba Bersih</span><h4 style="color: #10B981; font-size: 13.5px; margin-top:2px;">+ ${formatRupiahLengkap(d.totalProfit)}</h4></div>
         `;
         tableRowsHtml = daftarTerjual.length === 0 ? `<tr><td colspan="4" align="center" style="color:#64748B;">Belum ada data penjualan.</td></tr>` : daftarTerjual.map((t, i) => {
@@ -3482,25 +3482,25 @@ function generateReportCardHTML() {
                     <td align="center">${i + 1}</td>
                     <td><b>${t.produk}</b><br><span style="font-size:9.5px; color:#64748B;">IMEI: ${t.imei || '-'}</span></td>
                     <td>Modal: ${formatRupiahLengkap(parseRawToNumeric(t.hargaModal))}<br>Jual: ${formatRupiahLengkap(parseRawToNumeric(t.hargaJual))}</td>
-                    <td align="right" style="font-weight:700; color:${p>=0?'#10B981':'#EF4444'}; font-family:var(--font-mono);">+ ${formatRupiahLengkap(p)}</td>
+                    <td align="right" style="font-weight:700; color:${p>=0?'#10B981':'#F43F5E'}; font-family:var(--font-mono);">+ ${formatRupiahLengkap(p)}</td>
                 </tr>
             `;
         }).join('');
     } else if (activeReportCategory === 'stok') {
         summaryCardsHtml = `
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Stok Gudang</span><h4 style="color: #EA580C; font-size: 13.5px; margin-top:2px;">${d.sumStok} Unit Ready</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Total Stok Gudang</span><h4 style="color: #0284C7; font-size: 13.5px; margin-top:2px;">${d.sumStok} Unit Ready</h4></div>
         `;
         tableRowsHtml = daftarStokMasuk.length === 0 ? `<tr><td colspan="4" align="center" style="color:#64748B;">Belum ada unit ready.</td></tr>` : daftarStokMasuk.map((s, i) => `
             <tr>
                 <td align="center">${i + 1}</td>
                 <td><b>${s.produk}</b><br><span style="font-size:9.5px; color:#64748B;">Kondisi: ${s.kondisi} • ${s.kelengkapan}</span></td>
                 <td>IMEI: ${s.imei || '-'}<br>Tgl: ${formatTanggalID(s.tanggal)}</td>
-                <td align="center" style="font-weight:800; color:#EA580C;">${s.qty || 1} Unit</td>
+                <td align="center" style="font-weight:800; color:#0284C7;">${s.qty || 1} Unit</td>
             </tr>
         `).join('');
     } else if (activeReportCategory === 'pricelist') {
         summaryCardsHtml = `
-            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Model Dipilih</span><h4 style="color: #EA580C; font-size: 13.5px; margin-top:2px;">${d.filteredPLSelected.length} Model</h4></div>
+            <div class="doc-mini-stat"><span style="font-size: 10px; color: #64748B;">Model Dipilih</span><h4 style="color: #0284C7; font-size: 13.5px; margin-top:2px;">${d.filteredPLSelected.length} Model</h4></div>
         `;
         tableRowsHtml = d.filteredPLSelected.length === 0 ? `<tr><td colspan="4" align="center" style="color:#64748B;">Tidak ada model terpilih.</td></tr>` : d.filteredPLSelected.map((p, i) => `
             <tr>
@@ -3513,7 +3513,7 @@ function generateReportCardHTML() {
     }
 
     return `
-        <div class="elegant-export-card" style="background:#FFFFFF; color:#0F172A; padding:32px 34px; border:2px solid #FED7AA; border-radius:14px; box-sizing:border-box; width:100%; min-height: 1050px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="elegant-export-card" style="background:#FFFFFF; color:#0F172A; padding:32px 34px; border:2px solid #BAE6FD; border-radius:14px; box-sizing:border-box; width:100%; min-height: 1050px; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
                 <div class="doc-header-kop">
                     <img src="logo-np.jpg" alt="Logo NP" class="doc-logo-img">
@@ -3708,7 +3708,7 @@ function processFileDownload(format) {
                     div.Section1 { page: Section1; }
                     body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #0F172A; }
                     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-                    th { background-color: #EA580C; color: #FFFFFF; padding: 8px; border: 1px solid #EA580C; }
+                    th { background-color: #0284C7; color: #FFFFFF; padding: 8px; border: 1px solid #0284C7; }
                     td { padding: 8px; border: 1px solid #CBD5E1; font-size: 10pt; }
                 </style>
             </head>
