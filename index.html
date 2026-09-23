@@ -11,6 +11,8 @@
     <!-- Library Render Dokumen & Barcode Scanner HP Real-Time -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Library QR Code Generator Mandiri untuk Nota Digital -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -48,7 +50,7 @@
         <div class="floating-header">
             <div class="header-brand">
                 <img src="logo-np.jpg" alt="Logo NPGalery" class="app-logo">
-                <h1 class="title">Not - Project</h1>
+                <h1 class="title">NP Galery</h1>
             </div>
 
             <div class="header-actions">
@@ -1199,6 +1201,35 @@
                 <button class="btn-cancel" onclick="closeInvoiceModal()" style="flex: 0.7;">Selesai</button>
                 <button class="invoice-btn-wa" onclick="shareInvoiceWA()"><i class="fa-brands fa-whatsapp"></i> Kirim WA</button>
                 <button class="btn-save" onclick="downloadInvoiceImage()"><i class="fa-solid fa-download"></i> Unduh Nota A4</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP SERTIFIKAT KARTU GARANSI DIGITAL (WEB VIEW DISPLAY) -->
+    <div class="custom-modal-overlay" id="warranty-certificate-modal">
+        <div class="custom-modal-card warranty-modal-card" style="max-width: 480px; max-height: 92vh; display: flex; flex-direction: column; padding: 18px 16px;">
+            <div class="warranty-modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="logo-np.jpg" alt="Logo NPGalery" class="warranty-header-logo">
+                    <div>
+                        <h3 class="warranty-header-title">E-Warranty Certificate</h3>
+                        <p class="warranty-header-subtitle">Kartu Garansi Resmi & Sertifikat Digital</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close-webview" onclick="closeWarrantyCertificateModal()" title="Tutup Sertifikat">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="warranty-certificate-body" style="flex: 1; overflow-y: auto; padding-right: 4px; margin-top: 8px;">
+                <!-- Konten Sertifikat Kartu Garansi Digital di-render dinamis oleh script.js -->
+            </div>
+
+            <div class="warranty-modal-footer" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px; display: flex; gap: 8px;">
+                <button type="button" class="btn-cancel" onclick="closeWarrantyCertificateModal()" style="flex: 0.7;">Tutup</button>
+                <button type="button" id="btn-warranty-chat-wa" class="invoice-btn-wa" style="flex: 1.3;" onclick="claimWarrantyViaWhatsApp()">
+                    <i class="fa-brands fa-whatsapp"></i> Konsultasi & Klaim Garansi
+                </button>
             </div>
         </div>
     </div>
