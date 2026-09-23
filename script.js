@@ -449,16 +449,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const authModal = document.getElementById('auth-modal');
-    if (supabaseClient) {
-        const { data: sessionData } = await supabaseClient.auth.getSession();
-        if (sessionData && sessionData.session) {
-            localStorage.setItem('npgalery_logged_in', 'true');
-            if (authModal) authModal.classList.add('hidden');
-        } else {
-            const isLoggedIn = localStorage.getItem('npgalery_logged_in');
-            if (authModal) {
-                if (isLoggedIn === 'true') authModal.classList.add('hidden');
-                else authModal.classList.remove('hidden');
+    const urlParams = new URLSearchParams(window.location.search);
+    const isWarrantyRequest = urlParams.has('warranty');
+
+    // JIKA AKSES PUBLIK DARI SCAN KARTU GARANSI (BYPASS AUTH MODAL ADMIN)
+    if (isWarrantyRequest) {
+        if (authModal) authModal.classList.add('hidden');
+    } else {
+        if (supabaseClient) {
+            const { data: sessionData } = await supabaseClient.auth.getSession();
+            if (sessionData && sessionData.session) {
+                localStorage.setItem('npgalery_logged_in', 'true');
+                if (authModal) authModal.classList.add('hidden');
+            } else {
+                const isLoggedIn = localStorage.getItem('npgalery_logged_in');
+                if (authModal) {
+                    if (isLoggedIn === 'true') authModal.classList.add('hidden');
+                    else authModal.classList.remove('hidden');
+                }
             }
         }
     }
@@ -2580,7 +2588,7 @@ function generateInvoiceHTML(item, overridePrice = null, qrBoxId = 'invoice-qr-c
     `;
 }
 
-// FUNGSI RENDER QR CODE PADA NOTA SECARA MANDIRI
+// FUNGSI RENDER QR CODE PADA NOTA: DIPERBESAR MENJADI 90x90 DENGAN ERROR CORRECTION TINGGI
 function renderInvoiceQRCode(containerId, item) {
     const el = document.getElementById(containerId);
     if (!el) return;
@@ -2593,15 +2601,15 @@ function renderInvoiceQRCode(containerId, item) {
     if (window.QRCode) {
         new QRCode(el, {
             text: warrantyTargetUrl,
-            width: 60,
-            height: 60,
-            colorDark: "#0F172A",
+            width: 90,
+            height: 90,
+            colorDark: "#000000",
             colorLight: "#FFFFFF",
-            correctLevel: QRCode.CorrectLevel.M
+            correctLevel: QRCode.CorrectLevel.H
         });
     } else {
         // Fallback jika lib QRCode belum terpasang
-        el.innerHTML = `<i class="fa-solid fa-qrcode" style="font-size: 32px; color: var(--azure-primary);"></i>`;
+        el.innerHTML = `<i class="fa-solid fa-qrcode" style="font-size: 40px; color: var(--azure-primary);"></i>`;
     }
 }
 
@@ -2883,20 +2891,61 @@ window.claimWarrantyViaWhatsApp = function() {
 };
 
 // Deteksi otomatis jika link dibuka dari scan QR kamera HP
-function checkUrlForWarrantyParam() {
+async function checkUrlForWarrantyParam() {
     const urlParams = new URLSearchParams(window.location.search);
     const warrantyId = urlParams.get('warranty');
     if (!warrantyId) return;
 
-    // Tunggu sinkronisasi data selesai sejenak lalu buka kartu garansinya
-    setTimeout(() => {
-        let found = daftarTerjual.find(t => t.id === warrantyId) || daftarStokMasuk.find(s => s.id === warrantyId);
-        if (found) {
-            openWarrantyCertificateModal(found);
-        } else {
-            showToast('Garansi Digital', `Memuat data unit: ${warrantyId}`);
+    // Pastikan modal login ditutup jika sedang melihat garansi publik
+    const authModal = document.getElementById('auth-modal');
+    if (authModal) authModal.classList.add('hidden');
+
+    let found = daftarTerjual.find(t => t.id === warrantyId) || daftarStokMasuk.find(s => s.id === warrantyId);
+
+    if (found) {
+        openWarrantyCertificateModal(found);
+    } else if (supabaseClient) {
+        // Ambil data langsung dari Supabase jika belum termuat di memori
+        try {
+            const { data: trxData } = await supabaseClient.from('transactions').select('*').eq('id', warrantyId).maybeSingle();
+            if (trxData) {
+                openWarrantyCertificateModal({
+                    id: trxData.id,
+                    produk: trxData.product_name,
+                    kondisi: trxData.condition || 'Second',
+                    kelengkapan: trxData.completeness || 'Fullset',
+                    imei: trxData.imei || '-',
+                    qty: String(trxData.qty || 1),
+                    hargaModal: String(trxData.buy_price || 0),
+                    hargaJual: String(trxData.sell_price || 0),
+                    pembeli: trxData.customer_name || '',
+                    tanggal: trxData.date || '',
+                    tanggalTerjualRaw: trxData.sold_date || (trxData.created_at ? trxData.created_at.slice(0, 10) : '')
+                });
+            } else {
+                const { data: prodData } = await supabaseClient.from('product').select('*').eq('id', warrantyId).maybeSingle();
+                if (prodData) {
+                    openWarrantyCertificateModal({
+                        id: prodData.id,
+                        produk: prodData.name,
+                        kondisi: prodData.condition || 'Second',
+                        kelengkapan: prodData.completeness || 'Fullset',
+                        imei: prodData.imei || '-',
+                        qty: String(prodData.qty || 1),
+                        hargaModal: String(prodData.buy_price || 0),
+                        hargaJual: String(prodData.sell_price || 0),
+                        pembeli: prodData.buyer || '',
+                        tanggal: prodData.date || '',
+                        tanggalTerjualRaw: prodData.date || (prodData.created_at ? prodData.created_at.slice(0, 10) : '')
+                    });
+                } else {
+                    showToast('Info', 'Data kartu garansi unit tidak ditemukan.', false);
+                }
+            }
+        } catch (err) {
+            console.warn('Gagal memuat garansi publik:', err);
         }
-    }, 900);
+    }
 }
 
 window.hapusStokItem = function(id) {
