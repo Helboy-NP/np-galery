@@ -13,6 +13,9 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
+// FLAG KEAMANAN MODE GARANSI PUBLIK
+let isPublicWarrantyMode = false;
+
 // DATA IN-MEMORY (SINGLE SOURCE OF TRUTH: SUPABASE)
 let rawPriceListData = [];
 let rawDiagnosisData = [];
@@ -138,6 +141,7 @@ function setConnectionStatus(status) {
 }
 
 window.checkConnectionStatusManual = async function(btn) {
+    if (isPublicWarrantyMode) return;
     setConnectionStatus('syncing');
     showToast('Koneksi', 'Memeriksa sambungan ke Supabase...');
     try {
@@ -157,16 +161,19 @@ window.checkConnectionStatusManual = async function(btn) {
 };
 
 window.addEventListener('online', () => {
+    if (isPublicWarrantyMode) return;
     setConnectionStatus('syncing');
     syncFromSupabase().then(() => setConnectionStatus('connected'));
 });
 window.addEventListener('offline', () => {
+    if (isPublicWarrantyMode) return;
     setConnectionStatus('disconnected');
     showToast('Offline', 'Koneksi internet terputus.', false);
 });
 
 // SINKRONISASI DATA UTAMA DARI SUPABASE
 async function syncFromSupabase() {
+    if (isPublicWarrantyMode) return;
     if (!supabaseClient || !navigator.onLine) {
         setConnectionStatus('disconnected');
         return;
@@ -193,7 +200,7 @@ async function syncFromSupabase() {
 
 // 1. TABEL PRICELIST
 async function syncPriceListFromSupabaseOnly() {
-    if (!supabaseClient) return;
+    if (!supabaseClient || isPublicWarrantyMode) return;
     try {
         const { data, error } = await supabaseClient
             .from('pricelist')
@@ -312,16 +319,19 @@ async function syncProductsFromSupabaseOnly() {
             tanggal: p.date || (p.created_at ? p.created_at.slice(0, 10) : ''),
             imageUrl: p.image_url || null
         }));
-        renderDaftarStokMasuk();
-        updateDashboardStats();
-        renderLaporanKeuangan();
+
+        if (!isPublicWarrantyMode) {
+            renderDaftarStokMasuk();
+            updateDashboardStats();
+            renderLaporanKeuangan();
+        }
         initShowcaseBrandDropdown();
     }
 }
 
 // 3. TABEL TRANSACTIONS
 async function syncTransactionsFromSupabaseOnly() {
-    if (!supabaseClient) return;
+    if (!supabaseClient || isPublicWarrantyMode) return;
     const { data: trx, error: errTrx } = await supabaseClient
         .from('transactions')
         .select('*')
@@ -351,7 +361,7 @@ async function syncTransactionsFromSupabaseOnly() {
 
 // 4. TABEL CASH_MUTATIONS
 async function syncCashFromSupabaseOnly() {
-    if (!supabaseClient) return;
+    if (!supabaseClient || isPublicWarrantyMode) return;
     const { data: mutasi, error: errMutasi } = await supabaseClient
         .from('cash_mutations')
         .select('*')
@@ -373,7 +383,7 @@ async function syncCashFromSupabaseOnly() {
 
 // 5. TABEL NOTES
 async function syncNotesFromSupabaseOnly() {
-    if (!supabaseClient) return;
+    if (!supabaseClient || isPublicWarrantyMode) return;
     try {
         const { data: notesData, error: errNotes } = await supabaseClient
             .from('notes')
@@ -396,8 +406,8 @@ async function syncNotesFromSupabaseOnly() {
 
 // SETUP SUPABASE REALTIME
 function setupSupabaseRealtime() {
-    if (!supabaseClient) {
-        setConnectionStatus('disconnected');
+    if (!supabaseClient || isPublicWarrantyMode) {
+        if (!supabaseClient) setConnectionStatus('disconnected');
         return;
     }
 
@@ -428,6 +438,7 @@ function setupSupabaseRealtime() {
 }
 
 async function loadDiagnosisData() {
+    if (isPublicWarrantyMode) return;
     try {
         const response = await fetch('diagnosis.json');
         if (!response.ok) throw new Error('File diagnosis.json tidak dapat dimuat');
@@ -452,21 +463,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const isWarrantyRequest = urlParams.has('warranty');
 
-    // JIKA AKSES PUBLIK DARI SCAN KARTU GARANSI (BYPASS AUTH MODAL ADMIN)
+    // JIKA AKSES DARI SCAN QR CODE KARTU GARANSI DIGITAL: ISOLASI TOTAL DARI DASHBOARD ADMIN
     if (isWarrantyRequest) {
+        isPublicWarrantyMode = true;
         if (authModal) authModal.classList.add('hidden');
-    } else {
-        if (supabaseClient) {
-            const { data: sessionData } = await supabaseClient.auth.getSession();
-            if (sessionData && sessionData.session) {
-                localStorage.setItem('npgalery_logged_in', 'true');
-                if (authModal) authModal.classList.add('hidden');
-            } else {
-                const isLoggedIn = localStorage.getItem('npgalery_logged_in');
-                if (authModal) {
-                    if (isLoggedIn === 'true') authModal.classList.add('hidden');
-                    else authModal.classList.remove('hidden');
-                }
+
+        // Sembunyikan elemen admin
+        const header = document.querySelector('.floating-header-container');
+        const nav = document.querySelector('.floating-nav-container');
+        const fab = document.getElementById('btn-floating-ai');
+        const mainContent = document.querySelector('.content-container');
+
+        if (header) header.style.display = 'none';
+        if (nav) nav.style.display = 'none';
+        if (fab) fab.style.display = 'none';
+        if (mainContent) mainContent.style.display = 'none';
+
+        // Langsung periksa dan render kartu garansi publik
+        checkUrlForWarrantyParam();
+        return;
+    }
+
+    // MODE ADMIN NORMAL
+    if (supabaseClient) {
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        if (sessionData && sessionData.session) {
+            localStorage.setItem('npgalery_logged_in', 'true');
+            if (authModal) authModal.classList.add('hidden');
+        } else {
+            const isLoggedIn = localStorage.getItem('npgalery_logged_in');
+            if (authModal) {
+                if (isLoggedIn === 'true') authModal.classList.add('hidden');
+                else authModal.classList.remove('hidden');
             }
         }
     }
@@ -491,9 +519,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         setConnectionStatus('disconnected');
     }
-
-    // Deteksi jika link dibuka dari hasil scan QR Code garansi (?warranty=...)
-    checkUrlForWarrantyParam();
 
     document.addEventListener('click', (e) => {
         const inputElem = document.getElementById('stok-produk-input');
@@ -538,7 +563,6 @@ function parseRawToNumeric(valStr) {
     let clean = valStr.toString().trim().replace(/\./g, '');
     let num = parseFloat(clean);
     if (isNaN(num)) return null;
-    // Mendukung input harga ringkas ribuan (misal 5600 -> 5.600.000, 14700 -> 14.700.000)
     if (num < 1000000) return num * 1000;
     return num;
 }
@@ -2690,7 +2714,7 @@ window.shareInvoiceWA = function() {
 
     showToast('Memproses', 'Menyiapkan nota gambar & membuka WhatsApp...');
 
-    // Format teks ucapan profesional (Opsi 1 yang disesuaikan)
+    // Format teks ucapan profesional
     const textUcapan = `Halo Kak, terima kasih banyak telah melakukan transaksi di *NP - Galery Store* ✨\n\nBerikut kami lampirkan nota pembelian resmi beserta kartu garansi digital untuk unit Anda.\n\nJika ada kendala atau pertanyaan seputar unitnya, silakan hubungi kami kembali ya. Selamat menikmati perangkat barunya! 🙏😊`;
 
     setTimeout(() => {
@@ -2833,7 +2857,7 @@ window.openWarrantyCertificateModal = function(unitIdOrObject) {
                 </div>
                 <div class="warranty-detail-row">
                     <span class="w-label">Kondisi & Kelengkapan</span>
-                    <span class="w-val">${item.kondisi} •${item.kelengkapan}</span>
+                    <span class="w-val">${item.kondisi} • ${item.kelengkapan}</span>
                 </div>
                 <div class="warranty-detail-row">
                     <span class="w-label">Tanggal Pembelian</span>
@@ -2865,25 +2889,57 @@ window.openWarrantyCertificateModal = function(unitIdOrObject) {
     modal.classList.add('show');
 };
 
+// PENUTUPAN MODAL GARANSI: AMAN DARI PENYUSUPAN AKSES ADMIN
 window.closeWarrantyCertificateModal = function() {
+    if (isPublicWarrantyMode) {
+        // Tampilan selesai untuk pembeli saat menutup kartu garansi
+        const body = document.getElementById('warranty-certificate-body');
+        const footer = document.querySelector('.warranty-modal-footer');
+        if (body) {
+            body.innerHTML = `
+                <div style="text-align: center; padding: 32px 14px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; color: var(--status-safe); font-size: 24px;">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <h3 style="font-size: 15px; font-weight: 800; color: var(--text-primary);">Terima Kasih Telah Berbelanja!</h3>
+                    <p style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; max-width: 320px;">
+                        Simpan nota invoice Anda sebagai bukti garansi resmi di <b>NP - Galery Store</b>. Jika ada pertanyaan, admin siap melayani Anda.
+                    </p>
+                    <button type="button" class="btn-save" style="margin-top: 8px; width: auto; padding: 10px 22px; font-size: 12px;" onclick="openStoreShowcaseModal()">
+                        <i class="fa-solid fa-store"></i> Lihat Katalog Toko
+                    </button>
+                </div>
+            `;
+        }
+        if (footer) {
+            footer.innerHTML = `
+                <button type="button" class="invoice-btn-wa" style="width: 100%;" onclick="claimWarrantyViaWhatsApp()">
+                    <i class="fa-brands fa-whatsapp"></i> Chat Admin WhatsApp
+                </button>
+            `;
+        }
+        return;
+    }
+
     document.getElementById('warranty-certificate-modal')?.classList.remove('show');
     activeWarrantyItemData = null;
 };
 
 window.claimWarrantyViaWhatsApp = function() {
-    if (!activeWarrantyItemData) return;
-    const item = activeWarrantyItemData;
-    const tglBeliRaw = item.tanggalTerjualRaw || item.tanggal || new Date().toISOString().slice(0, 10);
-    const countdownInfo = calculateWarrantyCountdown(tglBeliRaw);
+    let item = activeWarrantyItemData;
+    let tglBeliRaw = item ? (item.tanggalTerjualRaw || item.tanggal || new Date().toISOString().slice(0, 10)) : new Date().toISOString().slice(0, 10);
+    let countdownInfo = calculateWarrantyCountdown(tglBeliRaw);
 
     let msg = `Halo Admin *NP - Galery*,\n\n`;
     msg += `Saya ingin konsultasi / klaim garansi untuk unit berikut:\n`;
-    msg += `• *Model*: ${item.produk}\n`;
-    msg += `• *IMEI/SN*: ${item.imei || '-'}\n`;
-    msg += `• *Kelengkapan*: ${item.kelengkapan}\n`;
-    msg += `• *Tgl Beli*: ${formatTanggalID(tglBeliRaw)}\n`;
-    msg += `• *Sisa Garansi*: ${!countdownInfo.isExpired ? countdownInfo.daysLeft + ' Hari' : 'Masa Garansi Habis'}\n\n`;
-    msg += `Kendala software yang dialami: `;
+    if (item) {
+        msg += `• *Model*: ${item.produk}\n`;
+        msg += `• *IMEI/SN*: ${item.imei || '-'}\n`;
+        msg += `• *Kelengkapan*: ${item.kelengkapan}\n`;
+        msg += `• *Tgl Beli*: ${formatTanggalID(tglBeliRaw)}\n`;
+        msg += `• *Sisa Garansi*: ${!countdownInfo.isExpired ? countdownInfo.daysLeft + ' Hari' : 'Masa Garansi Habis'}\n\n`;
+    }
+    msg += `Kendala yang dialami: `;
 
     const phone = "6285717945565"; // Nomor WhatsApp resmi NP Galery
     const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
@@ -2905,7 +2961,7 @@ async function checkUrlForWarrantyParam() {
     if (found) {
         openWarrantyCertificateModal(found);
     } else if (supabaseClient) {
-        // Ambil data langsung dari Supabase jika belum termuat di memori
+        // Ambil data unit langsung dari Supabase khusus untuk unit yang di-scan
         try {
             const { data: trxData } = await supabaseClient.from('transactions').select('*').eq('id', warrantyId).maybeSingle();
             if (trxData) {
@@ -2916,7 +2972,7 @@ async function checkUrlForWarrantyParam() {
                     kelengkapan: trxData.completeness || 'Fullset',
                     imei: trxData.imei || '-',
                     qty: String(trxData.qty || 1),
-                    hargaModal: String(trxData.buy_price || 0),
+                    hargaModal: '0',
                     hargaJual: String(trxData.sell_price || 0),
                     pembeli: trxData.customer_name || '',
                     tanggal: trxData.date || '',
@@ -2932,7 +2988,7 @@ async function checkUrlForWarrantyParam() {
                         kelengkapan: prodData.completeness || 'Fullset',
                         imei: prodData.imei || '-',
                         qty: String(prodData.qty || 1),
-                        hargaModal: String(prodData.buy_price || 0),
+                        hargaModal: '0',
                         hargaJual: String(prodData.sell_price || 0),
                         pembeli: prodData.buyer || '',
                         tanggal: prodData.date || '',
