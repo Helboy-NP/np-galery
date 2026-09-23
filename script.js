@@ -48,6 +48,9 @@ let calcEquation = "";
 // STATE FOTO FISIK UNIT STOK
 let selectedStockPhotoFile = null;
 
+// STATE SERTIFIKAT GARANSI DIGITAL AKTIF
+let activeWarrantyItemData = null;
+
 // MAPPING LINK RESMI CEK IMEI PER BRAND
 const BRAND_IMEI_LINKS = {
     'SAMSUNG': { name: 'Samsung', url: 'https://imeicheck.com/id/samsung-imei-check' },
@@ -101,6 +104,12 @@ function sortPriceListConsistently(list) {
 
         return naturalModelCompare(a.model, b.model);
     });
+}
+
+// FUNGSI PEMBANTU: MENGAMBIL NAMA MODEL UTAMA (DI LUAR TANDA KURUNG)
+function getModelNameWithoutSpecs(modelName) {
+    if (!modelName) return '';
+    return modelName.split('(')[0].trim().toLowerCase();
 }
 
 /* ========================================================== */
@@ -430,7 +439,7 @@ async function loadDiagnosisData() {
     }
 }
 
-// INISIALISASI SAAT DOM READY
+// INISIALISASI SAAT DOM READY & PENGECEKAN PARAMETER URL GARANSI
 document.addEventListener('DOMContentLoaded', async () => {
     const savedTheme = localStorage.getItem('npgalery_theme');
     if (savedTheme === 'dark') {
@@ -475,6 +484,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         setConnectionStatus('disconnected');
     }
 
+    // Deteksi jika link dibuka dari hasil scan QR Code garansi (?warranty=...)
+    checkUrlForWarrantyParam();
+
     document.addEventListener('click', (e) => {
         const inputElem = document.getElementById('stok-produk-input');
         const listElem = document.getElementById('stok-autocomplete-list');
@@ -518,7 +530,8 @@ function parseRawToNumeric(valStr) {
     let clean = valStr.toString().trim().replace(/\./g, '');
     let num = parseFloat(clean);
     if (isNaN(num)) return null;
-    if (num < 10000) return num * 1000;
+    // Mendukung input harga ringkas ribuan (misal 5600 -> 5.600.000, 14700 -> 14.700.000)
+    if (num < 1000000) return num * 1000;
     return num;
 }
 
@@ -1901,8 +1914,13 @@ function filterPriceList() {
         currentFilteredData = rawPriceListData.filter(item => {
             const itemBrand = (item.brand || '').trim().toUpperCase();
             const filterBrand = brandVal.trim().toUpperCase();
+            
+            // Hanya mencocokkan teks nama/seri utama di luar kurung
+            const cleanModel = getModelNameWithoutSpecs(item.model);
+            const cleanBrand = (item.brand || '').toLowerCase().trim();
+
             return (brandVal === 'ALL' || itemBrand === filterBrand) && 
-                   ((item.model || '').toLowerCase().includes(searchVal) || (item.brand || '').toLowerCase().includes(searchVal));
+                   (cleanModel.includes(searchVal) || cleanBrand.includes(searchVal));
         });
     }
     
@@ -2031,7 +2049,7 @@ window.openSingleProductPriceModal = function(id) {
 
 window.triggerPriceListModalSearch = function() {
     const searchInput = document.getElementById('filter-model-input');
-    const searchVal = searchInput ? searchInput.value.trim() : '';
+    const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
     if (!searchVal) {
         showToast('Peringatan', 'Ketik nama model smartphone terlebih dahulu!', false);
@@ -2046,15 +2064,16 @@ window.triggerPriceListModalSearch = function() {
     if (!modal || !container) return;
 
     const matched = rawPriceListData.filter(item => {
-        return item.model.toLowerCase().includes(searchVal.toLowerCase()) || 
-               item.brand.toLowerCase().includes(searchVal.toLowerCase());
+        const cleanModel = getModelNameWithoutSpecs(item.model);
+        const cleanBrand = (item.brand || '').toLowerCase().trim();
+        return cleanModel.includes(searchVal) || cleanBrand.includes(searchVal);
     });
 
     if (countBadge) countBadge.textContent = `${matched.length} Item`;
-    if (subtitle) subtitle.textContent = `Hasil pencarian untuk "${searchVal}"`;
+    if (subtitle) subtitle.textContent = `Hasil pencarian untuk "${searchInput.value.trim()}"`;
 
     if (matched.length === 0) {
-        container.innerHTML = `<div class="empty-stok-msg">Tidak ada model yang cocok dengan "${searchVal}"</div>`;
+        container.innerHTML = `<div class="empty-stok-msg">Tidak ada model yang cocok dengan "${searchInput.value.trim()}"</div>`;
     } else {
         container.innerHTML = matched.map(item => generatePriceCardHTML(item)).join('');
     }
@@ -2484,9 +2503,9 @@ window.jualStokItem = function(id) {
 };
 
 /* ========================================================== */
-/* INVOICE NOTA A4 (TITANIUM PLATINUM & STEEL BLUE)           */
+/* INVOICE NOTA A4 DENGAN QR CODE GARANSI DIGITAL             */
 /* ========================================================== */
-function generateInvoiceHTML(item, overridePrice = null) {
+function generateInvoiceHTML(item, overridePrice = null, qrBoxId = 'invoice-qr-canvas') {
     let invoiceNo = 'INV-' + (item.tanggalTerjualRaw ? item.tanggalTerjualRaw.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '')) + '-' + String(item.id).slice(-4);
     let customerName = item.pembeli && item.pembeli.trim() !== '' ? item.pembeli.trim() : 'Pelanggan Setia';
     
@@ -2504,7 +2523,7 @@ function generateInvoiceHTML(item, overridePrice = null) {
                         <h2 class="invoice-brand-title">NP - GALERY</h2>
                         <p class="invoice-brand-sub">Smartphone Store & Premium Gadget</p>
                         <div class="invoice-contact-row">
-                            <span class="invoice-contact-item wa"><i class="fa-brands fa-whatsapp"></i> 0878 3313 3318</span>
+                            <span class="invoice-contact-item wa"><i class="fa-brands fa-whatsapp"></i> 0857 1794 5565</span>
                             <span class="invoice-contact-divider">|</span>
                             <span class="invoice-contact-item email"><i class="fa-solid fa-envelope"></i> helboynpgalery@gmail.com</span>
                         </div>
@@ -2528,7 +2547,7 @@ function generateInvoiceHTML(item, overridePrice = null) {
                     <tr>
                         <td>
                             <div class="invoice-item-unit">${item.produk}</div>
-                            <div class="invoice-item-spec">${item.kondisi} •${item.kelengkapan}</div>
+                            <div class="invoice-item-spec">${item.kondisi} • ${item.kelengkapan}</div>
                             <div class="invoice-item-imei">SN/IMEI: ${item.imei || '-'}</div>
                         </td>
                         <td align="center" style="font-weight: 700; font-size: 12px;">${qty}</td>
@@ -2549,13 +2568,41 @@ function generateInvoiceHTML(item, overridePrice = null) {
                     <span class="invoice-sign-name-label">( NP - Galery )</span>
                 </div>
                 <div class="invoice-sign-column-right">
-                    <span class="invoice-sign-header-label">Customer,</span>
-                    <div class="invoice-sign-blank-space"></div>
+                    <span class="invoice-sign-header-label">Customer</span>
+                    <div class="invoice-qr-wrap" onclick="openWarrantyCertificateModal('${item.id}')" style="cursor:pointer;" title="Klik untuk pratinjau sertifikat garansi">
+                        <div id="${qrBoxId}" class="invoice-qr-box"></div>
+                        <span class="invoice-qr-hint">Scan Kartu Garansi</span>
+                    </div>
                     <span class="invoice-sign-name-label">( ${customerName} )</span>
                 </div>
             </div>
         </div>
     `;
+}
+
+// FUNGSI RENDER QR CODE PADA NOTA SECARA MANDIRI
+function renderInvoiceQRCode(containerId, item) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = '';
+
+    // URL langsung mengarah ke halaman garansi dengan parameter ID
+    const currentBaseUrl = window.location.origin + window.location.pathname;
+    const warrantyTargetUrl = `${currentBaseUrl}?warranty=${encodeURIComponent(item.id)}`;
+
+    if (window.QRCode) {
+        new QRCode(el, {
+            text: warrantyTargetUrl,
+            width: 60,
+            height: 60,
+            colorDark: "#0F172A",
+            colorLight: "#FFFFFF",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    } else {
+        // Fallback jika lib QRCode belum terpasang
+        el.innerHTML = `<i class="fa-solid fa-qrcode" style="font-size: 32px; color: var(--azure-primary);"></i>`;
+    }
 }
 
 window.openInvoiceModal = function(item) {
@@ -2573,7 +2620,8 @@ window.openInvoiceModal = function(item) {
     }
 
     if (!body || !modal) return;
-    body.innerHTML = generateInvoiceHTML(item);
+    body.innerHTML = generateInvoiceHTML(item, null, 'invoice-qr-canvas-preview');
+    renderInvoiceQRCode('invoice-qr-canvas-preview', item);
     modal.classList.add('show');
 };
 
@@ -2584,7 +2632,8 @@ window.handleInvoiceCustomPriceChange = function(rawVal) {
 
     const body = document.getElementById('invoice-preview-body');
     if (body) {
-        body.innerHTML = generateInvoiceHTML(activeInvoiceData, tempInvoiceOverridePrice);
+        body.innerHTML = generateInvoiceHTML(activeInvoiceData, tempInvoiceOverridePrice, 'invoice-qr-canvas-preview');
+        renderInvoiceQRCode('invoice-qr-canvas-preview', activeInvoiceData);
     }
 };
 
@@ -2600,7 +2649,8 @@ window.resetInvoicePriceToOriginal = function() {
 
     const body = document.getElementById('invoice-preview-body');
     if (body) {
-        body.innerHTML = generateInvoiceHTML(tempInvoiceOriginalItem);
+        body.innerHTML = generateInvoiceHTML(tempInvoiceOriginalItem, null, 'invoice-qr-canvas-preview');
+        renderInvoiceQRCode('invoice-qr-canvas-preview', tempInvoiceOriginalItem);
     }
     showToast('Reset', 'Harga invoice dikembalikan ke nilai awal.');
 };
@@ -2612,45 +2662,55 @@ window.closeInvoiceModal = function() {
     tempInvoiceOriginalItem = null;
 };
 
+/* ========================================================== */
+/* FUNGSI KIRIM NOTA KE WHATSAPP (OPSI A)                      */
+/* Merender & mengunduh gambar nota A4, menyalin pesan teks   */
+/* profesional, lalu membuka aplikasi WhatsApp pelanggan      */
+/* ========================================================== */
 window.shareInvoiceWA = function() {
-    if (!activeInvoiceData) return;
-    let item = activeInvoiceData;
-    let invoiceNo = 'INV-' + (item.tanggalTerjualRaw ? item.tanggalTerjualRaw.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '')) + '-' + String(item.id).slice(-4);
-    let customerName = item.pembeli && item.pembeli.trim() !== '' ? item.pembeli.trim() : 'Pelanggan Setia';
-    
-    let numericJual = (tempInvoiceOverridePrice !== null) ? tempInvoiceOverridePrice : (parseRawToNumeric(item.hargaJual) || 0);
-    let tglTampil = formatTanggalID(item.tanggalTerjualRaw || new Date().toISOString().slice(0, 10));
-
-    let text = `🧾 *NOTA INVOICE RESMI - NP GALERY* 🧾\n`;
-    text += `───────────────────────\n`;
-    text += `No. Nota : *${invoiceNo}*\n`;
-    text += `Tanggal  : ${tglTampil}\n`;
-    text += `Kepada   : *${customerName}*\n`;
-    text += `───────────────────────\n`;
-    text += `📱 Unit        : *${item.produk}*\n`;
-    text += `🔍 Kondisi     : ${item.kondisi}\n`;
-    text += `📦 Kelengkapan : ${item.kelengkapan}\n`;
-    text += `🔢 IMEI/SN     : ${item.imei || '-'}\n`;
-    text += `───────────────────────\n`;
-    text += `💰 Total Bayar : *${formatRupiahLengkap(numericJual)}* (LUNAS)\n`;
-    text += `───────────────────────\n`;
-    text += `📞 WhatsApp : 0878 3313 3318\n`;
-    text += `📧 Email    : helboynpgalery@gmail.com\n`;
-    text += `───────────────────────\n`;
-    text += `Terima kasih atas kepercayaan Anda bertransaksi di *NP - Galery Smartphone*! 🙏✨`;
-
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(() => {
-            showToast('Tersalin!', 'Format nota WhatsApp disalin.');
-            setTimeout(() => {
-                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-            }, 500);
-        }).catch(() => {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-        });
-    } else {
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    if (!activeInvoiceData || !window.html2canvas) {
+        showToast('Peringatan', 'Data nota atau modul gambar belum siap.', false);
+        return;
     }
+
+    const canvasWrap = document.getElementById('invoice-render-canvas');
+    if (!canvasWrap) return;
+
+    // Render HTML nota ke canvas tersembunyi
+    canvasWrap.innerHTML = generateInvoiceHTML(activeInvoiceData, tempInvoiceOverridePrice, 'invoice-qr-canvas-render');
+    renderInvoiceQRCode('invoice-qr-canvas-render', activeInvoiceData);
+
+    showToast('Memproses', 'Menyiapkan nota gambar & membuka WhatsApp...');
+
+    // Format teks ucapan profesional (Opsi 1 yang disesuaikan)
+    const textUcapan = `Halo Kak, terima kasih banyak telah melakukan transaksi di *NP - Galery Store* ✨\n\nBerikut kami lampirkan nota pembelian resmi beserta kartu garansi digital untuk unit Anda.\n\nJika ada kendala atau pertanyaan seputar unitnya, silakan hubungi kami kembali ya. Selamat menikmati perangkat barunya! 🙏😊`;
+
+    setTimeout(() => {
+        html2canvas(canvasWrap, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true }).then(canvas => {
+            // 1. Unduh otomatis file gambar nota
+            let link = document.createElement('a');
+            link.download = `Nota_${activeInvoiceData.produk.replace(/\s+/g, '_')}_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            // 2. Salin teks ucapan ke clipboard
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textUcapan).catch(() => fallbackSalinText(textUcapan));
+            } else {
+                fallbackSalinText(textUcapan);
+            }
+
+            showToast('Berhasil', 'Nota terunduh & pesan disalin ke clipboard.');
+
+            // 3. Buka WhatsApp dengan teks pesan yang sudah terpasang
+            setTimeout(() => {
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textUcapan)}`, '_blank');
+            }, 600);
+        }).catch(err => {
+            console.warn('Gagal render nota:', err);
+            showToast('Gagal', 'Tidak dapat merender nota ke gambar.', false);
+        });
+    }, 250);
 };
 
 window.downloadInvoiceImage = function() {
@@ -2658,16 +2718,186 @@ window.downloadInvoiceImage = function() {
     const canvasWrap = document.getElementById('invoice-render-canvas');
     if (!canvasWrap) return;
 
-    canvasWrap.innerHTML = generateInvoiceHTML(activeInvoiceData, tempInvoiceOverridePrice);
+    canvasWrap.innerHTML = generateInvoiceHTML(activeInvoiceData, tempInvoiceOverridePrice, 'invoice-qr-canvas-render');
+    renderInvoiceQRCode('invoice-qr-canvas-render', activeInvoiceData);
 
-    html2canvas(canvasWrap, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true }).then(canvas => {
-        let link = document.createElement('a');
-        link.download = `Invoice_A4_NPGalery_${activeInvoiceData.produk.replace(/\s+/g, '_')}_${Date.now()}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        showToast('Berhasil!', 'Nota invoice format A4 diunduh.');
-    });
+    setTimeout(() => {
+        html2canvas(canvasWrap, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true }).then(canvas => {
+            let link = document.createElement('a');
+            link.download = `Invoice_A4_NPGalery_${activeInvoiceData.produk.replace(/\s+/g, '_')}_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showToast('Berhasil!', 'Nota invoice format A4 diunduh.');
+        });
+    }, 200);
 };
+
+/* ========================================================== */
+/* SERTIFIKAT KARTU GARANSI DIGITAL (E-WARRANTY) & HITUNG MUNDUR */
+/* ========================================================== */
+function calculateWarrantyCountdown(purchaseDateStr) {
+    if (!purchaseDateStr) return { isExpired: true, daysLeft: 0, endDateStr: '-' };
+    
+    // Normalisasi tanggal pembelian
+    const parts = purchaseDateStr.split('-');
+    if (parts.length !== 3) return { isExpired: true, daysLeft: 0, endDateStr: '-' };
+
+    const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    const endDate = new Date(startDate.getTime());
+    endDate.setDate(endDate.getDate() + 7); // Tambah durasi garansi 7 hari
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const diffTime = endDate.getTime() - today.getTime();
+    const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const endYear = endDate.getFullYear();
+    const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+    const endDay = String(endDate.getDate()).padStart(2, '0');
+    const endDateStr = `${endDay} - ${endMonth} - ${endYear}`;
+
+    return {
+        isExpired: daysLeft < 0,
+        daysLeft: Math.max(0, daysLeft),
+        endDateStr: endDateStr
+    };
+}
+
+window.openWarrantyCertificateModal = function(unitIdOrObject) {
+    let item = null;
+    if (typeof unitIdOrObject === 'string') {
+        item = daftarTerjual.find(t => t.id === unitIdOrObject) || daftarStokMasuk.find(s => s.id === unitIdOrObject);
+    } else {
+        item = unitIdOrObject;
+    }
+
+    if (!item) {
+        showToast('Peringatan', 'Data unit tidak ditemukan untuk garansi ini.', false);
+        return;
+    }
+
+    activeWarrantyItemData = item;
+    const body = document.getElementById('warranty-certificate-body');
+    const modal = document.getElementById('warranty-certificate-modal');
+    if (!body || !modal) return;
+
+    const brand = item.produk.split(' ')[0].toUpperCase();
+    const tglBeliRaw = item.tanggalTerjualRaw || item.tanggal || new Date().toISOString().slice(0, 10);
+    const countdownInfo = calculateWarrantyCountdown(tglBeliRaw);
+
+    const statusBadgeHtml = !countdownInfo.isExpired 
+        ? `<span class="warranty-status-badge active"><span class="warranty-pulse-dot"></span> GARANSI AKTIF</span>`
+        : `<span class="warranty-status-badge expired"><span class="warranty-pulse-dot"></span> GARANSI BERAKHIR</span>`;
+
+    const countdownText = !countdownInfo.isExpired 
+        ? `${countdownInfo.daysLeft} Hari Lagi`
+        : `Masa Garansi Telah Habis`;
+
+    body.innerHTML = `
+        <div class="warranty-cert-card">
+            <div class="warranty-cert-hero">
+                <div>
+                    <span class="price-card-brand" style="${getBrandStyle(brand)}">${brand}</span>
+                    <h3 style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin-top: 4px;">${item.produk}</h3>
+                </div>
+                <div class="warranty-cert-badge-wrap">
+                    ${statusBadgeHtml}
+                </div>
+            </div>
+
+            <!-- KOTAK COUNTDOWN SISA HARI GARANSI -->
+            <div class="warranty-countdown-box">
+                <div>
+                    <span class="warranty-countdown-label">Sisa Masa Garansi 7 Hari</span>
+                    <div style="font-size: 9.5px; color: var(--text-secondary); margin-top: 2px;">
+                        Berlaku s/d: <b>${countdownInfo.endDateStr}</b>
+                    </div>
+                </div>
+                <span class="warranty-countdown-val">${countdownText}</span>
+            </div>
+
+            <!-- DETAIL KEPEMILIKAN & IDENTITAS UNIT -->
+            <div class="warranty-details-stack">
+                <div class="warranty-detail-row">
+                    <span class="w-label">Nomor IMEI / SN</span>
+                    <span class="w-val mono">${item.imei || '-'}</span>
+                </div>
+                <div class="warranty-detail-row">
+                    <span class="w-label">Kondisi & Kelengkapan</span>
+                    <span class="w-val">${item.kondisi} •${item.kelengkapan}</span>
+                </div>
+                <div class="warranty-detail-row">
+                    <span class="w-label">Tanggal Pembelian</span>
+                    <span class="w-val">${formatTanggalID(tglBeliRaw)}</span>
+                </div>
+                <div class="warranty-detail-row">
+                    <span class="w-label">Nama Pemilik</span>
+                    <span class="w-val">${item.pembeli || 'Pelanggan Setia'}</span>
+                </div>
+            </div>
+
+            <!-- 5 POIN SYARAT & KETENTUAN KLAIM GARANSI -->
+            <div class="warranty-terms-box">
+                <div class="warranty-terms-title">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Syarat & Ketentuan Klaim Garansi Toko:</span>
+                </div>
+                <ul class="warranty-terms-list">
+                    <li><i class="fa-solid fa-circle-check"></i> Customer sudah mengecek detail fisik, hardware, & software saat pembelian.</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Klaim garansi berlaku 7 hari setelah tanggal pembelian.</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Garansi berlaku untuk kerusakan software yang terjadi akibat error sistem.</li>
+                    <li class="term-warning"><i class="fa-solid fa-triangle-exclamation"></i> Garansi tidak berlaku untuk hardware (layar pecah, mesin konslet, terkena cairan, dsb).</li>
+                    <li class="term-warning"><i class="fa-solid fa-triangle-exclamation"></i> Garansi hangus apabila disebabkan oleh human error atau pembongkaran segel unit.</li>
+                </ul>
+            </div>
+        </div>
+    `;
+
+    modal.classList.add('show');
+};
+
+window.closeWarrantyCertificateModal = function() {
+    document.getElementById('warranty-certificate-modal')?.classList.remove('show');
+    activeWarrantyItemData = null;
+};
+
+window.claimWarrantyViaWhatsApp = function() {
+    if (!activeWarrantyItemData) return;
+    const item = activeWarrantyItemData;
+    const tglBeliRaw = item.tanggalTerjualRaw || item.tanggal || new Date().toISOString().slice(0, 10);
+    const countdownInfo = calculateWarrantyCountdown(tglBeliRaw);
+
+    let msg = `Halo Admin *NP - Galery*,\n\n`;
+    msg += `Saya ingin konsultasi / klaim garansi untuk unit berikut:\n`;
+    msg += `• *Model*: ${item.produk}\n`;
+    msg += `• *IMEI/SN*: ${item.imei || '-'}\n`;
+    msg += `• *Kelengkapan*: ${item.kelengkapan}\n`;
+    msg += `• *Tgl Beli*: ${formatTanggalID(tglBeliRaw)}\n`;
+    msg += `• *Sisa Garansi*: ${!countdownInfo.isExpired ? countdownInfo.daysLeft + ' Hari' : 'Masa Garansi Habis'}\n\n`;
+    msg += `Kendala software yang dialami: `;
+
+    const phone = "6285717945565"; // Nomor WhatsApp resmi NP Galery
+    const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+};
+
+// Deteksi otomatis jika link dibuka dari scan QR kamera HP
+function checkUrlForWarrantyParam() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const warrantyId = urlParams.get('warranty');
+    if (!warrantyId) return;
+
+    // Tunggu sinkronisasi data selesai sejenak lalu buka kartu garansinya
+    setTimeout(() => {
+        let found = daftarTerjual.find(t => t.id === warrantyId) || daftarStokMasuk.find(s => s.id === warrantyId);
+        if (found) {
+            openWarrantyCertificateModal(found);
+        } else {
+            showToast('Garansi Digital', `Memuat data unit: ${warrantyId}`);
+        }
+    }, 900);
+}
 
 window.hapusStokItem = function(id) {
     showCustomConfirm("Hapus Stok", "Hapus unit ini?", async () => {
@@ -2777,6 +3007,7 @@ function renderDaftarTerjual() {
                     </div>
                     <div style="display: flex; gap: 4px;">
                         <button onclick='openInvoiceModal(${JSON.stringify(i).replace(/'/g, "&apos;")})' class="action-btn edit-btn" title="Cetak / Lihat Invoice"><i class="fa-solid fa-receipt"></i></button>
+                        <button onclick="openWarrantyCertificateModal('${i.id}')" class="action-btn" title="Lihat Kartu Garansi Digital"><i class="fa-solid fa-shield-halved" style="color:var(--azure-primary);"></i></button>
                         <button onclick="hapusRiwayatTerjual('${i.id}')" class="action-btn delete-btn" title="Hapus Riwayat"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
@@ -3225,8 +3456,11 @@ function getFilteredReportPriceListAll() {
     return rawPriceListData.filter(item => {
         const itemBrand = (item.brand || '').trim().toUpperCase();
         const filterBrand = brandVal.trim().toUpperCase();
+        const cleanModel = getModelNameWithoutSpecs(item.model);
+        const cleanBrand = (item.brand || '').toLowerCase().trim();
+
         return (brandVal === 'ALL' || itemBrand === filterBrand) && 
-            ((item.model || '').toLowerCase().includes(searchVal) || (item.brand || '').toLowerCase().includes(searchVal));
+            (cleanModel.includes(searchVal) || cleanBrand.includes(searchVal));
     });
 }
 
