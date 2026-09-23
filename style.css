@@ -1378,12 +1378,278 @@ body.dark-mode .invoice-custom-price-input {
 .invoice-total-label { font-size: 12px; font-weight: 800; color: #0369A1; }
 .invoice-total-val { font-size: 16px; font-weight: 900; color: #0284C7; font-family: var(--font-mono); }
 
-.invoice-footer-signatures { display: flex; justify-content: space-between; align-items: flex-start; border-top: 1px dashed #CBD5E1; padding-top: 16px; margin-top: 14px; }
-.invoice-sign-column-left, .invoice-sign-column-right { display: flex; flex-direction: column; align-items: center; text-align: center; width: 44%; }
-.invoice-sign-header-label { font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; }
-.invoice-auto-sign-img { height: 52px; max-width: 140px; object-fit: contain; margin: 4px 0; display: block; }
-.invoice-sign-blank-space { height: 52px; margin: 4px 0; }
-.invoice-sign-name-label { font-size: 11.5px; font-weight: 800; color: #0F172A; border-top: 1px solid #94A3B8; padding-top: 4px; width: 85%; text-align: center; }
+/* ========================================================== */
+/* TATA LETAK FOOTER SIGNATURES & QR CODE KARTU GARANSI       */
+/* ========================================================== */
+.invoice-footer-signatures { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-end; 
+    border-top: 1px dashed #CBD5E1; 
+    padding-top: 14px; 
+    margin-top: 12px; 
+}
+.invoice-sign-column-left, .invoice-sign-column-right { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    text-align: center; 
+    width: 44%; 
+}
+.invoice-sign-header-label { 
+    font-size: 11px; 
+    font-weight: 700; 
+    color: #475569; 
+    margin-bottom: 4px; 
+}
+.invoice-auto-sign-img { 
+    height: 52px; 
+    max-width: 140px; 
+    object-fit: contain; 
+    margin: 4px 0; 
+    display: block; 
+}
+.invoice-sign-blank-space { 
+    height: 52px; 
+    margin: 4px 0; 
+}
+.invoice-sign-name-label { 
+    font-size: 11.5px; 
+    font-weight: 800; 
+    color: #0F172A; 
+    border-top: 1px solid #94A3B8; 
+    padding-top: 4px; 
+    width: 85%; 
+    text-align: center; 
+}
+
+/* KOTAK WADAH QR CODE GARANSI DI NOTA */
+.invoice-qr-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 2px 0 6px 0;
+}
+.invoice-qr-box {
+    width: 64px;
+    height: 64px;
+    padding: 3px;
+    background: #FFFFFF;
+    border: 1px solid #BAE6FD;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.invoice-qr-box img, .invoice-qr-box canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    object-fit: contain;
+}
+.invoice-qr-hint {
+    font-size: 9px;
+    font-weight: 800;
+    color: #0284C7;
+    letter-spacing: 0.3px;
+    margin-top: 4px;
+    white-space: nowrap;
+}
+
+/* ========================================================== */
+/* MODAL & KARTU SERTIFIKAT GARANSI DIGITAL (E-WARRANTY)      */
+/* ========================================================== */
+.warranty-modal-card {
+    background: var(--card-bg) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35) !important;
+    max-width: 480px !important;
+}
+.warranty-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 10px;
+}
+.warranty-header-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid var(--border-subtle);
+}
+.warranty-header-title {
+    font-family: 'ARCO', var(--font-main);
+    font-size: 15px;
+    color: var(--azure-primary);
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+.warranty-header-subtitle {
+    font-size: 10.5px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+    font-weight: 600;
+}
+
+/* KARTU SERTIFIKAT E-WARRANTY BODY */
+.warranty-cert-card {
+    background: var(--bg-page);
+    border: 1.5px solid var(--azure-primary);
+    border-radius: 16px;
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 8px 24px rgba(2, 132, 199, 0.1);
+}
+.warranty-cert-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed var(--border-subtle);
+    padding-bottom: 10px;
+}
+.warranty-cert-badge-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+}
+.warranty-status-badge {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    letter-spacing: 0.2px;
+}
+.warranty-status-badge.active {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--status-safe);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.warranty-status-badge.active .warranty-pulse-dot {
+    width: 6.5px;
+    height: 6.5px;
+    border-radius: 50%;
+    background-color: var(--status-safe);
+    animation: pulseGlowGreen 2s infinite ease-in-out;
+}
+.warranty-status-badge.expired {
+    background: rgba(244, 63, 94, 0.12);
+    color: var(--status-unsafe);
+    border: 1px solid rgba(244, 63, 94, 0.35);
+}
+.warranty-status-badge.expired .warranty-pulse-dot {
+    width: 6.5px;
+    height: 6.5px;
+    border-radius: 50%;
+    background-color: var(--status-unsafe);
+}
+
+/* GRID HITUNG MUNDUR SISA HARI */
+.warranty-countdown-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.warranty-countdown-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+.warranty-countdown-val {
+    font-size: 14px;
+    font-weight: 900;
+    font-family: var(--font-mono);
+    color: var(--azure-primary);
+}
+
+/* TABEL / BARIS DETAIL UNIT */
+.warranty-details-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.warranty-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    padding: 7.5px 12px;
+    border-radius: 9px;
+    font-size: 11.5px;
+}
+.warranty-detail-row .w-label {
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+.warranty-detail-row .w-val {
+    font-weight: 800;
+    color: var(--text-primary);
+    text-align: right;
+}
+.warranty-detail-row .w-val.mono {
+    font-family: var(--font-mono);
+}
+
+/* 5 POIN SYARAT & KETENTUAN */
+.warranty-terms-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+.warranty-terms-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+.warranty-terms-title i {
+    color: var(--azure-primary);
+    font-size: 12px;
+}
+.warranty-terms-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.warranty-terms-list li {
+    font-size: 10.5px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+}
+.warranty-terms-list li i {
+    color: var(--azure-primary);
+    font-size: 9.5px;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+.warranty-terms-list li.term-warning i {
+    color: var(--status-unsafe);
+}
 
 /* FORMS & STOK */
 .add-product-card { background: var(--glass-bg); backdrop-filter: blur(14px); border: 1px solid var(--border-subtle); border-radius: 18px; padding: 24px; margin-top: 10px; }
