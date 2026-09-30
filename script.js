@@ -20,6 +20,7 @@ let isPublicWarrantyMode = false;
 let rawPriceListData = [];
 let rawDiagnosisData = [];
 let daftarStokMasuk = [];
+let daftarProdukRiwayat = [];
 let daftarTerjual = [];
 let daftarKasPribadi = [];
 let daftarNotes = [];
@@ -47,6 +48,10 @@ let calcEquation = "";
 // STATE FOTO FISIK UNIT STOK
 let selectedStockPhotoFile = null;
 
+// MASTER FOTO PRODUK (terpisah dari foto fisik unit)
+let masterProductPhotos = new Map();
+const MASTER_PRODUCT_PHOTO_TABLE = 'product_reference_images';
+
 // STATE SERTIFIKAT GARANSI DIGITAL AKTIF
 let activeWarrantyItemData = null;
 
@@ -54,7 +59,9 @@ let activeWarrantyItemData = null;
 const BRAND_IMEI_LINKS = {
     'SAMSUNG': { name: 'Samsung', url: 'https://imeicheck.com/id/samsung-imei-check' },
     'OPPO': { name: 'Oppo', url: 'https://support.oppo.com/id/check/' },
-    'XIAOMI': { name: 'Xiaomi / Poco', url: 'https://www.mi.com/global/verify' },
+    'XIAOMI': { name: 'Xiaomi', url: 'https://www.mi.com/global/verify' },
+    'REDMI': { name: 'Redmi', url: 'https://www.mi.com/global/verify' },
+    'POCO': { name: 'POCO', url: 'https://www.mi.com/global/verify' },
     'VIVO': { name: 'Vivo', url: 'https://www.vivo.com/id/support/IMEI' },
     'REALME': { name: 'Realme', url: 'https://www.realme.com/id/support/phonecheck' },
     'INFINIX': { name: 'Infinix (Carlcare)', url: 'https://www.carlcare.com/id/warranty-check/' },
@@ -139,41 +146,75 @@ function getModelNameWithoutSpecs(modelName) {
 }
 
 /* ========================================================== */
-/* SISTEM INDIKATOR STATUS KONEKSI & REAL-TIME SYNC — id="rt5k2a" */
+/* SISTEM INDIKATOR STATUS KONEKSI & REAL-TIME SYNC           */
 /* ========================================================== */
 let isCloudConnected = false;
+let currentConnectionStatus = 'disconnected';
+let lastSuccessfulSyncAt = null;
 
 function setConnectionStatus(status) {
     const btn = document.getElementById('btn-connection-status');
-    const phoneGlow = document.getElementById('np-phone-glow');
+    const label = document.getElementById('connection-status-label');
+    const icon = document.getElementById('connection-status-icon');
+    const summary = document.getElementById('connection-info-summary');
+    const databaseValue = document.getElementById('connection-database-value');
+    const lastSyncValue = document.getElementById('connection-last-sync');
 
-    // Status realtime tetap menjadi sumber tunggal untuk seluruh feedback visual.
-    if (status === 'connected') {
+    currentConnectionStatus = status === 'connected' || status === 'syncing' ? status : 'disconnected';
+    if (currentConnectionStatus === 'connected') {
         isCloudConnected = true;
-    } else {
+        lastSuccessfulSyncAt = new Date();
+    } else if (currentConnectionStatus === 'disconnected') {
         isCloudConnected = false;
     }
 
     if (btn) {
         btn.classList.remove('status-connected', 'status-disconnected', 'status-syncing');
-        if (status === 'connected') {
-            btn.classList.add('status-connected');
-            btn.title = 'Koneksi Cloud: Terhubung & Realtime Aktif';
-        } else if (status === 'syncing') {
-            btn.classList.add('status-syncing');
-            btn.title = 'Koneksi Cloud: Sedang Sinkronisasi...';
-        } else {
-            btn.classList.add('status-disconnected');
-            btn.title = 'Koneksi Cloud: Terputus / Periksa Sambungan';
-        }
+        btn.classList.add(`status-${currentConnectionStatus}`);
+        btn.title = currentConnectionStatus === 'connected' ? 'Koneksi database: Terhubung' : currentConnectionStatus === 'syncing' ? 'Koneksi database: Sedang sinkronisasi' : 'Koneksi database: Offline';
     }
 
-    if (phoneGlow) {
-        phoneGlow.classList.remove('status-connected', 'status-disconnected', 'status-syncing');
-        phoneGlow.classList.add(`status-${status === 'connected' ? 'connected' : status === 'syncing' ? 'syncing' : 'disconnected'}`);
-        phoneGlow.setAttribute('aria-label', `Status realtime: ${status}`);
+    if (label) label.textContent = currentConnectionStatus === 'connected' ? 'Terhubung' : currentConnectionStatus === 'syncing' ? 'Sinkronisasi' : 'Offline';
+    if (icon) {
+        const mark = currentConnectionStatus === 'connected' ? '<i class="fa-solid fa-check connection-status-mark"></i>' : currentConnectionStatus === 'syncing' ? '<i class="fa-solid fa-rotate connection-status-mark is-spinning"></i>' : '<i class="fa-solid fa-xmark connection-status-mark"></i>';
+        icon.innerHTML = `<i class="fa-solid fa-cloud"></i>${mark}`;
     }
+    if (summary) summary.textContent = currentConnectionStatus === 'connected' ? 'Database terhubung' : currentConnectionStatus === 'syncing' ? 'Sedang memperbarui data' : 'Database tidak terhubung';
+    if (databaseValue) databaseValue.textContent = currentConnectionStatus === 'connected' ? 'Terhubung' : currentConnectionStatus === 'syncing' ? 'Sinkronisasi...' : 'Offline';
+    if (lastSyncValue) lastSyncValue.textContent = lastSuccessfulSyncAt ? lastSuccessfulSyncAt.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : 'Belum tersedia';
+    updateConnectionInternetStatus();
 }
+
+function updateConnectionInternetStatus() {
+    const value = document.getElementById('connection-internet-value');
+    if (value) value.textContent = navigator.onLine ? 'Online' : 'Offline';
+}
+
+window.toggleConnectionInfo = function(event) {
+    event?.stopPropagation();
+    const popover = document.getElementById('connection-info-popover');
+    const trigger = document.getElementById('btn-connection-status');
+    if (!popover || !trigger) return;
+    const open = popover.classList.toggle('is-open');
+    popover.setAttribute('aria-hidden', open ? 'false' : 'true');
+    trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    updateConnectionInternetStatus();
+};
+
+function closeConnectionInfo() {
+    const popover = document.getElementById('connection-info-popover');
+    const trigger = document.getElementById('btn-connection-status');
+    popover?.classList.remove('is-open');
+    popover?.setAttribute('aria-hidden', 'true');
+    trigger?.setAttribute('aria-expanded', 'false');
+}
+
+document.addEventListener('click', (event) => {
+    const wrap = document.querySelector('.connection-status-wrap');
+    if (wrap && !wrap.contains(event.target)) closeConnectionInfo();
+});
+window.addEventListener('online', updateConnectionInternetStatus);
+window.addEventListener('offline', updateConnectionInternetStatus);
 
 window.checkConnectionStatusManual = async function(btn) {
     if (isPublicWarrantyMode) return;
@@ -324,13 +365,22 @@ async function initialMigratePriceListToSupabase() {
 // 2. TABEL PRODUCT
 async function syncProductsFromSupabaseOnly() {
     if (!supabaseClient) return;
-    const { data: prods, error: errProds } = await supabaseClient
-        .from('product')
-        .select('*')
-        .order('created_at', { ascending: false });
+
+    const [{ data: prods, error: errProds }, { data: refPhotos, error: errRefPhotos }] = await Promise.all([
+        supabaseClient.from('product').select('*').order('created_at', { ascending: false }),
+        supabaseClient.from(MASTER_PRODUCT_PHOTO_TABLE).select('product_id,image_url,updated_at')
+    ]);
+
+    if (!errRefPhotos && refPhotos) {
+        masterProductPhotos = new Map(refPhotos.map(row => [String(row.product_id), row.image_url || null]));
+    } else if (errRefPhotos) {
+        // Master foto belum bermigrasi: jangan gunakan foto fisik sebagai foto invoice.
+        masterProductPhotos = new Map();
+        console.warn('Master Foto Produk belum tersedia:', errRefPhotos.message || errRefPhotos);
+    }
 
     if (!errProds && prods) {
-        daftarStokMasuk = prods.filter(p => p.status === 'ready' || !p.status).map(p => ({
+        const mapProduct = p => ({
             id: p.id,
             produk: p.name,
             kondisi: p.condition || 'Second',
@@ -343,10 +393,14 @@ async function syncProductsFromSupabaseOnly() {
             isNego: p.is_nego !== undefined ? Boolean(p.is_nego) : true,
             pembeli: p.buyer || '',
             tanggal: p.date || (p.created_at ? p.created_at.slice(0, 10) : ''),
-            imageUrl: p.image_url || null
-        }));
+            imageUrl: p.image_url || null,
+            status: p.status || 'ready'
+        });
+        daftarProdukRiwayat = prods.map(mapProduct);
+        daftarStokMasuk = daftarProdukRiwayat.filter(p => p.status === 'ready').map(({status, ...item}) => item);
 
         updateDashboardStats();
+        renderTransaksiCompact();
         initShowcaseBrandDropdown();
     }
 }
@@ -362,7 +416,9 @@ async function syncTransactionsFromSupabaseOnly() {
     if (!errTrx && trx) {
         daftarTerjual = trx.map(t => ({
             id: t.id,
+            productId: t.product_id || t.id,
             produk: t.product_name,
+            invoicePhotoUrl: t.invoice_photo_url || null,
             kondisi: t.condition || 'Second',
             kelengkapan: t.completeness || 'Fullset',
             imei: t.imei || '-',
@@ -374,7 +430,8 @@ async function syncTransactionsFromSupabaseOnly() {
             tanggalTerjualRaw: t.sold_date || (t.created_at ? t.created_at.slice(0, 10) : ''),
             modalStatus: t.modal_status || 'belum'
         }));
-        renderInvoiceCenter();
+        renderDaftarTerjual();
+        renderTransaksiCompact();
         renderDaftarModal();
         updateDashboardStats();
     }
@@ -462,13 +519,14 @@ async function loadDiagnosisData() {
 
 // INISIALISASI SAAT DOM READY & PENGECEKAN PARAMETER URL GARANSI
 document.addEventListener('DOMContentLoaded', async () => {
+    initDiagnosisInline();
+    renderTransaksiCompact();
     const savedTheme = localStorage.getItem('npgalery_theme');
     if (savedTheme === 'dark') {
         document.body.classList.add('dark-mode');
         const themeIcon = document.getElementById('theme-icon');
         if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
     }
-    updateThemeMenu();
 
     const authModal = document.getElementById('auth-modal');
     const urlParams = new URLSearchParams(window.location.search);
@@ -506,7 +564,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    loadDiagnosisData();
+    await loadDiagnosisData();
+    initDiagnosisInline();
+    renderTransaksiCompact();
     initAllCustomDropdowns();
 
     // Default tampilan adalah Home Screen polos
@@ -803,7 +863,7 @@ window.renderStoreShowcase = function() {
             hargaTampil = formatRupiahLengkap(hargaJualNum);
         }
 
-        const imgDisplay = item.imageUrl || 'logo-np.jpg';
+        const imgDisplay = item.imageUrl || 'assets/np-phone-hero.svg';
         const negoBadgeHtml = (item.isNego && hargaTampil !== 'Chat Admin') 
             ? `<span class="badge-nego-tag">Bisa Nego</span>` 
             : ``;
@@ -811,7 +871,7 @@ window.renderStoreShowcase = function() {
         return `
             <div class="showcase-item-card" onclick="openShowcaseDetail('${item.id}')" title="Klik untuk lihat detail unit">
                 <div class="showcase-card-img-wrap">
-                    <img src="${imgDisplay}" alt="${item.produk}" loading="lazy" onerror="this.src='logo-np.jpg';">
+                    <img src="${imgDisplay}" alt="${item.produk}" loading="lazy" onerror="this.onerror=null;this.src='assets/np-phone-hero.svg';">
                     <span class="showcase-condition-pill ${item.kondisi.toLowerCase()}">${item.kondisi}</span>
                 </div>
                 <div class="showcase-card-body">
@@ -833,7 +893,7 @@ window.renderStoreShowcase = function() {
 };
 
 /* ========================================================== */
-/* POP-UP QUICK VIEW ETALASE — PREMIUM CLEAN                 */
+/* POP-UP DETAIL UNIT ETALASE KATALOG                         */
 /* ========================================================== */
 window.openShowcaseDetail = function(id) {
     const item = daftarStokMasuk.find(s => s.id === id);
@@ -843,47 +903,52 @@ window.openShowcaseDetail = function(id) {
     const modelName = item.produk.split(' ').slice(1).join(' ') || item.produk;
 
     const brandBadge = document.getElementById('modal-showcase-brand-badge');
+    const photoBox = document.getElementById('modal-showcase-photo-box');
     const photoImg = document.getElementById('modal-showcase-photo-img');
     const modelEl = document.getElementById('modal-showcase-model');
     const kondisiEl = document.getElementById('modal-showcase-kondisi');
     const kelengkapanEl = document.getElementById('modal-showcase-kelengkapan');
+    const imeiEl = document.getElementById('modal-showcase-imei');
+    const tanggalEl = document.getElementById('modal-showcase-tanggal');
     const hargaEl = document.getElementById('modal-showcase-harga');
     const negoBadgeEl = document.getElementById('modal-showcase-nego-badge');
-    const jualBtn = document.getElementById('modal-showcase-jual');
 
     if (brandBadge) {
         brandBadge.textContent = brand;
         brandBadge.style.cssText = getBrandStyle(brand);
     }
 
-    if (photoImg) {
-        photoImg.src = item.imageUrl || 'logo-np.jpg';
-        photoImg.onerror = function() { this.src = 'logo-np.jpg'; };
+    if (photoImg && photoBox) {
+        photoImg.src = item.imageUrl || 'assets/np-phone-hero.svg';
+        photoImg.onerror = function() {
+            this.src = 'assets/np-phone-hero.svg';
+        };
     }
 
     if (modelEl) modelEl.textContent = modelName;
-    if (kondisiEl) kondisiEl.textContent = item.kondisi || 'Tersedia';
-    if (kelengkapanEl) kelengkapanEl.textContent = item.kelengkapan || 'Unit ready';
+    if (kondisiEl) kondisiEl.textContent = item.kondisi;
+    if (kelengkapanEl) kelengkapanEl.textContent = item.kelengkapan;
+    if (imeiEl) imeiEl.textContent = item.imei || '-';
+    if (tanggalEl) tanggalEl.textContent = formatTanggalID(item.tanggal);
 
-    const hargaDisplayNum = parseRawToNumeric(item.hargaDisplay);
-    const hargaJualNum = parseRawToNumeric(item.hargaJual);
+    let hargaDisplayNum = parseRawToNumeric(item.hargaDisplay);
+    let hargaJualNum = parseRawToNumeric(item.hargaJual);
     let hargaTampil = 'Chat Admin';
     if (hargaDisplayNum) {
         hargaTampil = formatRupiahLengkap(hargaDisplayNum);
     } else if (hargaJualNum) {
         hargaTampil = formatRupiahLengkap(hargaJualNum);
     }
+
     if (hargaEl) hargaEl.textContent = hargaTampil;
 
     if (negoBadgeEl) {
-        negoBadgeEl.style.display = item.isNego && hargaTampil !== 'Chat Admin' ? 'inline-flex' : 'none';
-    }
-
-    if (jualBtn) {
-        jualBtn.onclick = () => {
-            closeShowcaseDetailModal();
-            jualStokItem(item.id);
-        };
+        if (item.isNego && hargaTampil !== 'Chat Admin') {
+            negoBadgeEl.style.display = 'inline-block';
+            negoBadgeEl.textContent = 'Bisa Nego';
+        } else {
+            negoBadgeEl.style.display = 'none';
+        }
     }
 
     toggleModal('showcase-detail-modal', true);
@@ -898,29 +963,11 @@ window.closeShowcaseDetailModal = function() {
 /* ========================================================== */
 window.openAddNoteModal = function() {
     toggleModal('add-note-modal', true);
-    document.getElementById('add-note-modal')?.setAttribute('aria-hidden', 'false');
-    const titleInput = document.getElementById('note-title-input');
-    const contentInput = document.getElementById('note-content-input');
-    requestAnimationFrame(() => {
-        autoGrowNoteTextarea(contentInput);
-        titleInput?.focus();
-    });
 };
 
 window.closeAddNoteModal = function() {
     toggleModal('add-note-modal', false);
-    document.getElementById('add-note-modal')?.setAttribute('aria-hidden', 'true');
 };
-
-function autoGrowNoteTextarea(el) {
-    if (!el) return;
-    el.style.height = 'auto';
-    const min = 62;
-    const max = Math.min(300, Math.max(140, Math.round(window.innerHeight * 0.36)));
-    const next = Math.max(min, Math.min(el.scrollHeight, max));
-    el.style.height = `${next}px`;
-    el.style.overflowY = el.scrollHeight > max ? 'auto' : 'hidden';
-}
 
 window.openDaftarNotesModal = function() {
     renderDaftarNotes();
@@ -952,7 +999,6 @@ window.simpanCatatanBaru = async function() {
 
     titleInput.value = '';
     contentInput.value = '';
-    autoGrowNoteTextarea(contentInput);
     closeAddNoteModal();
 
     if (supabaseClient) {
@@ -1128,13 +1174,11 @@ window.openAddStokModal = function() {
     }
     removeStockPhotoSelection();
     toggleModal('add-stok-modal', true);
-    document.getElementById('add-stok-modal')?.setAttribute('aria-hidden', 'false');
 };
 
 window.closeAddStokModal = function() {
     removeStockPhotoSelection();
     toggleModal('add-stok-modal', false);
-    document.getElementById('add-stok-modal')?.setAttribute('aria-hidden', 'true');
 };
 
 window.openDaftarStokModal = function() {
@@ -1173,16 +1217,13 @@ window.closeRiwayatKasModal = function() {
 /* ========================================================== */
 /* MODAL POP-UP RIWAYAT PENJUALAN (R.JUAL)                    */
 /* ========================================================== */
-window.openInvoiceCenterModal = function() {
-    renderInvoiceCenter();
-    const search = document.getElementById('invoice-center-search');
-    if (search) search.value = '';
-    toggleModal('invoice-center-modal', true);
-    setTimeout(() => search?.focus(), 180);
+window.openRiwayatJualModal = function() {
+    renderDaftarTerjual();
+    toggleModal('riwayat-jual-modal', true);
 };
 
-window.closeInvoiceCenterModal = function() {
-    toggleModal('invoice-center-modal', false);
+window.closeRiwayatJualModal = function() {
+    toggleModal('riwayat-jual-modal', false);
 };
 
 /* ========================================================== */
@@ -1210,8 +1251,6 @@ window.closeModalSudahKembaliModal = function() {
 /* FITUR PORTAL CEK IMEI SPESIFIK BRAND                       */
 /* ========================================================== */
 window.openBrandImeiPortal = function(brandKey) {
-    closeDiagnosisModal();
-
     const key = (brandKey || '').trim().toUpperCase();
     const portal = BRAND_IMEI_LINKS[key] || { name: brandKey, url: 'https://imeicheck.com/' };
 
@@ -1333,7 +1372,6 @@ window.openDirectWaModal = function() {
     if (inputPhone) inputPhone.value = '';
     if (inputMsg) inputMsg.value = '';
     toggleModal('direct-wa-modal', true);
-    setTimeout(() => inputPhone?.focus(), 180);
 };
 
 window.closeDirectWaModal = function() {
@@ -1341,24 +1379,16 @@ window.closeDirectWaModal = function() {
 };
 
 window.submitDirectWa = function() {
-    let phone = document.getElementById('input-direct-wa-phone')?.value.trim() || '';
-    const msg = document.getElementById('input-direct-wa-msg')?.value.trim() || '';
+    let phone = document.getElementById('input-direct-wa-phone').value.trim();
+    let msg = document.getElementById('input-direct-wa-msg').value.trim();
 
     if (!phone) {
         showToast('Peringatan', 'Masukkan nomor WhatsApp terlebih dahulu!', false);
-        document.getElementById('input-direct-wa-phone')?.focus();
         return;
     }
 
     phone = phone.replace(/[^0-9]/g, '');
     if (phone.startsWith('0')) phone = '62' + phone.substring(1);
-    if (phone.startsWith('8')) phone = '62' + phone;
-
-    if (phone.length < 10 || phone.length > 15 || !phone.startsWith('62')) {
-        showToast('Peringatan', 'Format nomor WhatsApp belum valid.', false);
-        document.getElementById('input-direct-wa-phone')?.focus();
-        return;
-    }
 
     let url = `https://api.whatsapp.com/send?phone=${phone}`;
     if (msg) url += `&text=${encodeURIComponent(msg)}`;
@@ -1368,96 +1398,242 @@ window.submitDirectWa = function() {
 };
 
 /* ========================================================== */
-/* SUB-TAB DIAGNOSIS / SYSTEM CHECK                           */
+/* TRANSAKSI + DIAGNOSIS INLINE                               */
 /* ========================================================== */
-window.openDiagnosisBrand = function(brandName) {
-    if (!brandName) return;
-    openDiagnosisModal(brandName);
-};
+const NP_DIAGNOSIS_BRANDS = [
+    { key: 'SAMSUNG', name: 'Samsung', logo: 'https://cdn.simpleicons.org/samsung/1428A0' },
+    { key: 'OPPO', name: 'OPPO', logo: 'https://cdn.simpleicons.org/oppo/1FA637' },
+    { key: 'XIAOMI', name: 'Xiaomi', logo: 'https://cdn.simpleicons.org/xiaomi/FF6900' },
+    { key: 'REDMI', name: 'Redmi', logo: 'https://cdn.simpleicons.org/redmi/FF6900' },
+    { key: 'POCO', name: 'POCO', logo: 'https://cdn.simpleicons.org/poco/FFD600' },
+    { key: 'VIVO', name: 'Vivo', logo: 'https://cdn.simpleicons.org/vivo/415FFF' },
+    { key: 'REALME', name: 'realme', logo: 'https://cdn.simpleicons.org/realme/FFC915' },
+    { key: 'INFINIX', name: 'Infinix', logo: 'https://cdn.simpleicons.org/infinix/000000' },
+    { key: 'TECNO', name: 'TECNO', logo: 'https://cdn.simpleicons.org/tecno/000000' },
+    { key: 'ITEL', name: 'itel', logo: 'https://cdn.simpleicons.org/itel/00AEEF' }
+];
+let activeDiagnosisBrand = 'SAMSUNG';
+let activeTransaksiFilter = 'semua';
 
-window.toggleDiagnosisCheckItem = function(codeStr, isChecked) {
-    if (isChecked) checkedDiagnosisCodes.add(codeStr);
-    else checkedDiagnosisCodes.delete(codeStr);
-    const card = document.getElementById(`diag-card-${btoa(codeStr).replace(/=/g, '')}`);
-    if (card) card.classList.toggle('checked-item', isChecked);
-};
-
-function openDiagnosisModal(query) {
-    const upperQuery = query.toUpperCase();
-    const modalTitle = document.getElementById('diagnosis-modal-title');
-    const modalSub = document.getElementById('diagnosis-modal-subtitle');
-    const modalBody = document.getElementById('diagnosis-modal-body');
-
-    if (!modalBody) return;
-
-    let matchedBrandObj = rawDiagnosisData.find(b => upperQuery.includes(b.brand.toUpperCase()));
-
-    let targetCodes = [];
-    let detectedBrandKey = 'SAMSUNG';
-
-    if (matchedBrandObj && matchedBrandObj.codes) {
-        detectedBrandKey = matchedBrandObj.brand.toUpperCase();
-        modalTitle.innerHTML = `<i class="fa-solid fa-microchip" style="color: var(--azure-primary); margin-right: 6px;"></i> Diagnosis: ${matchedBrandObj.brand.toUpperCase()}`;
-        modalSub.textContent = `Daftar kode cek resmi brand: ${matchedBrandObj.brand.toUpperCase()}`;
-        targetCodes = matchedBrandObj.codes.map(c => ({ code: c.code, name: c.description }));
-    } else {
-        detectedBrandKey = upperQuery;
-        modalTitle.innerHTML = `<i class="fa-solid fa-microchip" style="color: var(--azure-primary); margin-right: 6px;"></i> Diagnosis: ${query}`;
-        modalSub.textContent = `Daftar kode dial umum perangkat`;
-        targetCodes = [
-            { code: "*#06#", name: "Cek Nomor IMEI" },
-            { code: "*#*#4636#*#*", name: "Info Jaringan & Baterai / Statistik" }
-        ];
-    }
-
-    let codesHtml = targetCodes.map(c => {
-        const isChecked = checkedDiagnosisCodes.has(c.code);
-        const domId = `diag-card-${btoa(c.code).replace(/=/g, '')}`;
-        return `
-            <div id="${domId}" class="diag-code-card ${isChecked ? 'checked-item' : ''}">
-                <div class="diag-left-wrap">
-                    <label class="checkbox-model-item" style="width: auto;">
-                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleDiagnosisCheckItem('${c.code}', this.checked)">
-                    </label>
-                    <div>
-                        <b class="diag-code-title">${c.code}</b><br>
-                        <span style="color: var(--text-secondary); font-size: 10px;">${c.name}</span>
-                    </div>
-                </div>
-
-            </div>
-        `;
-    }).join('');
-
-    let imeiInfo = BRAND_IMEI_LINKS[detectedBrandKey];
-    if (!imeiInfo) {
-        if (detectedBrandKey.includes('XIAOMI') || detectedBrandKey.includes('POCO')) imeiInfo = BRAND_IMEI_LINKS['XIAOMI'];
-        else if (detectedBrandKey.includes('INFINIX')) imeiInfo = BRAND_IMEI_LINKS['INFINIX'];
-        else if (detectedBrandKey.includes('TECNO')) imeiInfo = BRAND_IMEI_LINKS['TECNO'];
-        else if (detectedBrandKey.includes('ITEL')) imeiInfo = BRAND_IMEI_LINKS['ITEL'];
-        else imeiInfo = { name: query, url: 'https://imeicheck.com/' };
-    }
-
-    let imeiBottomHtml = `
-        <div class="diag-imei-box">
-            <button type="button" class="btn-diag-imei-action" onclick="openBrandImeiPortal('${detectedBrandKey}')" title="Buka Portal Cek Garansi Resmi">
-                <span style="display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-shield-virus"></i>
-                    <span>Cek IMEI & Garansi ${imeiInfo.name}</span>
-                </span>
-                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px;"></i>
-            </button>
-        </div>
-    `;
-
-    modalBody.innerHTML = codesHtml + imeiBottomHtml;
-    toggleModal('diagnosis-modal', true);
+function escapeHtmlNP(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[ch]));
 }
 
-window.closeDiagnosisModal = function() {
-    toggleModal('diagnosis-modal', false);
+function npFormatDateShort(value) {
+    if (!value) return '-';
+    const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return String(value);
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    return `${m[3]} ${months[Number(m[2])-1] || m[2]} ${m[1].slice(-2)}`;
+}
+
+function getNpTransactionRows() {
+    const masuk = daftarProdukRiwayat.map(i => ({
+        type: 'masuk', id: i.id, produk: i.produk || '-', imei: i.imei || '-',
+        harga: parseRawToNumeric(i.hargaModal) || 0, tanggal: i.tanggal || '',
+        source: i
+    }));
+    const keluar = daftarTerjual.map(i => ({
+        type: 'keluar', id: i.id, produk: i.produk || '-', imei: i.imei || '-',
+        harga: parseRawToNumeric(i.hargaJual) || 0, tanggal: i.tanggalTerjualRaw || i.tanggal || '',
+        source: i
+    }));
+    let rows = activeTransaksiFilter === 'masuk' ? masuk : activeTransaksiFilter === 'keluar' ? keluar : [...masuk, ...keluar];
+    return rows.sort((a,b) => String(b.tanggal).localeCompare(String(a.tanggal)));
+}
+
+window.renderTransaksiCompact = function() {
+    const el = document.getElementById('np-transaksi-list');
+    if (!el) return;
+    const rows = getNpTransactionRows();
+    if (!rows.length) {
+        el.innerHTML = `<div class="np-trx-empty">Belum ada transaksi ${activeTransaksiFilter === 'masuk' ? 'masuk' : activeTransaksiFilter === 'keluar' ? 'keluar' : ''}.</div>`;
+        return;
+    }
+    el.innerHTML = rows.map(row => {
+        const safeId = encodeURIComponent(String(row.id));
+        const icon = row.type === 'masuk' ? '↓' : '↑';
+        const price = formatRupiahRingkas(row.harga);
+        const actionLabel = row.type === 'masuk' ? 'Edit transaksi masuk' : 'Edit transaksi keluar';
+        return `<div class="np-trx-row" data-type="${row.type}" data-id="${escapeHtmlNP(row.id)}">
+            <button class="np-trx-main-hit" type="button" onclick="${row.type === 'masuk' ? `editNpTransaction('masuk','${safeId}')` : `openInvoiceFromCenter('${safeId}')`}" aria-label="Buka detail ${escapeHtmlNP(row.produk)}">
+                <span class="np-trx-type ${row.type}" aria-hidden="true">${icon}</span>
+                <span class="np-trx-main"><span class="np-trx-product">${escapeHtmlNP(row.produk)}</span><span class="np-trx-meta">IMEI ••••${escapeHtmlNP(String(row.imei).slice(-4))}</span></span>
+                <span class="np-trx-price-wrap"><span class="np-trx-price">${escapeHtmlNP(price)}</span><span class="np-trx-date">${escapeHtmlNP(npFormatDateShort(row.tanggal))}</span></span>
+            </button>
+            <span class="np-trx-actions">
+                <button class="np-trx-action edit" type="button" onclick="editNpTransaction('${row.type}','${safeId}')" title="${actionLabel}" aria-label="${actionLabel}"><i class="fa-solid fa-pen"></i></button>
+                <button class="np-trx-action delete" type="button" onclick="deleteNpTransaction('${row.type}','${safeId}')" title="Hapus transaksi" aria-label="Hapus transaksi"><i class="fa-solid fa-trash"></i></button>
+            </span>
+        </div>`;
+    }).join('');
 };
 
+function ensureNpTransactionEditModal() {
+    if (document.getElementById('np-trx-edit-modal')) return;
+    document.body.insertAdjacentHTML('beforeend', `<div class="custom-modal-overlay np-trx-edit-modal" id="np-trx-edit-modal" aria-hidden="true">
+        <div class="np-trx-edit-card">
+            <div class="np-trx-edit-head"><div><span class="np-kicker">TRANSAKSI</span><h3 id="np-trx-edit-title">Edit Transaksi</h3></div><button type="button" class="np-trx-edit-close" onclick="closeNpTransactionEdit()" aria-label="Tutup">×</button></div>
+            <div class="np-trx-edit-grid">
+                <label>Produk<input id="np-trx-edit-produk" type="text"></label>
+                <label>IMEI<input id="np-trx-edit-imei" type="text"></label>
+                <label>Tanggal<input id="np-trx-edit-tanggal" type="date"></label>
+                <label>Harga<input id="np-trx-edit-harga" type="text"></label>
+                <label class="np-trx-edit-extra" id="np-trx-edit-pembeli-wrap">Pembeli<input id="np-trx-edit-pembeli" type="text"></label>
+            </div>
+            <div class="np-trx-edit-foot"><button type="button" class="np-trx-edit-cancel" onclick="closeNpTransactionEdit()">Batal</button><button type="button" class="np-trx-edit-save" onclick="saveNpTransactionEdit()">Simpan Perubahan</button></div>
+        </div>
+    </div>`);
+}
+let activeNpTransactionEdit = null;
+window.editNpTransaction = function(type, encodedId) {
+    const id = decodeURIComponent(String(encodedId || ''));
+    const item = type === 'masuk' ? daftarProdukRiwayat.find(x => String(x.id) === id) : daftarTerjual.find(x => String(x.id) === id);
+    if (!item) return showToast('Info', 'Data transaksi tidak ditemukan.', false);
+    ensureNpTransactionEditModal();
+    activeNpTransactionEdit = {type, id};
+    document.getElementById('np-trx-edit-title').textContent = type === 'masuk' ? 'Edit Transaksi Masuk' : 'Edit Transaksi Keluar';
+    document.getElementById('np-trx-edit-produk').value = item.produk || '';
+    document.getElementById('np-trx-edit-imei').value = item.imei || '';
+    document.getElementById('np-trx-edit-tanggal').value = type === 'masuk' ? (item.tanggal || '') : (item.tanggalTerjualRaw || item.tanggal || '');
+    document.getElementById('np-trx-edit-harga').value = String(type === 'masuk' ? (parseRawToNumeric(item.hargaModal) || 0) : (parseRawToNumeric(item.hargaJual) || 0));
+    document.getElementById('np-trx-edit-pembeli').value = item.pembeli || '';
+    document.getElementById('np-trx-edit-pembeli-wrap').style.display = type === 'keluar' ? 'block' : 'none';
+    toggleModal('np-trx-edit-modal', true);
+    document.getElementById('np-trx-edit-modal').setAttribute('aria-hidden','false');
+};
+window.closeNpTransactionEdit = function() { toggleModal('np-trx-edit-modal', false); document.getElementById('np-trx-edit-modal')?.setAttribute('aria-hidden','true'); activeNpTransactionEdit = null; };
+window.saveNpTransactionEdit = async function() {
+    if (!activeNpTransactionEdit) return;
+    const {type,id} = activeNpTransactionEdit;
+    const produk = document.getElementById('np-trx-edit-produk').value.trim();
+    const imei = document.getElementById('np-trx-edit-imei').value.trim() || '-';
+    const tanggal = document.getElementById('np-trx-edit-tanggal').value;
+    const harga = parseRawToNumeric(document.getElementById('np-trx-edit-harga').value) || 0;
+    const pembeli = document.getElementById('np-trx-edit-pembeli').value.trim();
+    if (!produk || !tanggal) return showToast('Periksa Data', 'Produk dan tanggal wajib diisi.', false);
+    try {
+        setConnectionStatus('syncing');
+        if (type === 'masuk') {
+            const item = daftarProdukRiwayat.find(x => String(x.id) === id);
+            if (!item) throw new Error('Produk tidak ditemukan');
+            if (supabaseClient) {
+                const {error} = await supabaseClient.from('product').update({name:produk, imei, buy_price:harga, date:tanggal}).eq('id',id);
+                if (error) throw error;
+            }
+            Object.assign(item,{produk,imei,hargaModal:String(harga),tanggal});
+            const active = daftarStokMasuk.find(x => String(x.id) === id); if (active) Object.assign(active,{produk,imei,hargaModal:String(harga),tanggal});
+        } else {
+            const item = daftarTerjual.find(x => String(x.id) === id);
+            if (!item) throw new Error('Transaksi tidak ditemukan');
+            const profit = harga - (parseRawToNumeric(item.hargaModal) || 0);
+            if (supabaseClient) {
+                const {error} = await supabaseClient.from('transactions').update({product_name:produk, imei, sell_price:harga, customer_name:pembeli, sold_date:tanggal, profit}).eq('id',id);
+                if (error) throw error;
+                if (item.productId) await supabaseClient.from('product').update({name:produk, imei, sell_price:harga, buyer:pembeli}).eq('id',item.productId);
+            }
+            Object.assign(item,{produk,imei,hargaJual:String(harga),pembeli,tanggalTerjualRaw:tanggal});
+            const history = daftarProdukRiwayat.find(x => String(x.id) === String(item.productId || id)); if (history) Object.assign(history,{produk,imei,hargaJual:String(harga),pembeli});
+        }
+        closeNpTransactionEdit();
+        renderTransaksiCompact(); renderDaftarTerjual(); updateDashboardStats(); renderHomeShowcase();
+        setConnectionStatus('connected'); showToast('Berhasil','Transaksi berhasil diperbarui.');
+    } catch(e) { console.warn(e); setConnectionStatus('disconnected'); showToast('Gagal','Perubahan transaksi gagal disimpan.',false); }
+};
+window.deleteNpTransaction = function(type, encodedId) {
+    const id = decodeURIComponent(String(encodedId || ''));
+    showCustomConfirm('Hapus Transaksi', type === 'masuk' ? 'Hapus riwayat transaksi masuk ini? Unit juga akan dihapus dari stok.' : 'Hapus transaksi keluar ini? Invoice/riwayat penjualannya juga akan terhapus.', async () => {
+        try {
+            setConnectionStatus('syncing');
+            if (type === 'masuk') {
+                if (supabaseClient) { const {error}=await supabaseClient.from('product').delete().eq('id',id); if(error) throw error; }
+                daftarProdukRiwayat = daftarProdukRiwayat.filter(x=>String(x.id)!==id); daftarStokMasuk=daftarStokMasuk.filter(x=>String(x.id)!==id);
+            } else {
+                const soldItem = daftarTerjual.find(x=>String(x.id)===id);
+                if (supabaseClient) {
+                    const {error}=await supabaseClient.from('transactions').delete().eq('id',id); if(error) throw error;
+                    if (soldItem?.productId) {
+                        const {error:restoreError}=await supabaseClient.from('product').update({status:'ready', buyer:''}).eq('id',soldItem.productId);
+                        if (restoreError) throw restoreError;
+                    }
+                }
+                daftarTerjual=daftarTerjual.filter(x=>String(x.id)!==id);
+                if (soldItem?.productId) {
+                    const history=daftarProdukRiwayat.find(x=>String(x.id)===String(soldItem.productId));
+                    if (history) { history.status='ready'; history.pembeli=''; history.hargaJual=history.hargaJual || ''; }
+                    if (history && !daftarStokMasuk.some(x=>String(x.id)===String(history.id))) {
+                        const {status,...activeItem}=history; daftarStokMasuk.unshift({...activeItem});
+                    }
+                }
+            }
+            renderTransaksiCompact(); renderDaftarTerjual(); updateDashboardStats(); renderHomeShowcase();
+            setConnectionStatus('connected'); showToast('Berhasil','Transaksi berhasil dihapus.');
+        } catch(e) { console.warn(e); setConnectionStatus('disconnected'); showToast('Gagal','Transaksi gagal dihapus.',false); }
+    });
+};
+
+window.setTransaksiFilter = function(filter) {
+    activeTransaksiFilter = ['semua','masuk','keluar'].includes(filter) ? filter : 'semua';
+    document.querySelectorAll('.np-trx-filter').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === activeTransaksiFilter));
+    renderTransaksiCompact();
+};
+
+window.switchTransaksiSubTab = function(tab) {
+    const isDiag = tab === 'diagnosis';
+    document.getElementById('sub-transaksi')?.classList.toggle('active', !isDiag);
+    document.getElementById('sub-diagnosis')?.classList.toggle('active', isDiag);
+    document.getElementById('tab-transaksi-list')?.classList.toggle('active', !isDiag);
+    document.getElementById('tab-diagnosis-list')?.classList.toggle('active', isDiag);
+    document.getElementById('tab-transaksi-list')?.setAttribute('aria-selected', String(!isDiag));
+    document.getElementById('tab-diagnosis-list')?.setAttribute('aria-selected', String(isDiag));
+    if (isDiag) renderDiagnosisInline();
+};
+
+function getDiagnosisBrandData(key) {
+    let actual = key;
+    if (key === 'REDMI' || key === 'POCO') actual = key.charAt(0) + key.slice(1).toLowerCase();
+    const obj = rawDiagnosisData.find(b => String(b.brand).toUpperCase() === actual);
+    if (obj) return obj;
+    if (key === 'REDMI' || key === 'POCO') return rawDiagnosisData.find(b => String(b.brand).toUpperCase() === 'XIAOMI');
+    return null;
+}
+
+function renderDiagnosisBrandSelector() {
+    const el = document.getElementById('diagnosis-brand-selector');
+    if (!el) return;
+    el.innerHTML = NP_DIAGNOSIS_BRANDS.map(b => `<button type="button" class="np-brand-logo-btn brand-${b.key.toLowerCase()} ${b.key === activeDiagnosisBrand ? 'active' : ''}" onclick="selectDiagnosisBrand('${b.key}')" aria-label="${b.name}"><img src="${b.logo}" alt="${escapeHtmlNP(b.name)} logo" onerror="this.style.display='none';this.nextElementSibling.style.display='block';"><span class="np-brand-logo-fallback" style="display:none">${escapeHtmlNP(b.name)}</span></button>`).join('');
+}
+
+window.selectDiagnosisBrand = function(key) {
+    activeDiagnosisBrand = key;
+    renderDiagnosisBrandSelector();
+    renderDiagnosisInline();
+};
+
+window.copyDiagnosisCode = function(code) {
+    navigator.clipboard?.writeText(code).then(() => showToast('Tersalin', `Kode ${code} disalin.`)).catch(() => showToast('Info', 'Clipboard tidak tersedia.', false));
+};
+
+function renderDiagnosisInline() {
+    renderDiagnosisBrandSelector();
+    const panel = document.getElementById('np-diagnosis-panel');
+    if (!panel) return;
+    const brand = NP_DIAGNOSIS_BRANDS.find(b => b.key === activeDiagnosisBrand) || NP_DIAGNOSIS_BRANDS[0];
+    const data = getDiagnosisBrandData(activeDiagnosisBrand);
+    const codes = data?.codes || [];
+    const imei = BRAND_IMEI_LINKS[activeDiagnosisBrand] || BRAND_IMEI_LINKS['XIAOMI'];
+    panel.innerHTML = `<div class="np-diagnosis-panel-head"><img class="np-diagnosis-logo brand-logo-${brand.key.toLowerCase()}" src="${brand.logo}" alt="${escapeHtmlNP(brand.name)}" onerror="this.style.display='none'"><div><h4>${escapeHtmlNP(brand.name)}</h4><p>Kode dial & akses cek IMEI</p></div></div>
+        <span class="np-diag-section-label">KODE DIAL</span>
+        <div class="np-diag-code-list">${codes.map(c => `<div class="np-diag-code-row"><div class="np-diag-code-row-main"><span class="np-diag-code">${escapeHtmlNP(c.code)}</span><span class="np-diag-desc">${escapeHtmlNP(c.description)}</span></div><button class="np-diag-copy" type="button" onclick="copyDiagnosisCode(${JSON.stringify(c.code)})"><i class="fa-regular fa-copy"></i> SALIN</button></div>`).join('')}</div>
+        <div class="np-diag-imei"><div><div class="np-diag-imei-title">Cek IMEI & Garansi</div><div class="np-diag-imei-sub">${escapeHtmlNP(imei.name)}</div></div><button class="np-diag-open" type="button" onclick="openBrandImeiPortal('${activeDiagnosisBrand}')">BUKA ↗</button></div>`;
+}
+
+function initDiagnosisInline() {
+    if (!document.getElementById('diagnosis-brand-selector')) return;
+    renderDiagnosisInline();
+}
+
+/* ========================================================== */
 /* ========================================================== */
 /* KALKULATOR CEPAT KAS                                       */
 /* ========================================================== */
@@ -1614,9 +1790,59 @@ function initAllCustomDropdowns() {
 /* ========================================================== */
 /* STATISTIK DASHBOARD & KAS                                  */
 /* ========================================================== */
+function renderHomeShowcase() {
+    const container = document.getElementById('np-home-showcase');
+    if (!container) return;
+
+    if (!daftarStokMasuk.length) {
+        container.innerHTML = `
+            <div class="np-showcase-empty">
+                <i class="fa-solid fa-box-open"></i>
+                <span>Belum ada unit tersedia.</span>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = daftarStokMasuk.map(item => {
+        const productName = item.produk || 'Unit';
+        const condition = item.kondisi || 'Second';
+        const price = parseRawToNumeric(item.hargaDisplay) || parseRawToNumeric(item.hargaJual) || 0;
+        const priceText = price ? formatRupiahLengkap(price) : 'Chat Admin';
+        const hasPhoto = Boolean(item.imageUrl && String(item.imageUrl).trim());
+        const imageSource = hasPhoto ? item.imageUrl : 'assets/np-phone-hero.svg';
+        const imageClass = hasPhoto ? 'is-real-photo' : 'is-fallback-visual';
+        const imageAlt = hasPhoto ? `Foto ${productName}` : `Visual ${productName}`;
+
+        return `
+            <button class="np-showcase-row" type="button" onclick="openShowcaseDetail('${item.id}')" aria-label="Lihat detail ${productName}">
+                <span class="np-showcase-thumb ${imageClass}">
+                    <img src="${imageSource}" alt="${imageAlt}" loading="lazy" onerror="this.onerror=null;this.src='assets/np-phone-hero.svg';this.classList.remove('is-real-photo');this.classList.add('is-fallback-visual');">
+                </span>
+                <span class="np-showcase-row-info">
+                    <span class="np-showcase-row-top">
+                        <span class="np-showcase-row-name">${productName}</span>
+                        <span class="np-showcase-row-status">Tersedia</span>
+                    </span>
+                    <span class="np-showcase-row-bottom">
+                        <span class="np-showcase-row-meta">${condition}</span>
+                        <strong class="np-showcase-row-price">${priceText}</strong>
+                    </span>
+                </span>
+                <i class="fa-solid fa-chevron-right np-showcase-row-arrow" aria-hidden="true"></i>
+            </button>
+        `;
+    }).join('');
+}
+
 function updateDashboardStats() {
-    let sumStok = daftarStokMasuk.reduce((sum, item) => sum + parseInt(item.qty || 1), 0);
-    let sumTerjual = daftarTerjual.reduce((sum, item) => sum + parseInt(item.qty || 1), 0);
+    // Ringkasan memakai sumber data yang sama dengan Produk dan Transaksi.
+    // Total Unit = unit tersedia + unit terjual.
+    // Transaksi = jumlah record transaksi aktual (bukan jumlah unit).
+    let sumStok = daftarStokMasuk.reduce((sum, item) => sum + (parseInt(item.qty, 10) || 0), 0);
+    let sumTerjual = daftarTerjual.reduce((sum, item) => sum + (parseInt(item.qty, 10) || 0), 0);
+    let totalUnit = sumStok + sumTerjual;
+    let totalTransaksi = daftarTerjual.length;
     let totalOmset = 0;
     let totalProfit = 0; 
     
@@ -1628,27 +1854,34 @@ function updateDashboardStats() {
         totalProfit += ((hargaJual - hargaModal) * qty); 
     });
 
-    // Statistik finansial tetap dihitung untuk kebutuhan internal/fitur laporan,
-    // tetapi dashboard utama sekarang menonjolkan metrik inventori.
     const keuntunganQtyElem = document.getElementById('keuntungan-qty');
     const keuntunganNominalElem = document.getElementById('keuntungan-nominal');
     if (keuntunganQtyElem) keuntunganQtyElem.textContent = `${sumTerjual} Unit`;
     if (keuntunganNominalElem) keuntunganNominalElem.textContent = formatRupiahRingkas(totalProfit);
 
-    const totalUnitElem = document.getElementById('total-unit-val');
+    const totalUnitValElem = document.getElementById('total-unit-val');
+    if (totalUnitValElem) totalUnitValElem.textContent = `${totalUnit} Unit`;
+
+    const transaksiCountValElem = document.getElementById('transaksi-count-val');
+    if (transaksiCountValElem) transaksiCountValElem.textContent = `${totalTransaksi}`;
+
     const stokReadyValElem = document.getElementById('stok-ready-val');
+    if (stokReadyValElem) stokReadyValElem.textContent = `${sumStok} Unit`;
+
     const terjualValElem = document.getElementById('terjual-val');
     const terjualOmsetValElem = document.getElementById('terjual-omset-val');
-    const transaksiCountElem = document.getElementById('transaksi-count-val');
-    if (totalUnitElem) totalUnitElem.textContent = `${sumStok + sumTerjual} Unit`;
-    if (stokReadyValElem) stokReadyValElem.textContent = `${sumStok} Unit`;
     if (terjualValElem) terjualValElem.textContent = `${sumTerjual} Unit`;
     if (terjualOmsetValElem) terjualOmsetValElem.textContent = formatRupiahRingkas(totalOmset);
-    if (transaksiCountElem) transaksiCountElem.textContent = `${daftarStokMasuk.length + daftarTerjual.length}`;
 
     const modalBadgeStokCount = document.getElementById('modal-badge-stok-count');
     if (modalBadgeStokCount) modalBadgeStokCount.textContent = `${daftarStokMasuk.length} Unit`;
 
+    renderHomeShowcase();
+
+    const badgeRjual = document.getElementById('badge-rjual-count');
+    const modalBadgeRjual = document.getElementById('modal-badge-rjual-count');
+    if (badgeRjual) badgeRjual.textContent = `${sumTerjual}`;
+    if (modalBadgeRjual) modalBadgeRjual.textContent = `${sumTerjual} Unit`;
 }
 
 function updatePribadiStats() {
@@ -2132,23 +2365,13 @@ window.closePriceListModal = function() {
 /* NAVIGASI & AUTHENTIKASI SUPABASE                           */
 /* ========================================================== */
 function restartApp(btn) { btn?.classList.add('spinning'); setTimeout(() => window.location.reload(), 450); }
-function updateThemeMenu() {
-    const isDark = document.body.classList.contains('dark-mode');
-    const icon = document.getElementById('theme-menu-icon');
-    const label = document.getElementById('theme-menu-label');
-    if (icon) {
-        icon.classList.remove('fa-moon', 'fa-sun');
-        icon.classList.add(isDark ? 'fa-sun' : 'fa-moon');
-    }
-    if (label) label.textContent = isDark ? 'Mode Terang' : 'Mode Gelap';
-}
 function toggleTheme() {
     const isDark = document.body.classList.toggle('dark-mode');
     document.getElementById('theme-icon')?.classList.replace(isDark ? 'fa-moon' : 'fa-sun', isDark ? 'fa-sun' : 'fa-moon');
     localStorage.setItem('npgalery_theme', isDark ? 'dark' : 'light');
-    updateThemeMenu();
 }
 
+// V22 — Header More menu: hanya menambahkan fungsi yang hilang pada V21.
 window.toggleHeaderMore = function(event) {
     event?.stopPropagation();
     const menu = document.getElementById('header-more-menu');
@@ -2158,30 +2381,13 @@ window.toggleHeaderMore = function(event) {
     menu.setAttribute('aria-hidden', open ? 'false' : 'true');
     trigger?.setAttribute('aria-expanded', open ? 'true' : 'false');
 };
+
 window.closeHeaderMore = function() {
     const menu = document.getElementById('header-more-menu');
     const trigger = document.getElementById('btn-header-more');
     menu?.classList.remove('is-open');
     menu?.setAttribute('aria-hidden', 'true');
     trigger?.setAttribute('aria-expanded', 'false');
-};
-
-// WELCOME SUMMARY INTERACTION — id="vz73zb"
-window.toggleWelcomeSummary = function() {
-    const hero = document.getElementById('np-welcome-toggle');
-    const panel = document.getElementById('np-summary-panel');
-    if (!hero || !panel) return;
-    const open = !panel.classList.contains('is-open');
-    hero.classList.toggle('is-open', open);
-    panel.classList.toggle('is-open', open);
-    hero.setAttribute('aria-expanded', open ? 'true' : 'false');
-    panel.setAttribute('aria-hidden', open ? 'false' : 'true');
-};
-window.handleWelcomeKey = function(event) {
-    if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        window.toggleWelcomeSummary();
-    }
 };
 
 document.addEventListener('click', (event) => {
@@ -2241,9 +2447,6 @@ window.goHomeScreen = function() {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const homeSection = document.getElementById('section-home');
     if (homeSection) homeSection.classList.add('active');
-    const homeNav = document.querySelector('.nav-item[data-section="section-home"]');
-    if (homeNav) homeNav.classList.add('active');
-    if (typeof updateDashboardStats === 'function') updateDashboardStats();
 };
 
 // HANDLER NAVIGASI KLIK / DOUBLE-TAP / TOGGLE
@@ -2316,7 +2519,7 @@ window.selectStokKatalog = function(val) {
     document.getElementById('stok-autocomplete-list')?.classList.add('hidden');
 };
 
-// SIMPAN STOK DENGAN DUKUNGAN UNGGAH FOTO FISIK UNIT & HARGA DISPLAY
+// SIMPAN STOK DENGAN DUKUNGAN UNGGAH FOTO FISIK UNIT, HARGA DISPLAY, & NEGO
 window.simpanStokBaru = async function() {
     let produk = document.getElementById('stok-produk-input').value.trim();
     let imei = document.getElementById('stok-imei').value.trim();
@@ -2338,6 +2541,8 @@ window.simpanStokBaru = async function() {
     }
 
     const displayPriceInputVal = document.getElementById('stok-display-harga')?.value.trim() || '';
+    const isNegoCheckbox = document.getElementById('stok-is-nego');
+    const isNegoVal = isNegoCheckbox ? isNegoCheckbox.checked : true;
 
     const newStockItem = {
         id: newId,
@@ -2349,6 +2554,7 @@ window.simpanStokBaru = async function() {
         buy_price: parseRawToNumeric(document.getElementById('stok-harga').value) || 0,
         sell_price: 0,
         display_price: parseRawToNumeric(displayPriceInputVal) || 0,
+        is_nego: isNegoVal,
         status: 'ready',
         buyer: '',
         date: tanggal,
@@ -2371,9 +2577,16 @@ window.simpanStokBaru = async function() {
                 hargaModal: String(newStockItem.buy_price),
                 hargaJual: '',
                 hargaDisplay: String(newStockItem.display_price),
+                isNego: newStockItem.is_nego,
                 pembeli: '',
                 tanggal: newStockItem.date,
                 imageUrl: uploadedImageUrl
+            });
+            daftarProdukRiwayat.unshift({
+                id: newStockItem.id, produk: newStockItem.name, kondisi: newStockItem.condition,
+                kelengkapan: newStockItem.completeness, imei: newStockItem.imei, qty: String(newStockItem.qty),
+                hargaModal: String(newStockItem.buy_price), hargaJual: '', hargaDisplay: String(newStockItem.display_price),
+                isNego: newStockItem.is_nego, pembeli: '', tanggal: newStockItem.date, imageUrl: uploadedImageUrl, status: 'ready'
             });
 
             updateDashboardStats();
@@ -2515,236 +2728,218 @@ window.closeStokDetailModal = function() {
     activeDetailStokId = null; 
 };
 
+async function getMasterProductPhoto(productId) {
+    const key = String(productId || '');
+    if (!key) return null;
+    if (masterProductPhotos.has(key)) return masterProductPhotos.get(key);
+
+    if (!supabaseClient) return null;
+    try {
+        const { data, error } = await supabaseClient
+            .from(MASTER_PRODUCT_PHOTO_TABLE)
+            .select('image_url')
+            .eq('product_id', key)
+            .maybeSingle();
+        if (!error && data?.image_url) {
+            masterProductPhotos.set(key, data.image_url);
+            return data.image_url;
+        }
+    } catch (e) {
+        console.warn('Gagal mengambil Master Foto Produk:', e);
+    }
+    return null;
+}
+
 // PROSES JUAL UNIT KE SUPABASE TRANSACTIONS
 window.jualStokItem = function(id) {
     const item = daftarStokMasuk.find(s => s.id === id);
-    if (!item) return;
-    openSaleNowModal(item);
-};
+    if (item) {
+        showCustomConfirm("Penjualan", `Jual unit ${item.produk}?`, async () => {
+            let d = new Date(), tgl = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            item.tanggalTerjualRaw = tgl; 
+            item.modalStatus = 'belum';
 
-let npSaleNowItemId = null;
-let npSaleNowPayment = '';
+            let profit = (parseRawToNumeric(item.hargaJual) || 0) - (parseRawToNumeric(item.hargaModal) || 0);
+            let kasId = 'kas-' + Date.now();
 
-function openSaleNowModal(item) {
-    npSaleNowItemId = item.id;
-    npSaleNowPayment = item.metodePembayaran || '';
+            if (supabaseClient) {
+                setConnectionStatus('syncing');
+                try {
+                    // Snapshot foto Master Produk saat transaksi dibuat.
+                    const invoicePhotoUrl = await getMasterProductPhoto(item.id);
 
-    const nameEl = document.getElementById('np-sale-product-name');
-    const specEl = document.getElementById('np-sale-product-spec');
-    const imageEl = document.getElementById('np-sale-product-image');
-    const customerEl = document.getElementById('np-sale-customer');
-    const phoneEl = document.getElementById('np-sale-phone');
-    const priceEl = document.getElementById('np-sale-price');
-    const totalEl = document.getElementById('np-sale-total-value');
-    const paymentLabel = document.getElementById('np-sale-payment-label');
-    const options = document.getElementById('np-sale-payment-options');
+                    await supabaseClient.from('product').update({ status: 'sold' }).eq('id', item.id);
 
-    const basePrice = parseRawToNumeric(item.hargaDisplay) || parseRawToNumeric(item.hargaJual) || 0;
-    if (nameEl) nameEl.textContent = item.produk || 'Unit';
-    if (specEl) specEl.textContent = [item.kondisi, item.kelengkapan].filter(Boolean).join(' • ') || 'Unit tersedia';
-    if (imageEl) {
-        imageEl.src = item.imageUrl || 'logo-np.jpg';
-        imageEl.onerror = function() { this.src = 'logo-np.jpg'; };
-    }
-    if (customerEl) customerEl.value = item.pembeli || '';
-    if (phoneEl) phoneEl.value = item.customerPhone || '';
-    if (priceEl) priceEl.value = basePrice > 0 ? formatRupiahLengkap(basePrice) : '';
-    if (totalEl) totalEl.textContent = basePrice > 0 ? formatRupiahLengkap(basePrice) : 'Rp 0';
-    if (paymentLabel) paymentLabel.textContent = npSaleNowPayment || 'Pilih metode pembayaran';
-    if (options) options.classList.remove('is-open');
+                    const transactionPayload = {
+                        id: item.id,
+                        product_id: item.id,
+                        product_name: item.produk,
+                        invoice_photo_url: invoicePhotoUrl || null,
+                        condition: item.kondisi,
+                        completeness: item.kelengkapan,
+                        imei: item.imei,
+                        qty: parseInt(item.qty) || 1,
+                        buy_price: parseRawToNumeric(item.hargaModal) || 0,
+                        sell_price: parseRawToNumeric(item.hargaJual) || 0,
+                        customer_name: item.pembeli || '',
+                        profit: profit,
+                        sold_date: tgl,
+                        modal_status: 'belum'
+                    };
 
-    const modal = document.getElementById('np-sale-sheet-modal');
-    if (modal) {
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden', 'false');
-        setTimeout(() => customerEl?.focus(), 260);
-    }
-}
+                    let { error: trxInsertError } = await supabaseClient.from('transactions').insert([transactionPayload]);
+                    if (trxInsertError) {
+                        // Kompatibilitas sementara untuk database lama sebelum migrasi kolom baru.
+                        const legacyPayload = { ...transactionPayload };
+                        delete legacyPayload.product_id;
+                        delete legacyPayload.invoice_photo_url;
+                        const legacyInsert = await supabaseClient.from('transactions').insert([legacyPayload]);
+                        if (legacyInsert.error) throw legacyInsert.error;
+                        console.warn('Kolom snapshot foto belum tersedia; transaksi disimpan dalam mode kompatibilitas lama.');
+                    }
 
-window.closeSaleNowModal = function() {
-    const modal = document.getElementById('np-sale-sheet-modal');
-    if (modal) {
-        modal.classList.remove('show');
-        modal.setAttribute('aria-hidden', 'true');
-    }
-    npSaleNowItemId = null;
-    npSaleNowPayment = '';
-};
+                    if (profit > 0) {
+                        await supabaseClient.from('cash_mutations').insert([{
+                            id: kasId,
+                            description: `Laba Jual: ${item.produk}`,
+                            type: 'masuk',
+                            amount: profit,
+                            date: tgl
+                        }]);
+                    }
 
-async function confirmSaleNow() {
-    const id = npSaleNowItemId;
-    const item = daftarStokMasuk.find(s => s.id === id);
-    if (!item) return;
+                    daftarStokMasuk = daftarStokMasuk.filter(s => s.id !== id);
+                    const historyItem = daftarProdukRiwayat.find(s => String(s.id) === String(id));
+                    if (historyItem) historyItem.status = 'sold';
+                    daftarTerjual.unshift({ ...item, productId: item.id, invoicePhotoUrl: invoicePhotoUrl || null });
+                    if (profit > 0) {
+                        daftarKasPribadi.unshift({ id: kasId, keterangan: `Laba Jual: ${item.produk}`, kategori: 'masuk', nominal: profit, tanggal: tgl });
+                    }
 
-    const customerEl = document.getElementById('np-sale-customer');
-    const phoneEl = document.getElementById('np-sale-phone');
-    const priceEl = document.getElementById('np-sale-price');
-    const customer = customerEl?.value.trim() || '';
-    const phone = phoneEl?.value.trim() || '';
-    const price = parseRawToNumeric(priceEl?.value) || 0;
+                    renderDaftarTerjual(); 
+                    renderDaftarModal(); 
+                    renderManajemenKas(); 
+                    updateDashboardStats(); 
+                    updatePribadiStats(); 
+                    initShowcaseBrandDropdown();
 
-    if (!customer) {
-        showToast('Data belum lengkap', 'Nama pembeli wajib diisi.', false);
-        customerEl?.focus();
-        return;
-    }
-    if (price <= 0) {
-        showToast('Data belum lengkap', 'Harga penjualan wajib diisi dan harus lebih dari 0.', false);
-        priceEl?.focus();
-        return;
-    }
-    if (!npSaleNowPayment) {
-        showToast('Data belum lengkap', 'Pilih metode pembayaran terlebih dahulu.', false);
-        return;
-    }
-
-    item.pembeli = customer;
-    item.customerPhone = phone;
-    item.hargaJual = String(price);
-    item.metodePembayaran = npSaleNowPayment;
-
-    closeSaleNowModal();
-    await processSaleNow(item);
-}
-
-async function processSaleNow(item) {
-    let d = new Date(), tgl = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    item.tanggalTerjualRaw = tgl;
-    item.modalStatus = 'belum';
-
-    let profit = (parseRawToNumeric(item.hargaJual) || 0) - (parseRawToNumeric(item.hargaModal) || 0);
-    let kasId = 'kas-' + Date.now();
-
-    if (!supabaseClient) {
-        showToast('Gagal', 'Koneksi Cloud belum tersedia.', false);
-        return;
-    }
-
-    setConnectionStatus('syncing');
-    try {
-        await supabaseClient.from('product').update({ status: 'sold' }).eq('id', item.id);
-
-        const { error: trxError } = await supabaseClient.from('transactions').insert([{
-            id: item.id,
-            product_name: item.produk,
-            condition: item.kondisi,
-            completeness: item.kelengkapan,
-            imei: item.imei,
-            qty: parseInt(item.qty) || 1,
-            buy_price: parseRawToNumeric(item.hargaModal) || 0,
-            sell_price: parseRawToNumeric(item.hargaJual) || 0,
-            customer_name: item.pembeli || '',
-            profit: profit,
-            sold_date: tgl,
-            modal_status: 'belum'
-        }]);
-        if (trxError) throw trxError;
-
-        // Field tambahan bersifat opsional agar tetap kompatibel dengan schema transaksi lama.
-        await supabaseClient.from('transactions').update({
-            customer_phone: item.customerPhone || '',
-            payment_method: item.metodePembayaran || ''
-        }).eq('id', item.id).then(() => {}).catch(() => {});
-
-        if (profit > 0) {
-            await supabaseClient.from('cash_mutations').insert([{
-                id: kasId,
-                description: `Laba Jual: ${item.produk}`,
-                type: 'masuk',
-                amount: profit,
-                date: tgl
-            }]);
-        }
-
-        daftarStokMasuk = daftarStokMasuk.filter(s => s.id !== item.id);
-        daftarTerjual.unshift(item);
-        if (profit > 0) {
-            daftarKasPribadi.unshift({ id: kasId, keterangan: `Laba Jual: ${item.produk}`, kategori: 'masuk', nominal: profit, tanggal: tgl });
-        }
-
-        renderInvoiceCenter();
-        renderDaftarModal();
-        renderManajemenKas();
-        updateDashboardStats();
-        updatePribadiStats();
-        initShowcaseBrandDropdown();
-        renderHomeShowcase();
-
-        setConnectionStatus('connected');
-        showToast('Berhasil', 'Unit terjual & transaksi tercatat di Cloud.');
-        openInvoiceModal(item);
-    } catch (err) {
-        console.warn('Gagal sinkron penjualan ke Supabase:', err);
-        setConnectionStatus('disconnected');
-        showToast('Gagal', 'Terjadi kendala memproses penjualan di Cloud.', false);
-    }
-}
-
-/* FORM JUAL SEKARANG — INTERACTION */
-(function initSaleNowForm() {
-    document.addEventListener('DOMContentLoaded', () => {
-        const priceEl = document.getElementById('np-sale-price');
-        const totalEl = document.getElementById('np-sale-total-value');
-        const paymentTrigger = document.getElementById('np-sale-payment-trigger');
-        const paymentOptions = document.getElementById('np-sale-payment-options');
-        const paymentLabel = document.getElementById('np-sale-payment-label');
-        const confirmBtn = document.getElementById('np-sale-confirm-btn');
-
-        const normalizeSalePriceInput = () => {
-            if (!priceEl) return 0;
-            const rawDigits = String(priceEl.value || '').replace(/\D/g, '');
-            priceEl.value = rawDigits;
-            return parseRawToNumeric(rawDigits) || 0;
-        };
-
-        priceEl?.addEventListener('focus', () => {
-            const current = String(priceEl.value || '').trim();
-            if (!current) return;
-            const numeric = parseRawToNumeric(current.replace(/\D/g, '')) || 0;
-            if (numeric > 0 && numeric % 1000 === 0) {
-                priceEl.value = String(Math.round(numeric / 1000));
-            } else {
-                priceEl.value = current.replace(/\D/g, '');
+                    setConnectionStatus('connected');
+                    showToast('Berhasil', 'Unit terjual & laba tercatat di Cloud.');
+                    openInvoiceModal(item);
+                } catch (err) {
+                    console.warn('Gagal sinkron penjualan ke Supabase:', err);
+                    setConnectionStatus('disconnected');
+                    showToast('Gagal', 'Terjadi kendala memproses penjualan di Cloud.', false);
+                }
             }
         });
+    }
+};
 
-        priceEl?.addEventListener('input', () => {
-            const value = normalizeSalePriceInput();
-            if (totalEl) totalEl.textContent = value ? formatRupiahLengkap(value) : 'Rp 0';
-        });
+/* ========================================================== */
+/* INVOICE CENTER — DAFTAR SEMUA INVOICE                       */
+/* ========================================================== */
+function escapeInvoiceCenterText(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
-        priceEl?.addEventListener('blur', () => {
-            const value = parseRawToNumeric(String(priceEl.value || '').replace(/\D/g, '')) || 0;
-            priceEl.value = value ? formatRupiahLengkap(value) : '';
-            if (totalEl) totalEl.textContent = value ? formatRupiahLengkap(value) : 'Rp 0';
-        });
-
-        paymentTrigger?.addEventListener('click', () => {
-            paymentOptions?.classList.toggle('is-open');
-        });
-
-        paymentOptions?.querySelectorAll('[data-payment]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                npSaleNowPayment = btn.dataset.payment || '';
-                if (paymentLabel) paymentLabel.textContent = npSaleNowPayment;
-                paymentOptions.classList.remove('is-open');
-            });
-        });
-
-        confirmBtn?.addEventListener('click', confirmSaleNow);
+function getInvoiceCenterFilteredData(keyword = '') {
+    const q = String(keyword || '').trim().toLowerCase();
+    if (!q) return [...daftarTerjual];
+    return daftarTerjual.filter(item => {
+        const haystack = [
+            item.pembeli,
+            item.produk,
+            item.imei,
+            item.id,
+            item.tanggalTerjualRaw,
+            item.tanggal
+        ].map(v => String(v ?? '').toLowerCase()).join(' ');
+        return haystack.includes(q);
     });
-})();
+}
 
-/* QUICK NOTE — AUTO EXPAND TEXTAREA */
-(function initQuickNoteForm() {
-    document.addEventListener('DOMContentLoaded', () => {
-        const contentInput = document.getElementById('note-content-input');
-        contentInput?.addEventListener('input', () => autoGrowNoteTextarea(contentInput));
-        contentInput?.addEventListener('focus', () => autoGrowNoteTextarea(contentInput));
-        requestAnimationFrame(() => autoGrowNoteTextarea(contentInput));
-    });
-})();
+window.renderInvoiceCenter = function(keyword = '') {
+    const list = document.getElementById('invoice-center-list');
+    const count = document.getElementById('invoice-center-count');
+    if (!list) return;
 
+    const rows = getInvoiceCenterFilteredData(keyword);
+    if (count) count.textContent = String(rows.length);
+
+    if (rows.length === 0) {
+        list.innerHTML = `<div class="np-invoice-empty">${keyword ? 'Invoice yang dicari tidak ditemukan.' : 'Belum ada invoice tersimpan.'}</div>`;
+        return;
+    }
+
+    list.innerHTML = rows.map(item => {
+        const invoiceNo = 'INV-' +
+            (item.tanggalTerjualRaw ? String(item.tanggalTerjualRaw).replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '')) +
+            '-' + String(item.id).slice(-4);
+        const customer = item.pembeli && String(item.pembeli).trim() ? String(item.pembeli).trim() : 'Pelanggan Setia';
+        const price = parseRawToNumeric(item.hargaJual) || 0;
+        const date = item.tanggalTerjualRaw || item.tanggal || '';
+        const safeId = encodeURIComponent(String(item.id));
+
+        const invoicePhoto = item.invoicePhotoUrl || masterProductPhotos.get(String(item.productId || item.id)) || '';
+        const photoHtml = invoicePhoto
+            ? `<span class="np-invoice-row-thumb"><img src="${escapeInvoiceCenterText(invoicePhoto)}" alt="" loading="lazy" onerror="this.parentElement.classList.add('is-fallback');this.style.display='none';"></span>`
+            : `<span class="np-invoice-row-thumb is-fallback"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></span>`;
+
+        return `
+            <button class="np-invoice-row" type="button" onclick="openInvoiceFromCenter('${safeId}')" aria-label="Buka invoice ${escapeInvoiceCenterText(invoiceNo)}">
+                ${photoHtml}
+                <span class="np-invoice-row-main">
+                    <strong>${escapeInvoiceCenterText(customer)}</strong>
+                    <small>${escapeInvoiceCenterText(invoiceNo)} • ${escapeInvoiceCenterText(item.produk || '-')} • ${escapeInvoiceCenterText(date)}</small>
+                </span>
+                <span class="np-invoice-row-price">${escapeInvoiceCenterText(formatRupiahLengkap(price))}</span>
+                <i class="fa-solid fa-chevron-right np-invoice-row-arrow" aria-hidden="true"></i>
+            </button>
+        `;
+    }).join('');
+};
+
+window.openInvoiceCenterModal = function() {
+    const modal = document.getElementById('invoice-center-modal');
+    if (!modal) return;
+
+    const search = document.getElementById('invoice-center-search');
+    if (search) search.value = '';
+
+    renderInvoiceCenter('');
+    toggleModal('invoice-center-modal', true);
+    modal.setAttribute('aria-hidden', 'false');
+};
+
+window.closeInvoiceCenterModal = function() {
+    const modal = document.getElementById('invoice-center-modal');
+    if (!modal) return;
+    toggleModal('invoice-center-modal', false);
+    modal.setAttribute('aria-hidden', 'true');
+};
+
+window.filterInvoiceCenter = function(value) {
+    renderInvoiceCenter(value);
+};
+
+window.openInvoiceFromCenter = function(encodedId) {
+    const id = decodeURIComponent(String(encodedId || ''));
+    const item = daftarTerjual.find(t => String(t.id) === id);
+    if (!item) {
+        showToast('Peringatan', 'Data invoice tidak ditemukan.', false);
+        renderInvoiceCenter(document.getElementById('invoice-center-search')?.value || '');
+        return;
+    }
+
+    closeInvoiceCenterModal();
+    openInvoiceModal(item);
+};
 
 /* ========================================================== */
 /* INVOICE NOTA A4 DENGAN QR CODE GARANSI DIGITAL             */
@@ -3217,7 +3412,8 @@ window.hapusRiwayatTerjual = function(id) {
             try { 
                 await supabaseClient.from('transactions').delete().eq('id', id); 
                 daftarTerjual = daftarTerjual.filter(s => s.id !== id);
-                renderInvoiceCenter(); 
+                renderDaftarTerjual();
+                renderTransaksiCompact(); 
                 renderDaftarModal(); 
                 updateDashboardStats(); 
                 setConnectionStatus('connected');
@@ -3229,66 +3425,49 @@ window.hapusRiwayatTerjual = function(id) {
     });
 };
 
-function getInvoiceCenterNumber(item) {
-    return 'INV-' + (item.tanggalTerjualRaw ? item.tanggalTerjualRaw.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '')) + '-' + String(item.id).slice(-4);
-}
-
-function escapeHtml(value) {
-    return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-window.openInvoiceModalById = function(id) {
-    const item = daftarTerjual.find(entry => String(entry.id) === String(id));
-    if (item) openInvoiceModal(item);
-};
-
-window.filterInvoiceCenter = function(query = '') {
-    const container = document.getElementById('invoice-center-list');
-    const countEl = document.getElementById('invoice-center-count');
+function renderDaftarTerjual() {
+    const container = document.getElementById('rjual-container');
+    const badge = document.getElementById('badge-rjual-count');
+    const modalBadge = document.getElementById('modal-badge-rjual-count');
     if (!container) return;
 
-    const q = String(query).trim().toLowerCase();
-    const filtered = daftarTerjual.filter(item => {
-        const name = String(item.pembeli || 'Pelanggan Setia').toLowerCase();
-        const date = String(item.tanggalTerjualRaw || item.tanggal || '').toLowerCase();
-        const price = String(parseRawToNumeric(item.hargaJual) || 0);
-        const invoiceNo = getInvoiceCenterNumber(item).toLowerCase();
-        return !q || name.includes(q) || date.includes(q) || price.includes(q) || invoiceNo.includes(q);
-    });
+    if (badge) badge.textContent = `${daftarTerjual.length}`;
+    if (modalBadge) modalBadge.textContent = `${daftarTerjual.length} Unit`;
 
-    if (countEl) countEl.textContent = String(filtered.length);
-
-    if (!filtered.length) {
-        container.innerHTML = `<div class="np-invoice-empty">${q ? 'Invoice yang dicari tidak ditemukan.' : 'Belum ada invoice tersimpan.'}</div>`;
-        return;
+    if (daftarTerjual.length === 0) { 
+        container.innerHTML = `<div class="empty-stok-msg">Belum ada riwayat penjualan.</div>`; 
+        return; 
     }
-
-    container.innerHTML = filtered.map(item => {
-        const name = item.pembeli && item.pembeli.trim() ? item.pembeli.trim() : 'Pelanggan Setia';
-        const date = formatTanggalID(item.tanggalTerjualRaw || item.tanggal || '');
-        const price = formatRupiahLengkap(parseRawToNumeric(item.hargaJual) || 0);
+    
+    container.innerHTML = daftarTerjual.map(i => {
+        let numericModal = parseRawToNumeric(i.hargaModal) || 0;
+        let numericJual = parseRawToNumeric(i.hargaJual) || 0;
+        let p = numericJual - numericModal;
+        let namaPembeliText = i.pembeli && i.pembeli.trim() !== '' ? ` • Pembeli: <b>${i.pembeli}</b>` : '';
         return `
-            <button class="np-invoice-row" type="button" onclick="openInvoiceModalById('${escapeHtml(item.id)}')" aria-label="Buka invoice untuk ${escapeHtml(name)}">
-                <span class="np-invoice-row-main">
-                    <strong>${escapeHtml(name)}</strong>
-                    <small>${escapeHtml(date || '-')}</small>
-                </span>
-                <span class="np-invoice-row-price">${escapeHtml(price)}</span>
-                <i class="fa-solid fa-chevron-right np-invoice-row-arrow" aria-hidden="true"></i>
-            </button>
+            <div class="stok-item-card" style="cursor:default;">
+                <div class="stok-item-top">
+                    <div class="stok-title-group">
+                        <span class="kondisi-badge ${i.kondisi.toLowerCase()}">${i.kondisi}</span>
+                        <span class="stok-item-title">${i.produk}</span>
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button onclick='openInvoiceModal(${JSON.stringify(i).replace(/'/g, "&apos;")})' class="action-btn edit-btn" title="Cetak / Lihat Invoice"><i class="fa-solid fa-receipt"></i></button>
+                        <button onclick="openWarrantyCertificateModal('${i.id}')" class="action-btn" title="Lihat Kartu Garansi Digital"><i class="fa-solid fa-shield-halved" style="color:var(--azure-primary);"></i></button>
+                        <button onclick="hapusRiwayatTerjual('${i.id}')" class="action-btn delete-btn" title="Hapus Riwayat"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="stok-item-details">
+                    <span class="detail-badge imei-badge">IMEI: ${i.imei}</span>
+                    <span class="detail-badge" style="font-size: 10px; color: var(--text-secondary);">${namaPembeliText}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px; font-weight:700;">
+                    <span>Modal: ${formatRupiahRingkas(numericModal)} | Jual: ${formatRupiahRingkas(numericJual)}</span>
+                    <span style="color:${p>=0?'var(--status-safe)':'var(--status-unsafe)'}">${p>=0?'+ ':''}${formatRupiahRingkas(p)}</span>
+                </div>
+            </div>
         `;
     }).join('');
-};
-
-function renderInvoiceCenter() {
-    const countEl = document.getElementById('invoice-center-count');
-    if (countEl) countEl.textContent = String(daftarTerjual.length);
-    filterInvoiceCenter(document.getElementById('invoice-center-search')?.value || '');
 }
 
 /* ========================================================== */
@@ -3651,102 +3830,3 @@ window.executeDownloadStoryBanner = function() {
         closeStoryPreview();
     });
 };
-/* ========================================================== */
-/* V12 — HOME ETALASE LAYERED CAROUSEL                       */
-/* ========================================================== */
-let npHomeShowcaseIndex = 0;
-let npHomeShowcaseItems = [];
-let npHomeShowcaseStartX = null;
-let npHomeShowcaseDeltaX = 0;
-
-function renderHomeShowcase() {
-    const root = document.getElementById('np-home-showcase');
-    const dots = document.getElementById('np-showcase-dots');
-    if (!root) return;
-
-    npHomeShowcaseItems = Array.isArray(daftarStokMasuk) ? daftarStokMasuk.slice(0, 5) : [];
-    if (npHomeShowcaseIndex >= npHomeShowcaseItems.length) npHomeShowcaseIndex = Math.max(0, npHomeShowcaseItems.length - 1);
-
-    if (!npHomeShowcaseItems.length) {
-        root.innerHTML = '<div class="np-showcase-empty"><span><i class="fa-solid fa-box-open" style="margin-right:6px;"></i>Belum ada unit tersedia</span></div>';
-        if (dots) dots.innerHTML = '';
-        return;
-    }
-
-    root.innerHTML = npHomeShowcaseItems.map((item, index) => {
-        const brand = (item.produk || '').split(' ')[0].toUpperCase();
-        const model = (item.produk || '').split(' ').slice(1).join(' ') || item.produk || 'Unit';
-        const img = item.imageUrl || 'logo-np.jpg';
-        const hargaDisplayNum = parseRawToNumeric(item.hargaDisplay);
-        const hargaJualNum = parseRawToNumeric(item.hargaJual);
-        const harga = hargaDisplayNum ? formatRupiahLengkap(hargaDisplayNum) : (hargaJualNum ? formatRupiahLengkap(hargaJualNum) : 'Chat Admin');
-        const kondisi = item.kondisi || 'Tersedia';
-        const detail = item.kelengkapan || 'Unit ready';
-        return `
-            <article class="np-showcase-card" data-index="${index}" data-pos="${index - npHomeShowcaseIndex}" onclick="openShowcaseDetail('${item.id}')" aria-label="${item.produk || 'Unit'}">
-                <div class="np-showcase-photo">
-                    <img src="${img}" alt="${item.produk || 'Unit'}" loading="lazy" onerror="this.src='logo-np.jpg';">
-                </div>
-                <div class="np-showcase-info">
-                    <div class="np-showcase-meta"><span class="np-showcase-brand">${brand}</span><span class="np-showcase-condition">${kondisi}</span></div>
-                    <h4 class="np-showcase-name">${model}</h4>
-                    <div class="np-showcase-detail">${detail}</div>
-                    <strong class="np-showcase-price">${harga}</strong>
-                </div>
-            </article>
-        `;
-    }).join('');
-
-    if (dots) dots.innerHTML = npHomeShowcaseItems.map((_, i) => `<span class="np-showcase-dot ${i === npHomeShowcaseIndex ? 'active' : ''}"></span>`).join('');
-}
-
-function updateHomeShowcasePositions() {
-    const cards = document.querySelectorAll('#np-home-showcase .np-showcase-card');
-    cards.forEach(card => {
-        const pos = Number(card.dataset.index) - npHomeShowcaseIndex;
-        card.dataset.pos = String(pos);
-    });
-    document.querySelectorAll('#np-showcase-dots .np-showcase-dot').forEach((dot, i) => dot.classList.toggle('active', i === npHomeShowcaseIndex));
-}
-
-function moveHomeShowcase(direction) {
-    if (!npHomeShowcaseItems.length) return;
-    const next = Math.max(0, Math.min(npHomeShowcaseItems.length - 1, npHomeShowcaseIndex + direction));
-    if (next === npHomeShowcaseIndex) return;
-    npHomeShowcaseIndex = next;
-    updateHomeShowcasePositions();
-}
-
-(function initHomeShowcaseSwipe() {
-    document.addEventListener('DOMContentLoaded', () => {
-        renderHomeShowcase();
-        const root = document.getElementById('np-home-showcase');
-        if (!root) return;
-        root.addEventListener('pointerdown', e => { npHomeShowcaseStartX = e.clientX; npHomeShowcaseDeltaX = 0; root.classList.add('is-dragging'); });
-        root.addEventListener('pointermove', e => { if (npHomeShowcaseStartX !== null) npHomeShowcaseDeltaX = e.clientX - npHomeShowcaseStartX; });
-        const endSwipe = () => {
-            if (npHomeShowcaseStartX === null) return;
-            if (Math.abs(npHomeShowcaseDeltaX) > 45) moveHomeShowcase(npHomeShowcaseDeltaX < 0 ? 1 : -1);
-            npHomeShowcaseStartX = null; npHomeShowcaseDeltaX = 0; root.classList.remove('is-dragging');
-        };
-        root.addEventListener('pointerup', endSwipe);
-        root.addEventListener('pointercancel', endSwipe);
-        root.addEventListener('pointerleave', endSwipe);
-    });
-})();
-
-const _npOriginalUpdateDashboardStats = window.updateDashboardStats || updateDashboardStats;
-window.updateDashboardStats = function() {
-    _npOriginalUpdateDashboardStats();
-    renderHomeShowcase();
-};
-
-
-/* ========================================================== */
-/* HEADER STICKY — TRANSPARENT TOP + SUBTLE BLUR ON SCROLL  */
-/* ========================================================== */
-(function initNpStickyHeader() {
-    const apply = () => document.body.classList.toggle('np-header-scrolled', window.scrollY > 8);
-    window.addEventListener('scroll', apply, { passive: true });
-    document.addEventListener('DOMContentLoaded', apply);
-})();

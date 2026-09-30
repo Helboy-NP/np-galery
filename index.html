@@ -55,6 +55,19 @@
 <button class="header-icon-btn" id="btn-notification" onclick="showToast('Notifikasi', 'Belum ada notifikasi baru.')" title="Notifikasi" aria-label="Notifikasi">
 <i class="fa-regular fa-bell"></i>
 </button>
+<div class="connection-status-wrap">
+    <button class="connection-status-badge status-disconnected" id="btn-connection-status" type="button" onclick="toggleConnectionInfo(event)" aria-label="Informasi koneksi" aria-expanded="false" aria-controls="connection-info-popover" title="Status koneksi: Offline">
+        <span class="connection-cloud-icon" id="connection-status-icon" aria-hidden="true"><i class="fa-solid fa-cloud"></i><i class="fa-solid fa-xmark connection-status-mark"></i></span>
+        <span class="connection-status-label" id="connection-status-label">Offline</span>
+    </button>
+    <section class="connection-info-popover" id="connection-info-popover" aria-hidden="true" aria-labelledby="connection-info-title">
+        <div class="connection-info-heading"><span class="connection-info-cloud"><i class="fa-solid fa-cloud"></i></span><div><strong id="connection-info-title">Status Koneksi</strong><small id="connection-info-summary">Memeriksa koneksi...</small></div></div>
+        <div class="connection-info-row"><span>Jaringan perangkat</span><strong id="connection-internet-value">Memeriksa...</strong></div>
+        <div class="connection-info-row"><span>Database Supabase</span><strong id="connection-database-value">Belum terhubung</strong></div>
+        <div class="connection-info-row"><span>Sinkronisasi terakhir</span><strong id="connection-last-sync">Belum tersedia</strong></div>
+        <button class="connection-info-refresh" type="button" onclick="checkConnectionStatusManual(this)"><i class="fa-solid fa-rotate"></i> Periksa koneksi</button>
+    </section>
+</div>
 <div class="header-more-wrap">
 <button class="header-icon-btn header-more-btn" id="btn-header-more" type="button" onclick="toggleHeaderMore(event)" title="Lainnya" aria-label="Menu lainnya" aria-expanded="false" aria-controls="header-more-menu">
 <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -74,21 +87,21 @@
 <section class="tab-content active" id="section-home">
 <!-- WELCOME HERO + COMPACT SUMMARY — id="wlc8m" -->
 <div class="np-dashboard-shell">
-    <section class="np-welcome-hero" id="np-welcome-toggle" role="button" tabindex="0" aria-expanded="false" aria-controls="np-summary-panel" onclick="toggleWelcomeSummary()" onkeydown="handleWelcomeKey(event)">
-        <div class="np-welcome-copy">
-            <span class="np-eyebrow"><i class="fa-solid fa-sparkles"></i> NP GALERY</span>
-            <h2>Selamat datang kembali 👋</h2>
-            <p>Kelola stok, transaksi, dan etalase bisnis kamu dalam satu tempat.</p>
-            <span class="np-welcome-hint"><i class="fa-solid fa-chevron-down"></i><span>Lihat ringkasan</span></span>
+    <section class="np-welcome-hero np-welcome-typography" id="np-welcome-toggle">
+        <div class="np-welcome-copy np-welcome-type-copy">
+            <svg class="np-welcome-trace" viewBox="0 0 1200 180" role="img" aria-label="WELCOME HELBOY" preserveAspectRatio="xMidYMid meet">
+                <text class="np-welcome-trace-base" x="600" y="112" text-anchor="middle">WELCOME HELBOY</text>
+                <text class="np-welcome-trace-neon" x="600" y="112" text-anchor="middle" pathLength="1000">WELCOME HELBOY</text>
+            </svg>
         </div>
-        <div class="np-welcome-art" aria-hidden="true">
-            <div class="np-orb np-orb-one"></div><div class="np-orb np-orb-two"></div>
-            <div class="np-phone-glow status-disconnected" id="np-phone-glow"></div>
-            <img class="np-phone-image" src="assets/np-phone-hero.svg" alt=""/>
+        <div class="np-welcome-neon-orbit" aria-hidden="true">
+            <span class="np-neon-streak np-neon-streak-one"></span>
+            <span class="np-neon-streak np-neon-streak-two"></span>
         </div>
     </section>
 
-    <section class="np-summary-panel" id="np-summary-panel" aria-hidden="true">
+    <div class="np-home-light-sheet">
+    <section class="np-summary-panel is-open" id="np-summary-panel">
         <div class="np-summary-handle" aria-hidden="true"></div>
         <div class="np-stats-grid">
             <article class="np-stat-card">
@@ -121,56 +134,47 @@
         </div>
     </section>
 
-    <!-- ETALASE BERANDA — PREVIEW LAYERED CAROUSEL -->
+    <!-- ETALASE BERANDA — COMPACT HORIZONTAL LIST -->
     <section class="np-home-showcase" aria-labelledby="np-home-showcase-title">
         <div class="np-section-heading compact np-showcase-heading">
             <div><span class="np-kicker">ETALASE</span><h3 id="np-home-showcase-title">Unit tersedia</h3></div>
-            <button class="np-showcase-link" type="button" onclick="openStoreShowcaseModal()">Lihat Semua <i class="fa-solid fa-chevron-right"></i></button>
         </div>
-        <div class="np-showcase-carousel" id="np-home-showcase" aria-label="Etalase unit tersedia">
+        <div class="np-showcase-list" id="np-home-showcase" aria-label="Etalase unit tersedia">
             <div class="np-showcase-empty">Memuat unit tersedia...</div>
         </div>
-        <div class="np-showcase-dots" id="np-showcase-dots" aria-hidden="true"></div>
     </section>
+    </div>
 </div>
 </section>
 
 <section class="tab-content" id="section-transaksi">
-<div class="np-page-intro"><span class="np-kicker">OPERATIONS</span><h2>Transaksi & Stok</h2><p>Kelola unit masuk, unit terjual, diagnosis perangkat, dan aktivitas operasional.</p></div>
-<!-- TEST MODE -->
+<div class="np-page-intro"><span class="np-kicker">OPERATIONS</span><h2>Transaksi</h2><p>Kelola unit masuk, unit keluar, dan alat bantu diagnosis.</p></div>
 
-<!-- SUB-TAB TEST MODE: TEKS NAMA BRAND SAJA (COMPACT) -->
-<div class="sub-content active" id="sub-diagnosis">
-<div class="diagnosis-brands-wrapper">
-<div class="diagnosis-brand-grid" id="diagnosis-brand-grid">
-<button class="btn-brand-card brand-samsung" onclick="openDiagnosisBrand('Samsung')" type="button">
-<span>SAMSUNG</span>
-</button>
-<button class="btn-brand-card brand-oppo" onclick="openDiagnosisBrand('Oppo')" type="button">
-<span>OPPO</span>
-</button>
-<button class="btn-brand-card brand-xiaomi" onclick="openDiagnosisBrand('Xiaomi')" type="button">
-<span>XIAOMI / POCO</span>
-</button>
-<button class="btn-brand-card brand-vivo" onclick="openDiagnosisBrand('Vivo')" type="button">
-<span>VIVO</span>
-</button>
-<button class="btn-brand-card brand-realme" onclick="openDiagnosisBrand('Realme')" type="button">
-<span>REALME</span>
-</button>
-<button class="btn-brand-card brand-infinix" onclick="openDiagnosisBrand('Infinix')" type="button">
-<span>INFINIX</span>
-</button>
-<button class="btn-brand-card brand-tecno" onclick="openDiagnosisBrand('Tecno')" type="button">
-<span>TECNO</span>
-</button>
-<button class="btn-brand-card brand-itel" onclick="openDiagnosisBrand('Itel')" type="button">
-<span>ITEL</span>
-</button>
-</div>
-</div>
+<div class="np-transaksi-tabs" role="tablist" aria-label="Transaksi dan Diagnosis">
+  <button class="np-transaksi-tab active" id="tab-transaksi-list" type="button" role="tab" aria-selected="true" onclick="switchTransaksiSubTab('transaksi')">TRANSAKSI</button>
+  <button class="np-transaksi-tab" id="tab-diagnosis-list" type="button" role="tab" aria-selected="false" onclick="switchTransaksiSubTab('diagnosis')">DIAGNOSIS</button>
 </div>
 
+<div class="sub-content active" id="sub-transaksi">
+  <div class="np-transaksi-filter" role="tablist" aria-label="Filter transaksi">
+    <button class="np-trx-filter active" type="button" data-filter="semua" onclick="setTransaksiFilter('semua')">SEMUA</button>
+    <button class="np-trx-filter" type="button" data-filter="masuk" onclick="setTransaksiFilter('masuk')">MASUK</button>
+    <button class="np-trx-filter" type="button" data-filter="keluar" onclick="setTransaksiFilter('keluar')">KELUAR</button>
+  </div>
+  <div class="np-transaksi-list" id="np-transaksi-list">
+    <div class="np-trx-empty">Belum ada transaksi.</div>
+  </div>
+</div>
+
+<div class="sub-content" id="sub-diagnosis">
+  <div class="np-diagnosis-intro">
+    <span class="np-kicker">QUICK TOOLS</span>
+    <h3>Diagnosis Perangkat</h3>
+    <p>Kode dial dan akses cek IMEI berdasarkan brand.</p>
+  </div>
+  <div class="diagnosis-brand-selector" id="diagnosis-brand-selector" aria-label="Pilih brand diagnosis"></div>
+  <div class="np-diagnosis-panel" id="np-diagnosis-panel"></div>
+</div>
 </section>
 <!-- SECTION PRICE LIST (TATA LETAK: TOMBOL +, SEARCH, TOMBOL POP-UP, & FILTER SEJAJAR) -->
 <section class="tab-content" id="section-pricelist">
@@ -798,20 +802,7 @@
     </button>
   </div>
 </div>
-<!-- MODAL POP-UP DIAGNOSIS KODE DIAL DENGAN CHECKBOX & CEK IMEI RESMI -->
-<div class="custom-modal-overlay" id="diagnosis-modal">
-<div class="custom-modal-card" style="max-width: 420px; max-height: 85vh; display: flex; flex-direction: column;">
-<div class="edit-modal-header" style="margin-bottom: 10px; text-align: left; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
-<h3 id="diagnosis-modal-title" style="font-size: 15px;"><i class="fa-solid fa-microchip" style="color: var(--azure-primary); margin-right: 6px;"></i> Menu Diagnosis</h3>
-<p id="diagnosis-modal-subtitle" style="font-size: 11px; color: var(--text-secondary);">Daftar kode dial rahasia perangkat</p>
-</div>
-<div id="diagnosis-modal-body" style="overflow-y: auto; flex: 1; padding-right: 4px; display: flex; flex-direction: column; gap: 8px;">
-</div>
-<div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
-<button class="btn-cancel" onclick="closeDiagnosisModal()" style="width: 100%;">Close</button>
-</div>
-</div>
-</div>
+<!-- MODAL POP-UP DIAGNOSIS LAMA DIHILANGKAN: diagnosis kini tampil inline di tab Transaksi. -->
 <!-- MODAL POP-UP KALKULATOR KAS -->
 
 <!-- MODAL INVOICE A4 -->
