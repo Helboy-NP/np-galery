@@ -209,25 +209,81 @@
 </div>
 </section>
 <section class="tab-content" id="section-pribadi">
+  <div class="pribadi-page-v23">
+    <div class="pribadi-profile-card">
+      <div class="pribadi-profile-avatar" aria-hidden="true"><i class="fa-solid fa-user"></i></div>
+      <div class="pribadi-profile-info">
+        <span class="pribadi-section-kicker">PROFILE</span>
+        <h2 id="pribadi-profile-name">Pengguna NP_Galery</h2>
+        <span id="pribadi-profile-role">Pemilik / Admin</span>
+      </div>
+      <button class="pribadi-icon-button" type="button" onclick="openProfileEditor()" aria-label="Edit profil" title="Edit Profil">
+        <i class="fa-solid fa-pen"></i>
+      </button>
+    </div>
 
-<!-- SUB-TAB PRIBADI (GRID-2: KAS & NOTES) -->
+    <div class="pribadi-v23-section">
+      <div class="pribadi-v23-section-head">
+        <div>
+          <span class="pribadi-section-kicker">PERSONAL</span>
+          <h3>Catatan Pribadi</h3>
+        </div>
+      </div>
+      <button class="pribadi-note-card" id="pribadi-note-card" type="button" onclick="openDaftarNotesModal()">
+        <span class="pribadi-note-icon"><i class="fa-regular fa-note-sticky"></i></span>
+        <span class="pribadi-note-main">
+          <strong id="pribadi-note-title">Catatan Pribadi</strong>
+          <small id="pribadi-note-preview">Belum ada catatan tersimpan</small>
+        </span>
+        <i class="fa-solid fa-chevron-right pribadi-note-arrow" aria-hidden="true"></i>
+      </button>
+    </div>
 
-<!-- SUB-TAB KAS (FILTER SEJAJAR & 2 TOMBOL BERSEBELAHAN) -->
+    <div class="pribadi-v23-section">
+      <div class="pribadi-v23-section-head">
+        <div>
+          <span class="pribadi-section-kicker">APP</span>
+          <h3>Pengaturan</h3>
+        </div>
+      </div>
+      <div class="pribadi-settings-card">
+        <button class="pribadi-setting-row" type="button" onclick="toggleTheme()">
+          <span class="pribadi-setting-icon"><i id="pribadi-theme-icon" class="fa-solid fa-moon"></i></span>
+          <span><strong>Tampilan</strong><small id="pribadi-theme-label">Mode gelap / terang</small></span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+        <button class="pribadi-setting-row" type="button" onclick="showToast('Info','Pengaturan notifikasi siap dikembangkan.')">
+          <span class="pribadi-setting-icon"><i class="fa-regular fa-bell"></i></span>
+          <span><strong>Notifikasi</strong><small>Kelola pemberitahuan aplikasi</small></span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+        <button class="pribadi-setting-row" type="button" onclick="showToast('Info','Pengaturan keamanan siap dikembangkan.')">
+          <span class="pribadi-setting-icon"><i class="fa-solid fa-shield-halved"></i></span>
+          <span><strong>Keamanan</strong><small>Perlindungan dan akses data</small></span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+        <button class="pribadi-setting-row" type="button" onclick="showToast('Info','Backup & Data siap dikembangkan.')">
+          <span class="pribadi-setting-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+          <span><strong>Backup &amp; Data</strong><small>Kelola data aplikasi</small></span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
 
-<!-- NOTES & SALES HISTORY -->
-<div class="sub-content active" id="sub-notes">
-<div class="stok-action-buttons-row notes-action-row" style="margin-bottom: 8px;">
-<button class="btn-stok-action-pill" onclick="openAddNoteModal()" title="Buka Form Tambah Catatan" type="button">
-<i class="fa-solid fa-circle-plus"></i>
-<span>Add New</span>
-</button>
-<button class="btn-stok-action-pill" onclick="openDaftarNotesModal()" title="Lihat Semua Catatan" type="button">
-<i class="fa-solid fa-note-sticky"></i>
-<span>Record List</span>
-<span class="badge-count-pill" id="badge-notes-count">0</span>
-</button>
-</div>
-</div>
+    <div class="pribadi-v23-section pribadi-about-section">
+      <div class="pribadi-v23-section-head">
+        <div>
+          <span class="pribadi-section-kicker">INFORMATION</span>
+          <h3>Tentang NP_Galery</h3>
+        </div>
+      </div>
+      <div class="pribadi-about-card">
+        <span class="pribadi-about-logo"><i class="fa-solid fa-images"></i></span>
+        <span><strong>NP_Galery</strong><small>Data &amp; gallery management</small></span>
+        <span class="pribadi-version-badge">V2.3</span>
+      </div>
+    </div>
+  </div>
 </section>
 </div>
 </main>
@@ -428,9 +484,102 @@
     </div>
   </div>
 </div>
+<!-- PRIBADI V2.3 — FULL PAGE DAFTAR CATATAN -->
+<section class="tab-content pribadi-notes-page" id="section-pribadi-notes">
+  <div class="pribadi-notes-page-inner">
+    <div class="pribadi-notes-page-header">
+      <button class="pribadi-notes-back" type="button" onclick="closeDaftarNotesModal()" aria-label="Kembali ke Pribadi">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div class="pribadi-notes-page-title-wrap">
+        <span class="pribadi-section-kicker">PERSONAL</span>
+        <h2>Daftar Catatan</h2>
+        <span id="full-notes-count">0 catatan</span>
+      </div>
+    </div>
+    <div class="pribadi-notes-split">
+      <div class="pribadi-notes-list" id="notes-page-container">
+        <div class="empty-stok-msg">Belum ada catatan tersimpan.</div>
+      </div>
+      <section class="pribadi-inline-detail" id="pribadi-inline-detail" aria-live="polite">
+        <div class="pribadi-inline-detail-empty" id="pribadi-inline-detail-empty">
+          <i class="fa-regular fa-note-sticky"></i>
+          <span>Pilih catatan untuk melihat detailnya</span>
+        </div>
+        <div class="pribadi-inline-detail-content" id="pribadi-inline-detail-content" hidden>
+          <div class="pribadi-inline-detail-head">
+            <div>
+              <span class="pribadi-section-kicker">DETAIL CATATAN</span>
+              <h3 id="inline-note-title"></h3>
+            </div>
+          </div>
+          <div class="personal-note-inline-view" id="personal-note-inline-view">
+            <div class="personal-note-inline-text" id="inline-note-content"></div>
+          </div>
+          <div class="personal-note-edit-fields pribadi-inline-edit-fields" id="personal-note-inline-edit" hidden>
+            <label class="pribadi-edit-field"><span>Judul</span><input id="inline-note-title-input" type="text" placeholder="Judul catatan" autocomplete="off"></label>
+            <label class="pribadi-edit-field"><span>Isi Catatan</span><textarea id="inline-note-content-input" rows="10" placeholder="Tulis catatan pribadi kamu..."></textarea></label>
+          </div>
+          <div class="pribadi-sheet-actions personal-note-detail-actions" id="inline-note-view-actions">
+            <button class="note-detail-action" type="button" onclick="bukaEditCatatanDariDetail()"><i class="fa-solid fa-pen"></i> Edit</button>
+            <button class="note-detail-action" type="button" onclick="salinCatatanAktif()"><i class="fa-solid fa-copy"></i> Salin</button>
+            <button class="note-detail-action note-detail-delete" type="button" onclick="hapusCatatanAktif()"><i class="fa-solid fa-trash"></i> Hapus</button>
+          </div>
+          <div class="pribadi-sheet-actions personal-note-detail-actions" id="inline-note-edit-actions" hidden>
+            <button class="btn-cancel" type="button" onclick="batalEditCatatanDetail()">Batal</button>
+            <button class="btn-save" type="button" onclick="simpanEditCatatanDetail()"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+
 <!-- MODAL POP-UP TAMBAH CATATAN KAS BARU -->
 
 <!-- MODAL POP-UP RIWAYAT MUTASI KAS (SCROLLABLE & CLEAN) -->
+
+<!-- PRIBADI V2.3 — PROFILE EDITOR -->
+<div class="custom-modal-overlay pribadi-profile-overlay" id="profile-editor-modal" aria-hidden="true">
+  <div class="custom-modal-card pribadi-profile-sheet" role="dialog" aria-modal="true" aria-labelledby="profile-editor-title">
+    <div class="pribadi-sheet-handle"></div>
+    <div class="pribadi-sheet-header">
+      <div><span class="pribadi-section-kicker">PROFILE</span><h3 id="profile-editor-title">Edit Profil</h3></div>
+      <button class="pribadi-icon-button" type="button" onclick="closeProfileEditor()" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <label class="pribadi-edit-field"><span>Nama</span><input id="pribadi-profile-name-input" type="text" placeholder="Nama kamu" autocomplete="off"></label>
+    <label class="pribadi-edit-field"><span>Role</span><input id="pribadi-profile-role-input" type="text" placeholder="Pemilik / Admin" autocomplete="off"></label>
+    <div class="pribadi-sheet-actions"><button class="btn-cancel" type="button" onclick="closeProfileEditor()">Batal</button><button class="btn-save" type="button" onclick="savePribadiProfile()"><i class="fa-solid fa-check"></i> Simpan</button></div>
+  </div>
+</div>
+
+<!-- PRIBADI V2.3 — NOTE DETAIL BOTTOM SHEET -->
+<div class="custom-modal-overlay pribadi-note-overlay" id="personal-note-sheet" aria-hidden="true">
+  <div class="custom-modal-card pribadi-note-sheet pribadi-note-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="personal-note-sheet-title">
+    <div class="pribadi-sheet-handle"></div>
+    <div class="pribadi-sheet-header">
+      <div><span class="pribadi-section-kicker">PERSONAL NOTE</span><h3 id="personal-note-sheet-title">Catatan</h3></div>
+      <button class="pribadi-icon-button" type="button" onclick="closePersonalNoteSheet()" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="personal-note-view" id="personal-note-view">
+      <div class="personal-note-detail-title" id="personal-note-detail-title"></div>
+      <div class="personal-note-detail-content" id="personal-note-detail-content"></div>
+    </div>
+    <div class="personal-note-edit-fields" id="personal-note-edit-fields" hidden>
+      <label class="pribadi-edit-field"><span>Judul</span><input id="personal-note-title-input" type="text" placeholder="Judul catatan" autocomplete="off"></label>
+      <label class="pribadi-edit-field"><span>Isi Catatan</span><textarea id="personal-note-content-input" rows="10" placeholder="Tulis catatan pribadi kamu..."></textarea></label>
+    </div>
+    <div class="pribadi-sheet-actions personal-note-detail-actions" id="personal-note-view-actions">
+      <button class="note-detail-action" type="button" onclick="bukaEditCatatanDariDetail()"><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="note-detail-action" type="button" onclick="salinCatatanAktif()"><i class="fa-solid fa-copy"></i> Salin</button>
+      <button class="note-detail-action note-detail-delete" type="button" onclick="hapusCatatanAktif()"><i class="fa-solid fa-trash"></i> Hapus</button>
+    </div>
+    <div class="pribadi-sheet-actions personal-note-detail-actions" id="personal-note-edit-actions" hidden>
+      <button class="btn-cancel" type="button" onclick="batalEditCatatanDetail()">Batal</button>
+      <button class="btn-save" type="button" onclick="simpanEditCatatanDetail()"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+    </div>
+  </div>
+</div>
 
 <!-- ADD NOTE — PREMIUM COMPACT POPUP -->
 <div class="custom-modal-overlay np-note-overlay" id="add-note-modal" aria-hidden="true">
@@ -484,26 +633,6 @@
 <div class="edit-modal-actions" style="margin-top: 14px;">
 <button class="btn-cancel" onclick="closeEditNoteModal()">Batal</button>
 <button class="btn-save" onclick="simpanPerubahanCatatan()">Simpan Perubahan</button>
-</div>
-</div>
-</div>
-<!-- MODAL POP-UP DAFTAR SELURUH CATATAN (NOTES SCROLLABLE) -->
-<div class="custom-modal-overlay" id="daftar-notes-modal">
-<div class="custom-modal-card" style="max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;">
-<div class="edit-modal-header" style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-<div>
-<h3 style="font-size: 15px; font-weight: 800;">
-<i class="fa-solid fa-note-sticky" style="color: var(--azure-primary); margin-right: 6px;"></i> Note List
-                    </h3>
-<p style="font-size: 11px; color: var(--text-secondary);">Enter details here...</p>
-</div>
-<span class="badge-count" id="modal-badge-notes-count">0 Catatan</span>
-</div>
-<div class="stok-masuk-container" id="notes-container" style="flex: 1; max-height: 60vh; overflow-y: auto;">
-<div class="empty-stok-msg">Empty.</div>
-</div>
-<div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
-<button class="btn-cancel" onclick="closeDaftarNotesModal()" style="width: 100%;" type="button">Close</button>
 </div>
 </div>
 </div>

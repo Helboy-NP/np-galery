@@ -3886,6 +3886,9 @@ body.dark-mode .header-icon-btn {
 }
 
 
+/* V23 — sudut panel Beranda dan navigasi bawah dipertegas, tetap rounded. */
+.floating-nav.nav-3d { border-radius: 16px !important; }
+
 /* V22 LOCK — bottom navigation benar-benar fixed dan menempel ke bawah viewport. */
 .floating-nav-container {
   position: fixed !important;
@@ -3899,8 +3902,24 @@ body.dark-mode .header-icon-btn {
 }
 
 
-/* CHANGE #001 — sudut bawah panel putih Beranda mengikuti sudut atas. */
-.np-home-light-sheet { border-radius: 34px !important; }
+/* CHANGE #003 — Beranda menyatu ke area navigasi tanpa garis putih di sudut frame. */
+.content-card {
+  border: 0 !important;
+}
+#section-home,
+.np-dashboard-shell {
+  background: var(--np-dark-canvas) !important;
+}
+.np-home-light-sheet {
+  border-radius: 0 !important;
+  margin-bottom: calc(-150px - env(safe-area-inset-bottom)) !important;
+  padding-bottom: calc(184px + env(safe-area-inset-bottom)) !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+.floating-nav-container {
+  z-index: 2200 !important;
+}
 
 /* CHANGE #002 — hero phone 3D orange/charcoal; glow hanya dekoratif. */
 .np-welcome-hero .np-phone-image {
@@ -4389,4 +4408,1037 @@ body.dark-mode .header-icon-btn {
   .np-trx-action{width:25px;height:25px;font-size:9px;}
   .np-trx-edit-grid{grid-template-columns:1fr;}
   .np-trx-edit-grid label:first-child{grid-column:auto;}
+}
+
+
+/* V1.12 LOCKED — HOME SURFACE + WELCOME HERO FLOATING CARD */
+#section-home {
+  position: relative !important;
+  isolation: isolate;
+  background: var(--np-dark-canvas) !important;
+  overflow: visible !important;
+}
+#section-home::after {
+  content: "";
+  position: fixed;
+  left: 10px;
+  right: 10px;
+  bottom: 0;
+  height: calc(170px + env(safe-area-inset-bottom));
+  background: var(--np-warm-white);
+  z-index: -1;
+  pointer-events: none;
+}
+.np-dashboard-shell {
+  position: relative !important;
+  overflow: visible !important;
+  background: var(--np-dark-canvas) !important;
+}
+.np-home-light-sheet {
+  position: relative !important;
+  z-index: 1 !important;
+  border-radius: 0 !important;
+  margin-bottom: calc(-190px - env(safe-area-inset-bottom)) !important;
+  padding-bottom: calc(224px + env(safe-area-inset-bottom)) !important;
+  overflow: visible !important;
+}
+
+/* Welcome Hero: compact floating card treatment. */
+.np-welcome-hero {
+  margin: 10px clamp(10px, 2vw, 24px) 16px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  box-shadow:
+    0 14px 30px rgba(0,0,0,.24),
+    0 4px 12px rgba(0,0,0,.14) !important;
+  transform: translateY(-1px);
+}
+@media (max-width: 560px) {
+  .np-welcome-hero {
+    margin: 8px 10px 14px !important;
+    border-radius: 16px !important;
+  }
+}
+
+
+/* V1.13 LOCKED — HOME FRAME REBALANCE + LARGER WELCOME HERO */
+/* Beranda: putih menjadi bidang utama, hitam hanya frame luar tipis. */
+#section-home {
+  position: relative !important;
+  isolation: isolate !important;
+  background: var(--np-dark-canvas) !important;
+  color: var(--np-ink) !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+#section-home::after {
+  display: none !important;
+}
+#section-home::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 6px !important;
+  background: var(--np-warm-white) !important;
+  border-radius: 18px !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+#section-home > .np-dashboard-shell {
+  position: relative !important;
+  z-index: 1 !important;
+  background: transparent !important;
+  padding: 8px 0 120px !important;
+  overflow: visible !important;
+}
+/* Bidang putih tetap menyatu sampai belakang navigasi. */
+#section-home .np-home-light-sheet {
+  background: var(--np-warm-white) !important;
+  color: var(--np-ink) !important;
+  border-radius: 0 !important;
+  margin-left: 6px !important;
+  margin-right: 6px !important;
+  margin-bottom: calc(-224px - env(safe-area-inset-bottom)) !important;
+  padding-bottom: calc(250px + env(safe-area-inset-bottom)) !important;
+  overflow: visible !important;
+  box-shadow: none !important;
+}
+/* Welcome Hero: card hitamnya sendiri diperbesar; tidak ada layer hitam tambahan. */
+#section-home .np-welcome-hero {
+  width: calc(100% - 16px) !important;
+  margin: 8px 8px 14px !important;
+  min-height: 218px !important;
+  padding: 26px 18px !important;
+  border-radius: 18px !important;
+  border: 0 !important;
+  box-shadow: 0 16px 34px rgba(0,0,0,.26), 0 5px 14px rgba(0,0,0,.14) !important;
+  transform: translateY(-1px) !important;
+}
+@media (max-width: 560px) {
+  #section-home .np-welcome-hero {
+    width: calc(100% - 14px) !important;
+    margin: 7px 7px 13px !important;
+    min-height: 198px !important;
+    padding: 22px 15px !important;
+    border-radius: 17px !important;
+  }
+}
+@media (max-width: 430px) {
+  #section-home .np-welcome-hero {
+    width: calc(100% - 12px) !important;
+    margin: 6px 6px 12px !important;
+    min-height: 188px !important;
+    padding: 20px 13px !important;
+    border-radius: 16px !important;
+  }
+}
+
+/* V1.14 — WELCOME HERO ONLY: SOLID BLACK CARD */
+#section-home .np-welcome-hero {
+  background: #111315 !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 16px 34px rgba(0,0,0,.26), 0 5px 14px rgba(0,0,0,.14) !important;
+}
+#section-home .np-welcome-hero::after {
+  border: 0 !important;
+  outline: 0 !important;
+}
+@media (max-width: 560px) {
+  #section-home .np-welcome-hero { border-radius: 17px !important; }
+}
+@media (max-width: 430px) {
+  #section-home .np-welcome-hero { border-radius: 16px !important; }
+}
+
+/* V1.14 — Welcome Hero mengikuti lebar bidang Beranda */
+.np-dashboard-shell > .np-welcome-hero {
+  margin-left: clamp(4px, .8vw, 12px) !important;
+  margin-right: clamp(4px, .8vw, 12px) !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: #1D1F21 !important;
+  box-shadow: 0 16px 34px rgba(0,0,0,.22) !important;
+}
+
+/* V1.14 LOCK — Welcome Hero diperluas vertikal hingga memenuhi area atas Beranda. */
+#section-home > .np-dashboard-shell > .np-welcome-hero,
+.np-dashboard-shell > .np-welcome-hero {
+  margin-top: 0 !important;
+  margin-left: 6px !important;
+  margin-right: 6px !important;
+  width: calc(100% - 12px) !important;
+  min-height: 300px !important;
+  box-sizing: border-box !important;
+}
+@media (max-width: 560px) {
+  #section-home > .np-dashboard-shell > .np-welcome-hero,
+  .np-dashboard-shell > .np-welcome-hero {
+    margin-top: 0 !important;
+    margin-left: 6px !important;
+    margin-right: 6px !important;
+    width: calc(100% - 12px) !important;
+    min-height: 270px !important;
+  }
+}
+@media (max-width: 430px) {
+  #section-home > .np-dashboard-shell > .np-welcome-hero,
+  .np-dashboard-shell > .np-welcome-hero {
+    margin-top: 0 !important;
+    margin-left: 6px !important;
+    margin-right: 6px !important;
+    width: calc(100% - 12px) !important;
+    min-height: 245px !important;
+  }
+}
+
+/* V1.14 LOCK — Welcome Hero diperkecil, latar belakang full hitam, soft glow tanpa border putih. */
+#section-home {
+  background:#000 !important;
+}
+#section-home::before {
+  background:#000 !important;
+}
+#section-home > .np-dashboard-shell > .np-welcome-hero,
+.np-dashboard-shell > .np-welcome-hero {
+  margin:18px 12px 22px !important;
+  width:calc(100% - 24px) !important;
+  min-height:250px !important;
+  box-sizing:border-box !important;
+  background:#111315 !important;
+  background-image:none !important;
+  border:0 !important;
+  outline:0 !important;
+  border-radius:18px !important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.025), 0 8px 24px rgba(0,0,0,.65), 0 0 22px rgba(255,255,255,.055) !important;
+  position:relative !important;
+}
+#section-home > .np-dashboard-shell > .np-welcome-hero::before,
+#section-home > .np-dashboard-shell > .np-welcome-hero::after,
+.np-dashboard-shell > .np-welcome-hero::before,
+.np-dashboard-shell > .np-welcome-hero::after {
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+}
+@media (max-width:560px){
+  #section-home > .np-dashboard-shell > .np-welcome-hero,
+  .np-dashboard-shell > .np-welcome-hero {
+    margin:15px 10px 20px !important;
+    width:calc(100% - 20px) !important;
+    min-height:225px !important;
+  }
+}
+@media (max-width:430px){
+  #section-home > .np-dashboard-shell > .np-welcome-hero,
+  .np-dashboard-shell > .np-welcome-hero {
+    margin:13px 9px 18px !important;
+    width:calc(100% - 18px) !important;
+    min-height:210px !important;
+  }
+}
+
+/* ==========================================================
+   V1.15 IMPLEMENTATION — WORKING DARK / LIGHT THEME
+   LOCK: theme switch lives inside the existing ⋮ menu.
+   Dark = existing NP_Galery premium canvas.
+   Light = full light counterpart without changing layout.
+   ========================================================== */
+
+html { transition: background-color .28s ease, color .28s ease; }
+
+/* LIGHT MODE: explicit counterpart for every V19/V20 hard-coded dark surface. */
+body:not(.dark-mode) {
+  --np-dark-canvas:#FBF9F5;
+  --np-warm-white:#FBF9F5;
+  --np-warm-gray:#EAE6DF;
+  --np-ink:#25272A;
+  --np-muted:#706B65;
+  --np-surface-solid:#FFFFFF;
+  --np-surface:rgba(255,255,255,.96);
+  --np-line:rgba(37,39,42,.11);
+  background:#FBF9F5 !important;
+  color:#25272A !important;
+}
+body:not(.dark-mode) .floating-header {
+  background:rgba(251,249,245,.94) !important;
+  box-shadow:0 10px 28px rgba(91,57,28,.08) !important;
+}
+body:not(.dark-mode) .floating-header .title,
+body:not(.dark-mode) .header-icon-btn {
+  color:#25272A !important;
+  -webkit-text-fill-color:#25272A !important;
+  background:rgba(37,39,42,.035) !important;
+  border-color:rgba(37,39,42,.08) !important;
+}
+body:not(.dark-mode) .header-icon-btn:hover {
+  color:#ED7A24 !important;
+  background:#FCE9D8 !important;
+  border-color:rgba(237,122,36,.25) !important;
+}
+body:not(.dark-mode) .content-card {
+  background:#FBF9F5 !important;
+  color:#25272A !important;
+  border-color:rgba(37,39,42,.08) !important;
+  box-shadow:0 22px 70px rgba(37,39,42,.08) !important;
+}
+body:not(.dark-mode) #section-home,
+body:not(.dark-mode) .np-dashboard-shell {
+  background:#FBF9F5 !important;
+  color:#25272A !important;
+}
+body:not(.dark-mode) .np-welcome-hero {
+  background:
+    radial-gradient(circle at 78% 54%, rgba(237,122,36,.13) 0, rgba(237,122,36,.055) 18%, transparent 43%),
+    linear-gradient(135deg,#FFFFFF 0%,#F8F5F0 58%,#F0EBE4 100%) !important;
+  border:1px solid rgba(37,39,42,.08) !important;
+  box-shadow:0 18px 44px rgba(91,57,28,.10) !important;
+}
+body:not(.dark-mode) .np-welcome-copy h2 { color:#25272A !important; }
+body:not(.dark-mode) .np-welcome-copy p { color:#706B65 !important; }
+body:not(.dark-mode) .np-welcome-hero .np-eyebrow { color:#ED7A24 !important; }
+body:not(.dark-mode) .np-welcome-hero .np-phone-image {
+  filter:drop-shadow(0 16px 28px rgba(75,48,25,.16)) !important;
+}
+body:not(.dark-mode) .np-welcome-hero .np-phone-glow {
+  background:rgba(237,122,36,.52) !important;
+  box-shadow:0 0 34px rgba(237,122,36,.34),0 0 82px rgba(237,122,36,.18) !important;
+  opacity:.72 !important;
+}
+body:not(.dark-mode) .np-welcome-hero .np-orb { opacity:.10 !important; }
+body:not(.dark-mode) .np-summary-panel .np-stat-card,
+body:not(.dark-mode) .np-quick-item,
+body:not(.dark-mode) .price-card,
+body:not(.dark-mode) .pricelist-filter-row,
+body:not(.dark-mode) .showcase-filter-bar,
+body:not(.dark-mode) .notes-action-row,
+body:not(.dark-mode) .filter-search-box,
+body:not(.dark-mode) .filter-select-box {
+  background:#FFFFFF !important;
+  color:#25272A !important;
+  border-color:rgba(37,39,42,.10) !important;
+  box-shadow:0 8px 24px rgba(37,39,42,.055) !important;
+}
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(1),
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(3) {
+  background:linear-gradient(145deg,rgba(237,122,36,.10),rgba(255,255,255,.96)) !important;
+}
+body:not(.dark-mode) .np-summary-panel .np-stat-card,
+body:not(.dark-mode) .np-summary-panel .np-stat-card strong,
+body:not(.dark-mode) .np-section-heading h3,
+body:not(.dark-mode) .np-page-intro h2 {
+  color:#25272A !important;
+}
+body:not(.dark-mode) .np-summary-panel .np-stat-card span,
+body:not(.dark-mode) .np-quick-item span,
+body:not(.dark-mode) .np-quick-item small {
+  color:#706B65 !important;
+}
+body:not(.dark-mode) .np-quick-item:hover { background:#FFF7EF !important; }
+body:not(.dark-mode) .floating-nav.nav-3d {
+  background:rgba(255,255,255,.96) !important;
+  border-color:rgba(37,39,42,.10) !important;
+  box-shadow:0 14px 40px rgba(37,39,42,.14) !important;
+}
+body:not(.dark-mode) .nav-item-3d { color:#706B65 !important; }
+body:not(.dark-mode) .nav-item-3d.active { color:#ED7A24 !important; background:#FCE9D8 !important; }
+body:not(.dark-mode) .header-more-menu {
+  background:rgba(255,255,255,.97) !important;
+  border-color:rgba(37,39,42,.10) !important;
+  box-shadow:0 18px 45px rgba(37,39,42,.14) !important;
+}
+body:not(.dark-mode) .header-more-menu button { color:#25272A !important; }
+body:not(.dark-mode) .header-more-menu button i { color:#706B65 !important; }
+body:not(.dark-mode) .header-more-menu button:hover { background:#FCE9D8 !important; color:#D96314 !important; }
+
+/* DARK MODE: keep V1.15 premium canvas and make the menu state explicit. */
+body.dark-mode .header-more-menu {
+  background:rgba(27,22,36,.97) !important;
+  border-color:rgba(255,255,255,.08) !important;
+}
+body.dark-mode .header-more-menu button { color:#FBF9F5 !important; }
+body.dark-mode .header-more-menu button i { color:#B9B0C8 !important; }
+body.dark-mode .header-more-menu button:hover { background:rgba(237,122,36,.14) !important; color:#F5A261 !important; }
+
+/* Smooth theme transition on common surfaces. */
+.floating-header,
+.content-card,
+.np-welcome-hero,
+.np-summary-panel .np-stat-card,
+.np-quick-item,
+.price-card,
+.floating-nav.nav-3d,
+.header-more-menu {
+  transition:background .28s ease,border-color .28s ease,color .28s ease,box-shadow .28s ease !important;
+}
+
+/* ==========================================================
+   V1.17 — DARK MODE VISUAL REWORK
+   Light Mode remains unchanged. Dark Mode is a separate
+   premium identity: deep obsidian + warm orange light.
+   ========================================================== */
+body.dark-mode {
+  --np-dark-canvas: #090A0C !important;
+  --np-warm-white: #121416 !important;
+  --np-warm-gray: #1B1E22 !important;
+  --np-ink: #F5F2ED !important;
+  --np-muted: #9A9DA3 !important;
+  --np-surface-solid: #15181B !important;
+  --np-surface: rgba(21,24,27,.92) !important;
+  --np-line: rgba(255,255,255,.075) !important;
+  --np-orange: #FF8A2A !important;
+  --np-orange-dark: #E7660D !important;
+  --np-orange-soft: rgba(255,138,42,.13) !important;
+  --np-orange-faint: rgba(255,138,42,.065) !important;
+  --card-bg: #15181B !important;
+  --glass-bg: rgba(18,20,22,.88) !important;
+  --glass-border: rgba(255,255,255,.07) !important;
+  --border-subtle: rgba(255,255,255,.075) !important;
+  --text-primary: #F5F2ED !important;
+  --text-secondary: #9A9DA3 !important;
+  --azure-primary: #FF8A2A !important;
+  --azure-hover: #FFAA62 !important;
+  --neon-orange: #FF8A2A !important;
+  --nav-active-bg: rgba(255,138,42,.13) !important;
+  --card-shadow: 0 22px 55px rgba(0,0,0,.48) !important;
+}
+
+html.dark-mode,
+html body.dark-mode {
+  background: #090A0C !important;
+}
+
+body.dark-mode .floating-header {
+  background: rgba(12,14,16,.88) !important;
+  border-bottom: 1px solid rgba(255,255,255,.06) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.42) !important;
+}
+body.dark-mode .floating-header .title {
+  color: #F5F2ED !important;
+  -webkit-text-fill-color: #F5F2ED !important;
+}
+body.dark-mode .header-icon-btn,
+body.dark-mode .header-icon-btn:hover {
+  background: rgba(255,255,255,.045) !important;
+  border-color: rgba(255,255,255,.075) !important;
+  color: #F5F2ED !important;
+}
+body.dark-mode .header-icon-btn:hover {
+  color: #FF8A2A !important;
+  background: rgba(255,138,42,.12) !important;
+  border-color: rgba(255,138,42,.28) !important;
+}
+
+body.dark-mode .content-card {
+  background: #0F1113 !important;
+  border-color: rgba(255,255,255,.055) !important;
+  box-shadow: 0 28px 80px rgba(0,0,0,.34) !important;
+}
+body.dark-mode .np-welcome-hero {
+  background: linear-gradient(135deg, #1A1511 0%, #241A13 48%, #332015 100%) !important;
+  border: 1px solid rgba(255,138,42,.20) !important;
+  box-shadow: 0 20px 52px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+body.dark-mode .np-welcome-hero::after {
+  background: radial-gradient(circle, rgba(255,138,42,.18), transparent 68%) !important;
+}
+
+body.dark-mode .np-summary-panel .np-stat-card,
+body.dark-mode .np-quick-item,
+body.dark-mode .price-card,
+body.dark-mode .btn-brand-card,
+body.dark-mode .action-btn-square,
+body.dark-mode .custom-dropdown-trigger {
+  background: #15181B !important;
+  border-color: rgba(255,255,255,.075) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.22) !important;
+}
+body.dark-mode .np-summary-panel .np-stat-card:nth-child(1),
+body.dark-mode .np-summary-panel .np-stat-card:nth-child(3) {
+  background: linear-gradient(145deg, rgba(255,138,42,.12), #15181B 70%) !important;
+}
+body.dark-mode .np-summary-panel .np-stat-card span,
+body.dark-mode .np-quick-item small,
+body.dark-mode .price-card small {
+  color: #9A9DA3 !important;
+}
+body.dark-mode .np-summary-panel .np-stat-card strong,
+body.dark-mode .price-card-model {
+  color: #F5F2ED !important;
+}
+body.dark-mode .np-summary-panel .np-stat-icon,
+body.dark-mode .np-quick-item i,
+body.dark-mode .np-quick-icon {
+  background: rgba(255,138,42,.12) !important;
+  color: #FF8A2A !important;
+}
+
+body.dark-mode .floating-nav.nav-3d {
+  background: rgba(14,16,18,.94) !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  box-shadow: 0 -10px 34px rgba(0,0,0,.46) !important;
+}
+body.dark-mode .nav-item-3d.active {
+  color: #FF8A2A !important;
+  background: rgba(255,138,42,.12) !important;
+}
+body.dark-mode .nav-item-add-3d {
+  background: linear-gradient(145deg,#E7660D,#FF9B45) !important;
+  box-shadow: 0 12px 30px rgba(231,102,13,.30) !important;
+}
+
+body.dark-mode .header-more-menu {
+  background: #15181B !important;
+  border-color: rgba(255,255,255,.075) !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,.52) !important;
+}
+body.dark-mode .header-more-menu button {
+  color: #F5F2ED !important;
+}
+body.dark-mode .header-more-menu button i {
+  color: #9A9DA3 !important;
+}
+body.dark-mode .header-more-menu button:hover {
+  background: rgba(255,138,42,.12) !important;
+  color: #FF8A2A !important;
+}
+
+body.dark-mode .btn-save,
+body.dark-mode .auth-btn,
+body.dark-mode .np-direct-wa-submit {
+  background: linear-gradient(135deg,#E7660D,#FF8A2A) !important;
+  box-shadow: 0 10px 25px rgba(231,102,13,.25) !important;
+}
+body.dark-mode .custom-modal-card,
+body.dark-mode .np-sale-sheet,
+body.dark-mode .np-stock-sheet,
+body.dark-mode .np-note-modal,
+body.dark-mode .np-invoice-center {
+  background: #15181B !important;
+  color: #F5F2ED !important;
+  border-color: rgba(255,255,255,.075) !important;
+  box-shadow: 0 30px 90px rgba(0,0,0,.55) !important;
+}
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode select {
+  background: #0D0F11 !important;
+  color: #F5F2ED !important;
+  border-color: rgba(255,255,255,.09) !important;
+}
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: #6F747B !important;
+}
+
+body.dark-mode .sub-tab-btn.active,
+body.dark-mode .custom-dropdown-item:hover,
+body.dark-mode .custom-dropdown-item.active {
+  background: rgba(255,138,42,.12) !important;
+  color: #FF8A2A !important;
+  border-color: rgba(255,138,42,.28) !important;
+}
+body.dark-mode .sub-tab-badge,
+body.dark-mode #pricelist-count-badge {
+  background: rgba(255,138,42,.12) !important;
+  color: #FFAA62 !important;
+  border-color: rgba(255,138,42,.25) !important;
+}
+body.dark-mode .sub-tab-btn.active .sub-tab-badge {
+  background: #FF8A2A !important;
+  color: #17110C !important;
+}
+
+body.dark-mode .price-compare-stack .price-box:last-child {
+  background: rgba(255,138,42,.10) !important;
+  border-color: rgba(255,138,42,.25) !important;
+}
+body.dark-mode .price-compare-stack .price-box:last-child .price-box-label,
+body.dark-mode .price-compare-stack .price-box:last-child .price-box-val {
+  color: #FFAA62 !important;
+}
+body.dark-mode .floating-ai-fab {
+  background: linear-gradient(135deg,#E7660D,#FF8A2A) !important;
+  box-shadow: 0 10px 30px rgba(231,102,13,.30) !important;
+}
+
+body.dark-mode .np-kicker,
+body.dark-mode .np-invoice-row-price,
+body.dark-mode .invoice-item-spec,
+body.dark-mode .invoice-total-label,
+body.dark-mode .invoice-total-val,
+body.dark-mode .invoice-qr-hint {
+  color: #FF8A2A !important;
+}
+body.dark-mode .invoice-total-row {
+  background: rgba(255,138,42,.08) !important;
+  border-color: rgba(255,138,42,.20) !important;
+}
+body.dark-mode .invoice-qr-box {
+  border-color: rgba(255,138,42,.22) !important;
+}
+
+/* ==========================================================
+   V1.18 — DARK MODE NEON EDGE POLISH
+   LOCKED: dark canvas, no accidental white surfaces,
+   subtle orange-neon accents on borders/curves.
+   ========================================================== */
+body.dark-mode {
+  --np-dark-canvas:#070707;
+  --np-warm-white:#0B0B0C;
+  --np-warm-gray:#171719;
+  --np-ink:#F7F7F5;
+  --np-muted:#9A9A9F;
+  --np-surface-solid:#111113;
+  --np-surface:rgba(17,17,19,.94);
+  --np-line:rgba(237,122,36,.18);
+  --np-orange:#ED7A24;
+  --np-orange-dark:#D96314;
+  --np-orange-soft:rgba(237,122,36,.12);
+  --np-orange-faint:rgba(237,122,36,.055);
+}
+
+body.dark-mode,
+body.dark-mode .content-card,
+body.dark-mode #section-home,
+body.dark-mode #section-transaksi,
+body.dark-mode #section-pricelist,
+body.dark-mode #section-pribadi,
+body.dark-mode .tab-content {
+  background:#070707 !important;
+  color:#F7F7F5 !important;
+}
+
+body.dark-mode .content-card {
+  border:1px solid rgba(237,122,36,.14) !important;
+  box-shadow:0 24px 80px rgba(0,0,0,.58), 0 0 24px rgba(237,122,36,.035) !important;
+}
+
+/* Unified subtle neon edge language. */
+body.dark-mode .floating-header,
+body.dark-mode .np-showcase-row,
+body.dark-mode .np-showcase-empty,
+body.dark-mode .np-summary-panel .np-stat-card,
+body.dark-mode .np-quick-item,
+body.dark-mode .price-card,
+body.dark-mode .pricelist-filter-row,
+body.dark-mode .showcase-filter-bar,
+body.dark-mode .notes-action-row,
+body.dark-mode .filter-search-box,
+body.dark-mode .filter-select-box,
+body.dark-mode .pribadi-card,
+body.dark-mode .sub-tab-btn,
+body.dark-mode .np-transaksi-tab,
+body.dark-mode .np-trx-filter,
+body.dark-mode .stok-item-card,
+body.dark-mode .note-item-card {
+  border-color:rgba(237,122,36,.18) !important;
+  box-shadow:0 0 12px rgba(237,122,36,.025), inset 0 0 0 1px rgba(237,122,36,.025) !important;
+}
+
+body.dark-mode .floating-header {
+  background:rgba(10,10,11,.92) !important;
+  border-bottom:1px solid rgba(237,122,36,.22) !important;
+}
+
+/* HOME / ETALASE */
+body.dark-mode .np-showcase-row {
+  background:linear-gradient(145deg,#111113 0%,#0C0C0D 100%) !important;
+  color:#F7F7F5 !important;
+  border:1px solid rgba(237,122,36,.22) !important;
+}
+body.dark-mode .np-showcase-row:hover,
+body.dark-mode .np-showcase-row:focus-visible {
+  border-color:rgba(237,122,36,.62) !important;
+  box-shadow:0 0 14px rgba(237,122,36,.10),0 10px 24px rgba(0,0,0,.42) !important;
+}
+body.dark-mode .np-showcase-thumb {
+  background:linear-gradient(145deg,rgba(237,122,36,.12),#151517) !important;
+  border:1px solid rgba(237,122,36,.15);
+}
+body.dark-mode .np-showcase-thumb.is-real-photo { background:#151517 !important; }
+body.dark-mode .np-showcase-row-name { color:#F7F7F5 !important; }
+body.dark-mode .np-showcase-row-meta { color:#8F8F95 !important; }
+body.dark-mode .np-showcase-row-arrow { color:rgba(237,122,36,.65) !important; }
+body.dark-mode .np-showcase-empty { background:#0D0D0E !important; color:#77777D !important; }
+
+/* PRICE LIST — remove the white top block and make controls part of the dark canvas. */
+body.dark-mode .pricelist-filter-row,
+body.dark-mode .pricelist-summary,
+body.dark-mode .pricelist-cards-wrapper {
+  background:transparent !important;
+}
+body.dark-mode .pricelist-filter-row {
+  border:1px solid rgba(237,122,36,.20) !important;
+  border-radius:16px !important;
+  padding:6px !important;
+  box-shadow:0 0 14px rgba(237,122,36,.035) !important;
+}
+body.dark-mode .filter-search-box,
+body.dark-mode .filter-select-box,
+body.dark-mode .form-select-glass,
+body.dark-mode .filter-search-box input {
+  background:#111113 !important;
+  color:#F7F7F5 !important;
+  border-color:rgba(237,122,36,.20) !important;
+}
+body.dark-mode .price-card {
+  background:linear-gradient(145deg,#121214,#0C0C0D) !important;
+  color:#F7F7F5 !important;
+}
+
+/* PRIBADI — all top-level surfaces stay dark. */
+body.dark-mode .notes-action-row,
+body.dark-mode .card-pengeluaran,
+body.dark-mode .card-saldo,
+body.dark-mode .sub-content,
+body.dark-mode #sub-notes,
+body.dark-mode #sub-kas {
+  background:#0C0C0D !important;
+  color:#F7F7F5 !important;
+}
+body.dark-mode .card-saldo {
+  background:linear-gradient(145deg,#151516,#0C0C0D) !important;
+  border-color:rgba(237,122,36,.30) !important;
+  box-shadow:0 0 16px rgba(237,122,36,.045) !important;
+}
+body.dark-mode .card-pengeluaran { border-color:rgba(237,122,36,.18) !important; }
+
+/* Hero keeps its already-locked identity; add only restrained edge light. */
+body.dark-mode .np-welcome-hero {
+  border:1px solid rgba(237,122,36,.42) !important;
+  box-shadow:0 0 18px rgba(237,122,36,.08),0 20px 50px rgba(0,0,0,.52) !important;
+}
+
+/* Dark bottom dock: no white/light slab. */
+body.dark-mode .floating-nav.nav-3d {
+  background:rgba(10,10,11,.94) !important;
+  border:1px solid rgba(237,122,36,.22) !important;
+  box-shadow:0 0 18px rgba(237,122,36,.05),0 14px 40px rgba(0,0,0,.55) !important;
+}
+body.dark-mode .nav-item-3d { color:#9A9A9F !important; }
+body.dark-mode .nav-item-3d.active {
+  color:#ED7A24 !important;
+  background:rgba(237,122,36,.11) !important;
+  box-shadow:0 0 12px rgba(237,122,36,.08) !important;
+}
+
+/* ==========================================================
+   V1.19 IMPLEMENTATION — LIGHT WELCOME HERO + SUMMARY A-B-A-B
+   LOCKED: light hero follows dark hero geometry; light canvas only.
+   ========================================================== */
+body:not(.dark-mode) #section-home > .np-dashboard-shell > .np-welcome-hero,
+body:not(.dark-mode) .np-dashboard-shell > .np-welcome-hero {
+  margin: 18px 12px 22px !important;
+  width: calc(100% - 24px) !important;
+  min-height: 250px !important;
+  box-sizing: border-box !important;
+  border: 1px solid rgba(237,122,36,.28) !important;
+  outline: 0 !important;
+  border-radius: 18px !important;
+  background:
+    radial-gradient(circle at 78% 54%, rgba(237,122,36,.16) 0, rgba(237,122,36,.07) 18%, transparent 42%),
+    linear-gradient(135deg,#FFFFFF 0%,#F8F5F0 58%,#ECE7DF 100%) !important;
+  box-shadow:
+    0 0 18px rgba(237,122,36,.07),
+    0 12px 34px rgba(91,57,28,.12),
+    inset 0 1px 0 rgba(255,255,255,.95) !important;
+  overflow: hidden !important;
+}
+body:not(.dark-mode) .np-welcome-hero::after {
+  background: radial-gradient(circle, rgba(237,122,36,.12), transparent 68%) !important;
+}
+body:not(.dark-mode) .np-welcome-trace-base {
+  fill: #25272A !important;
+  stroke: rgba(37,39,42,.92) !important;
+}
+body:not(.dark-mode) .np-welcome-trace-neon {
+  stroke: #ED7A24 !important;
+  filter: drop-shadow(0 0 5px rgba(237,122,36,.52)) drop-shadow(0 0 12px rgba(237,122,36,.22)) !important;
+}
+
+/* Summary cards: strictly alternating orange / second color / orange / second color. */
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(1),
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(3) {
+  background: linear-gradient(145deg,rgba(237,122,36,.12),rgba(255,255,255,.96)) !important;
+  border-color: rgba(237,122,36,.22) !important;
+}
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(2),
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(4) {
+  background: linear-gradient(145deg,rgba(234,230,223,.62),rgba(255,255,255,.96)) !important;
+  border-color: rgba(37,39,42,.10) !important;
+}
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(1) .np-stat-icon,
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(3) .np-stat-icon {
+  color: #ED7A24 !important;
+  border-color: rgba(237,122,36,.28) !important;
+}
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(2) .np-stat-icon,
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(4) .np-stat-icon {
+  color: #706B65 !important;
+  border-color: rgba(37,39,42,.16) !important;
+}
+
+@media (max-width:560px) {
+  body:not(.dark-mode) #section-home > .np-dashboard-shell > .np-welcome-hero,
+  body:not(.dark-mode) .np-dashboard-shell > .np-welcome-hero {
+    margin: 15px 10px 20px !important;
+    width: calc(100% - 20px) !important;
+    min-height: 225px !important;
+    border-radius: 17px !important;
+  }
+}
+@media (max-width:430px) {
+  body:not(.dark-mode) #section-home > .np-dashboard-shell > .np-welcome-hero,
+  body:not(.dark-mode) .np-dashboard-shell > .np-welcome-hero {
+    margin: 13px 9px 18px !important;
+    width: calc(100% - 18px) !important;
+    min-height: 210px !important;
+    border-radius: 16px !important;
+  }
+}
+
+/* V1.20 IMPLEMENTATION — LIGHT HERO PURE-WHITE CANVAS + DARK QUICK ACCESS LABELS */
+body:not(.dark-mode) #section-home,
+body:not(.dark-mode) #section-home::before,
+body:not(.dark-mode) #section-home > .np-dashboard-shell,
+body:not(.dark-mode) #section-home .np-home-light-sheet,
+body:not(.dark-mode) .content-card,
+body:not(.dark-mode) .tab-content {
+  background: #FFFFFF !important;
+  color: #25272A !important;
+}
+
+body:not(.dark-mode) #section-home > .np-dashboard-shell > .np-welcome-hero,
+body:not(.dark-mode) .np-dashboard-shell > .np-welcome-hero {
+  background: #FFFFFF !important;
+  background-image: radial-gradient(circle at 78% 54%, rgba(237,122,36,.10) 0, rgba(237,122,36,.035) 18%, transparent 42%) !important;
+  border: 1px solid rgba(237,122,36,.28) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 0 18px rgba(237,122,36,.07), 0 12px 34px rgba(91,57,28,.12), inset 0 1px 0 rgba(255,255,255,.98) !important;
+}
+
+body.dark-mode .np-quick-item .np-quick-label {
+  color: #FFFFFF !important;
+}
+
+/* V2 — LOCKED HOME SUMMARY COLOR SWAP
+   Total Unit = orange; Unit Tersedia = second color;
+   Unit Terjual = second color; Transaksi = orange.
+   Applied consistently to light and dark modes. */
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(1),
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(4) {
+  background: linear-gradient(145deg,rgba(237,122,36,.12),rgba(255,255,255,.96)) !important;
+  border-color: rgba(237,122,36,.22) !important;
+}
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(2),
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(3) {
+  background: linear-gradient(145deg,rgba(234,230,223,.62),rgba(255,255,255,.96)) !important;
+  border-color: rgba(37,39,42,.10) !important;
+}
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(1) .np-stat-icon,
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(4) .np-stat-icon {
+  color: #ED7A24 !important;
+  border-color: rgba(237,122,36,.28) !important;
+}
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(2) .np-stat-icon,
+body:not(.dark-mode) .np-summary-panel .np-stat-card:nth-child(3) .np-stat-icon {
+  color: #706B65 !important;
+  border-color: rgba(37,39,42,.16) !important;
+}
+body.dark-mode .np-summary-panel .np-stat-card:nth-child(1),
+body.dark-mode .np-summary-panel .np-stat-card:nth-child(4) {
+  background: linear-gradient(145deg, rgba(255,138,42,.12), #15181B 70%) !important;
+  border-color: rgba(255,138,42,.16) !important;
+}
+body.dark-mode .np-summary-panel .np-stat-card:nth-child(2),
+body.dark-mode .np-summary-panel .np-stat-card:nth-child(3) {
+  background: linear-gradient(145deg, rgba(234,230,223,.10), #15181B 70%) !important;
+  border-color: rgba(234,230,223,.10) !important;
+}
+body.dark-mode .np-summary-panel .np-stat-card:nth-child(1) .np-stat-icon,
+body.dark-mode .np-summary-panel .np-stat-card:nth-child(4) .np-stat-icon {
+  color: #FF8A2A !important;
+  border-color: rgba(255,138,42,.38) !important;
+}
+body.dark-mode .np-summary-panel .np-stat-card:nth-child(2) .np-stat-icon,
+body.dark-mode .np-summary-panel .np-stat-card:nth-child(3) .np-stat-icon {
+  color: #EAE6DF !important;
+  border-color: rgba(234,230,223,.24) !important;
+}
+
+/* ========================================================== */
+/* V2.1 LOCKED — ULTRA SMOOTH MOTION / NO FLICKER / LIGHTWEIGHT */
+/* Keep visual language intact; optimize only motion/compositing. */
+/* ========================================================== */
+html { scroll-behavior: smooth; }
+
+button, .nav-item, .action-btn, .action-btn-square, .custom-dropdown-trigger,
+.np-brand-logo-btn, .np-transaksi-tab, .np-trx-filter, .np-quick-item,
+.np-trx-action, .np-diag-copy, .np-diag-open {
+  transition-property: transform, opacity, color, background-color, border-color, box-shadow;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(.22, 1, .36, 1);
+  will-change: auto;
+}
+
+button:active, .nav-item:active, .action-btn:active, .action-btn-square:active {
+  transform: scale(.975) !important;
+}
+
+/* One-frame-friendly view entry; no layout animation and no expensive filters. */
+.tab-content.active, .sub-content.active {
+  animation: npSmoothViewIn 260ms cubic-bezier(.22, 1, .36, 1) both;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+@keyframes npSmoothViewIn {
+  from { opacity: 0; transform: translate3d(0, 4px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.np-brand-logo-btn {
+  transition-duration: 220ms;
+  transform: translate3d(0,0,0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.np-brand-logo-btn img {
+  opacity: 1;
+  transform: translate3d(0,0,0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: opacity 180ms ease, transform 220ms cubic-bezier(.22,1,.36,1);
+}
+.np-brand-logo-btn:hover img { transform: scale(1.025); }
+.np-brand-logo-btn.active img { transform: scale(1.015); }
+
+/* Avoid costly blanket transitions that can animate layout/size. */
+.content-card, .floating-header, .stat-card-uniform, .np-stat-card, .np-quick-item {
+  transition-property: background-color, border-color, box-shadow, transform, opacity;
+}
+
+/* Respect reduced-motion preferences while keeping state changes instant and stable. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ========================================================== */
+/* PRIBADI V2.3 — PROFILE / SINGLE NOTE / SETTINGS           */
+/* ========================================================== */
+.pribadi-page-v23 { display:flex; flex-direction:column; gap:16px; padding-bottom:24px; }
+.pribadi-profile-card, .pribadi-note-card, .pribadi-settings-card, .pribadi-about-card { background:var(--card-bg); border:1px solid var(--border-subtle); box-shadow:var(--card-shadow); }
+.pribadi-profile-card { display:flex; align-items:center; gap:12px; padding:16px; border-radius:18px; }
+.pribadi-profile-avatar { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:rgba(2,132,199,.12); color:var(--azure-primary); font-size:20px; flex:0 0 auto; }
+.pribadi-profile-info { min-width:0; flex:1; }
+.pribadi-section-kicker { display:block; font-size:8px; line-height:1.2; letter-spacing:1.1px; font-weight:900; color:var(--azure-primary); margin-bottom:4px; }
+.pribadi-profile-info h2, .pribadi-v23-section-head h3 { margin:0; color:var(--text-primary); }
+.pribadi-profile-info h2 { font-size:16px; font-weight:850; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pribadi-profile-info > span:last-child { display:block; margin-top:3px; font-size:10px; color:var(--text-secondary); }
+.pribadi-icon-button { width:32px; height:32px; border:1px solid var(--border-subtle); border-radius:10px; background:var(--bg-page); color:var(--text-secondary); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:all .22s cubic-bezier(.16,1,.3,1); }
+.pribadi-icon-button:hover { color:var(--azure-primary); border-color:var(--azure-primary); transform:translateY(-1px); }
+.pribadi-v23-section { display:flex; flex-direction:column; gap:8px; }
+.pribadi-v23-section-head { display:flex; align-items:center; justify-content:space-between; padding:0 2px; }
+.pribadi-v23-section-head h3 { font-size:13px; font-weight:850; }
+.pribadi-note-card { width:100%; border-radius:15px; padding:13px 14px; display:flex; align-items:center; gap:11px; text-align:left; color:var(--text-primary); cursor:pointer; transition:transform .22s cubic-bezier(.16,1,.3,1), border-color .22s ease, box-shadow .22s ease; }
+.pribadi-note-card:hover { transform:translateY(-1px); border-color:var(--azure-primary); }
+.pribadi-note-icon, .pribadi-setting-icon, .pribadi-about-logo { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; background:rgba(2,132,199,.1); color:var(--azure-primary); }
+.pribadi-note-main { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
+.pribadi-note-main strong { font-size:12px; font-weight:800; }
+.pribadi-note-main small { font-size:9.5px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pribadi-note-arrow, .pribadi-setting-row > i { color:var(--text-secondary); font-size:10px; }
+.pribadi-settings-card { border-radius:15px; overflow:hidden; }
+.pribadi-setting-row { width:100%; min-height:55px; border:0; border-bottom:1px solid var(--border-subtle); background:transparent; display:flex; align-items:center; gap:10px; padding:8px 12px; text-align:left; color:var(--text-primary); cursor:pointer; transition:background .2s ease; }
+.pribadi-setting-row:last-child { border-bottom:0; }
+.pribadi-setting-row:hover { background:rgba(2,132,199,.05); }
+.pribadi-setting-row > span:nth-child(2) { min-width:0; flex:1; display:flex; flex-direction:column; gap:2px; }
+.pribadi-setting-row strong { font-size:11px; font-weight:800; }
+.pribadi-setting-row small { font-size:9px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pribadi-about-card { border-radius:15px; padding:12px 13px; display:flex; align-items:center; gap:10px; }
+.pribadi-about-card > span:nth-child(2) { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.pribadi-about-card strong { font-size:11px; font-weight:850; }
+.pribadi-about-card small { font-size:9px; color:var(--text-secondary); }
+.pribadi-version-badge { font-family:var(--font-mono); font-size:8px; font-weight:800; color:var(--azure-primary); border:1px solid rgba(2,132,199,.25); background:rgba(2,132,199,.08); border-radius:7px; padding:4px 6px; }
+.pribadi-profile-overlay, .pribadi-note-overlay { align-items:flex-end !important; padding:0 !important; }
+.pribadi-profile-sheet, .pribadi-note-sheet { width:min(100%, 520px); max-width:520px !important; margin:0 auto; border-radius:22px 22px 0 0 !important; padding:14px 16px calc(16px + env(safe-area-inset-bottom)) !important; animation:pribadiSheetIn .32s cubic-bezier(.16,1,.3,1) both; transform-origin:bottom center; }
+@keyframes pribadiSheetIn { from { transform:translateY(22px); opacity:.2; } to { transform:translateY(0); opacity:1; } }
+.pribadi-sheet-handle { width:38px; height:4px; border-radius:99px; background:var(--border-subtle); margin:0 auto 13px; }
+.pribadi-sheet-header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:15px; }
+.pribadi-sheet-header h3 { margin:0; font-size:15px; font-weight:850; color:var(--text-primary); }
+.pribadi-edit-field { display:flex; flex-direction:column; gap:6px; margin-bottom:11px; }
+.pribadi-edit-field > span { font-size:10px; font-weight:750; color:var(--text-secondary); }
+.pribadi-edit-field input, .pribadi-edit-field textarea { width:100%; box-sizing:border-box; border:1px solid var(--border-subtle); border-radius:11px; background:var(--bg-page); color:var(--text-primary); padding:10px 11px; font:inherit; font-size:11px; outline:none; transition:border-color .2s ease, box-shadow .2s ease; }
+.pribadi-edit-field textarea { resize:vertical; min-height:180px; line-height:1.55; }
+.pribadi-edit-field input:focus, .pribadi-edit-field textarea:focus { border-color:var(--azure-primary); box-shadow:0 0 0 3px rgba(2,132,199,.08); }
+.pribadi-sheet-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+.pribadi-sheet-actions button { min-height:36px; }
+body.dark-mode .pribadi-profile-avatar, body.dark-mode .pribadi-note-icon, body.dark-mode .pribadi-setting-icon, body.dark-mode .pribadi-about-logo { background:rgba(56,189,248,.12); }
+@media (max-width:520px) { .pribadi-profile-card { padding:14px; } .pribadi-page-v23 { gap:14px; } }
+
+/* PRIBADI V2.3 PATCH — clickable note list + actions inside detail */
+.note-item-card-clickable { width:100%; border:1px solid var(--border-subtle); text-align:left; cursor:pointer; color:var(--text-primary); background:var(--bg-page); }
+.note-item-card-clickable:focus-visible { outline:2px solid var(--azure-primary); outline-offset:2px; }
+.note-list-title-row { width:100%; display:flex; align-items:center; gap:10px; justify-content:space-between; }
+.note-list-title-row .stok-item-title { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.note-list-arrow { flex:0 0 auto; color:var(--text-secondary); font-size:10px; }
+.personal-note-view { display:flex; flex-direction:column; gap:12px; }
+.personal-note-detail-title { font-size:16px; font-weight:850; color:var(--text-primary); line-height:1.25; }
+.personal-note-detail-content { min-height:150px; max-height:46vh; overflow:auto; padding:13px; border:1px solid var(--border-subtle); border-radius:13px; background:var(--bg-page); color:var(--text-primary); font-size:12px; line-height:1.65; white-space:pre-wrap; word-break:break-word; }
+.personal-note-detail-actions { display:grid !important; grid-template-columns:repeat(3,1fr); justify-content:stretch !important; }
+.note-detail-action { min-height:40px; border:1px solid var(--border-subtle); border-radius:11px; background:var(--bg-page); color:var(--text-primary); font:inherit; font-size:10px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:all .2s ease; }
+.note-detail-action:hover { border-color:var(--azure-primary); color:var(--azure-primary); transform:translateY(-1px); }
+.note-detail-delete:hover { border-color:var(--status-unsafe); color:var(--status-unsafe); }
+.personal-note-edit-fields[hidden], .personal-note-detail-actions[hidden], .personal-note-view[hidden] { display:none !important; }
+@media (max-width:420px) { .personal-note-detail-actions { grid-template-columns:1fr 1fr 1fr; gap:6px; } .note-detail-action { font-size:9px; } }
+
+/* PRIBADI V2.3 PATCH — FULL PAGE NOTE LIST */
+.pribadi-notes-page { min-height:100%; padding:0 0 24px; }
+.pribadi-notes-page-inner { width:100%; max-width:760px; margin:0 auto; }
+.pribadi-notes-page-header { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:10px; padding:12px 0 14px; background:var(--bg-page); border-bottom:1px solid var(--border-subtle); }
+.pribadi-notes-back { width:34px; height:34px; flex:0 0 auto; border:1px solid var(--border-subtle); border-radius:10px; background:var(--card-bg); color:var(--text-primary); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s ease; }
+.pribadi-notes-back:hover { color:var(--azure-primary); border-color:var(--azure-primary); transform:translateX(-1px); }
+.pribadi-notes-page-title-wrap { min-width:0; flex:1; }
+.pribadi-notes-page-title-wrap h2 { margin:0; font-size:16px; font-weight:850; color:var(--text-primary); line-height:1.15; }
+.pribadi-notes-page-title-wrap > span:last-child { display:block; margin-top:3px; font-size:9px; color:var(--text-secondary); }
+.pribadi-notes-list { display:flex; flex-direction:column; gap:5px; padding-top:10px; }
+.pribadi-notes-list .note-item-card-clickable { border-radius:11px; padding:10px 11px; min-height:38px; background:var(--card-bg); box-shadow:none; transition:background .18s ease,border-color .18s ease,transform .18s ease; }
+.pribadi-notes-list .note-item-card-clickable:hover { border-color:var(--azure-primary); background:rgba(2,132,199,.04); transform:translateX(1px); }
+.pribadi-notes-list .stok-item-title { font-size:12px !important; font-weight:700; line-height:1.25; }
+.pribadi-notes-list .note-list-arrow { font-size:9px; }
+@media (max-width:520px) { .pribadi-notes-page { padding-left:2px; padding-right:2px; } .pribadi-notes-page-header { padding-top:10px; } .pribadi-notes-page-title-wrap h2 { font-size:15px; } .pribadi-notes-list .stok-item-title { font-size:11.5px !important; } }
+
+/* V2.3 — SPLIT NOTE VIEW: scrollable list + scrollable detail, clear of bottom nav */
+.pribadi-notes-page { height:100%; min-height:0; padding:0 0 calc(86px + env(safe-area-inset-bottom)); box-sizing:border-box; overflow:hidden; }
+.pribadi-notes-page-inner { height:100%; min-height:0; display:flex; flex-direction:column; }
+.pribadi-notes-page-header { flex:0 0 auto; }
+.pribadi-notes-split { min-height:0; flex:1 1 auto; display:grid; grid-template-rows:minmax(120px, 34%) minmax(0, 1fr); gap:10px; overflow:hidden; padding-top:10px; }
+.pribadi-notes-list { min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:0 3px 8px; scrollbar-width:thin; }
+.pribadi-notes-list .note-item-card-clickable { width:100%; box-sizing:border-box; }
+.pribadi-inline-detail { min-height:0; overflow:hidden; display:flex; flex-direction:column; border:1px solid var(--border-subtle); border-radius:14px; background:var(--card-bg); }
+.pribadi-inline-detail-empty { min-height:0; height:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:20px; color:var(--text-secondary); font-size:11px; text-align:center; }
+.pribadi-inline-detail-empty i { font-size:18px; opacity:.7; }
+.pribadi-inline-detail-content { min-height:0; height:100%; display:flex; flex-direction:column; padding:12px; box-sizing:border-box; }
+.pribadi-inline-detail-head { flex:0 0 auto; padding-bottom:8px; }
+.pribadi-inline-detail-head h3 { margin:2px 0 0; font-size:15px; line-height:1.25; color:var(--text-primary); word-break:break-word; }
+.personal-note-inline-view { min-height:0; flex:1 1 auto; overflow-y:auto; overscroll-behavior:contain; padding:2px 2px 12px; }
+.personal-note-inline-text { color:var(--text-primary); font-size:12px; line-height:1.7; white-space:pre-wrap; word-break:break-word; }
+.pribadi-inline-edit-fields { min-height:0; flex:1 1 auto; overflow-y:auto; }
+.pribadi-inline-edit-fields textarea { min-height:180px; }
+#inline-note-view-actions, #inline-note-edit-actions { flex:0 0 auto; margin-top:8px; padding-bottom:calc(2px + env(safe-area-inset-bottom)); }
+@media (max-width:520px) {
+  .pribadi-notes-split { grid-template-rows:minmax(110px, 31%) minmax(0, 1fr); gap:8px; }
+  .pribadi-notes-list .stok-item-title { font-size:11.5px !important; }
+  .pribadi-inline-detail-content { padding:10px; }
+  .pribadi-inline-detail-head h3 { font-size:14px; }
+  .personal-note-inline-text { font-size:11.5px; }
 }

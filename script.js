@@ -474,6 +474,7 @@ async function syncNotesFromSupabaseOnly() {
                 content: n.content || '',
                 date: n.date || (n.created_at ? n.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10))
             }));
+        if (typeof renderPribadiV23 === 'function') renderPribadiV23();
             renderDaftarNotes();
         }
     } catch (e) {
@@ -482,6 +483,17 @@ async function syncNotesFromSupabaseOnly() {
 }
 
 // SETUP SUPABASE REALTIME
+const realtimeSyncTimers = new Map();
+function scheduleRealtimeSync(key, fn, delay = 180) {
+    const previous = realtimeSyncTimers.get(key);
+    if (previous) clearTimeout(previous);
+    const timer = setTimeout(() => {
+        realtimeSyncTimers.delete(key);
+        if (navigator.onLine) fn().catch?.(err => console.warn(`Realtime sync ${key} gagal:`, err));
+    }, delay);
+    realtimeSyncTimers.set(key, timer);
+}
+
 function setupSupabaseRealtime() {
     if (!supabaseClient || isPublicWarrantyMode) {
         if (!supabaseClient) setConnectionStatus('disconnected');
@@ -490,11 +502,11 @@ function setupSupabaseRealtime() {
 
     supabaseClient
         .channel('npgalery-realtime-channel')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pricelist' }, () => syncPriceListFromSupabaseOnly())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'product' }, () => syncProductsFromSupabaseOnly())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => syncTransactionsFromSupabaseOnly())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'cash_mutations' }, () => syncCashFromSupabaseOnly())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, () => syncNotesFromSupabaseOnly())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pricelist' }, () => scheduleRealtimeSync('pricelist', syncPriceListFromSupabaseOnly))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'product' }, () => scheduleRealtimeSync('product', syncProductsFromSupabaseOnly))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => scheduleRealtimeSync('transactions', syncTransactionsFromSupabaseOnly))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'cash_mutations' }, () => scheduleRealtimeSync('cash_mutations', syncCashFromSupabaseOnly))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, () => scheduleRealtimeSync('notes', syncNotesFromSupabaseOnly))
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
                 setConnectionStatus('connected');
@@ -503,6 +515,13 @@ function setupSupabaseRealtime() {
             }
         });
 }
+
+// Keep the UI responsive when the network changes instead of waiting for a failed request.
+window.addEventListener('online', () => {
+    setConnectionStatus('syncing');
+    scheduleRealtimeSync('network-recovery', syncFromSupabase, 120);
+});
+window.addEventListener('offline', () => setConnectionStatus('disconnected'));
 
 async function loadDiagnosisData() {
     if (isPublicWarrantyMode) return;
@@ -521,12 +540,9 @@ async function loadDiagnosisData() {
 document.addEventListener('DOMContentLoaded', async () => {
     initDiagnosisInline();
     renderTransaksiCompact();
-    const savedTheme = localStorage.getItem('npgalery_theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        const themeIcon = document.getElementById('theme-icon');
-        if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
-    }
+    // THEME: default tetap Dark agar baseline V1.15 tidak berubah.
+    const savedTheme = localStorage.getItem('npgalery_theme') || 'dark';
+    applyTheme(savedTheme, false);
 
     const authModal = document.getElementById('auth-modal');
     const urlParams = new URLSearchParams(window.location.search);
@@ -959,6 +975,152 @@ window.closeShowcaseDetailModal = function() {
 };
 
 /* ========================================================== */
+/* PRIBADI V2.3 — PROFILE & MULTI PERSONAL NOTES              */
+/* ========================================================== */
+let activePersonalNoteId = null;
+let activeDetailNoteId = null;
+
+function getPrimaryPersonalNote() {
+    if (!Array.isArray(daftarNotes) || daftarNotes.length === 0) return null;
+    return daftarNotes[0] || null;
+}
+
+window.renderPribadiV23 = function() {
+    const nameEl = document.getElementById('pribadi-profile-name');
+    const roleEl = document.getElementById('pribadi-profile-role');
+    const saved = JSON.parse(localStorage.getItem('npgalery_profile') || 'null');
+    if (nameEl) nameEl.textContent = saved?.name || 'Pengguna NP_Galery';
+    if (roleEl) roleEl.textContent = saved?.role || 'Pemilik / Admin';
+
+    const titleEl = document.getElementById('pribadi-note-title');
+    const previewEl = document.getElementById('pribadi-note-preview');
+    const count = Array.isArray(daftarNotes) ? daftarNotes.length : 0;
+    if (titleEl) titleEl.textContent = 'Daftar Catatan';
+    if (previewEl) previewEl.textContent = count ? `${count} catatan tersimpan` : 'Belum ada catatan tersimpan';
+
+    const themeIcon = document.getElementById('pribadi-theme-icon');
+    const themeLabel = document.getElementById('pribadi-theme-label');
+    const dark = document.body.classList.contains('dark-mode');
+    if (themeIcon) { themeIcon.classList.toggle('fa-moon', !dark); themeIcon.classList.toggle('fa-sun', dark); }
+    if (themeLabel) themeLabel.textContent = dark ? 'Mode gelap aktif' : 'Mode terang aktif';
+};
+
+window.openProfileEditor = function() {
+    const saved = JSON.parse(localStorage.getItem('npgalery_profile') || 'null') || {};
+    const n = document.getElementById('pribadi-profile-name-input');
+    const r = document.getElementById('pribadi-profile-role-input');
+    if (n) n.value = saved.name || '';
+    if (r) r.value = saved.role || '';
+    toggleModal('profile-editor-modal', true);
+};
+window.closeProfileEditor = function() { toggleModal('profile-editor-modal', false); };
+window.savePribadiProfile = function() {
+    const name = document.getElementById('pribadi-profile-name-input')?.value.trim() || 'Pengguna NP_Galery';
+    const role = document.getElementById('pribadi-profile-role-input')?.value.trim() || 'Pemilik / Admin';
+    localStorage.setItem('npgalery_profile', JSON.stringify({name, role}));
+    renderPribadiV23();
+    closeProfileEditor();
+};
+
+window.openPersonalNoteSheet = function(id) {
+    const note = daftarNotes.find(n => n.id === id);
+    if (!note) { if (daftarNotes.length === 0) openAddNoteModal(); return; }
+    activePersonalNoteId = note.id;
+    activeDetailNoteId = note.id;
+    const title = document.getElementById('inline-note-title-input');
+    const content = document.getElementById('inline-note-content-input');
+    if (title) title.value = note.title || '';
+    if (content) content.value = note.content || '';
+    const titleView = document.getElementById('inline-note-title');
+    const contentView = document.getElementById('inline-note-content');
+    if (titleView) titleView.textContent = note.title || 'Catatan';
+    if (contentView) contentView.textContent = note.content || 'Belum ada isi catatan.';
+    const empty = document.getElementById('pribadi-inline-detail-empty');
+    const detail = document.getElementById('pribadi-inline-detail-content');
+    const view = document.getElementById('personal-note-inline-view');
+    const edit = document.getElementById('personal-note-inline-edit');
+    const viewActions = document.getElementById('inline-note-view-actions');
+    const editActions = document.getElementById('inline-note-edit-actions');
+    if (empty) empty.hidden = true;
+    if (detail) detail.hidden = false;
+    if (view) view.hidden = false;
+    if (edit) edit.hidden = true;
+    if (viewActions) viewActions.hidden = false;
+    if (editActions) editActions.hidden = true;
+    renderDaftarNotes();
+};
+window.closePersonalNoteSheet = function() {
+    activePersonalNoteId = null;
+    activeDetailNoteId = null;
+    const empty = document.getElementById('pribadi-inline-detail-empty');
+    const detail = document.getElementById('pribadi-inline-detail-content');
+    if (empty) empty.hidden = false;
+    if (detail) detail.hidden = true;
+};
+
+window.bukaEditCatatanDariDetail = function() {
+    const note = daftarNotes.find(n => n.id === activeDetailNoteId);
+    if (!note) return;
+    const view = document.getElementById('personal-note-inline-view');
+    const edit = document.getElementById('personal-note-inline-edit');
+    const viewActions = document.getElementById('inline-note-view-actions');
+    const editActions = document.getElementById('inline-note-edit-actions');
+    if (view) view.hidden = true;
+    if (edit) edit.hidden = false;
+    if (viewActions) viewActions.hidden = true;
+    if (editActions) editActions.hidden = false;
+    document.getElementById('inline-note-title-input')?.focus();
+};
+window.batalEditCatatanDetail = function() { openPersonalNoteSheet(activeDetailNoteId); };
+window.simpanEditCatatanDetail = async function() {
+    const id = activeDetailNoteId;
+    if (!id) return;
+    const note = daftarNotes.find(n => n.id === id);
+    if (!note) return;
+    const title = document.getElementById('inline-note-title-input')?.value.trim() || 'Catatan Baru';
+    const content = document.getElementById('inline-note-content-input')?.value.trim() || '';
+    if (!title && !content) { showToast('Peringatan', 'Judul atau isi catatan tidak boleh kosong!', false); return; }
+    if (!supabaseClient) { showToast('Gagal', 'Koneksi data belum tersedia.', false); return; }
+    setConnectionStatus('syncing');
+    try {
+        const { error } = await supabaseClient.from('notes').update({title, content}).eq('id', id);
+        if (error) throw error;
+        note.title = title; note.content = content;
+        renderDaftarNotes();
+        openPersonalNoteSheet(id);
+        setConnectionStatus('connected');
+        showToast('Berhasil', 'Catatan berhasil diperbarui.');
+    } catch (e) {
+        console.warn('Gagal menyimpan catatan:', e);
+        setConnectionStatus('disconnected');
+        showToast('Gagal', 'Catatan tidak dapat diperbarui.', false);
+    }
+};
+window.savePersonalNote = window.simpanEditCatatanDetail;
+window.salinCatatanAktif = function() { if (activeDetailNoteId) salinCatatan(activeDetailNoteId); };
+window.hapusCatatanAktif = function() {
+    if (!activeDetailNoteId) return;
+    const id = activeDetailNoteId;
+    showCustomConfirm('Hapus Catatan', 'Yakin ingin menghapus catatan ini?', async () => {
+        if (!supabaseClient) { showToast('Gagal', 'Koneksi data belum tersedia.', false); return; }
+        setConnectionStatus('syncing');
+        try {
+            const { error } = await supabaseClient.from('notes').delete().eq('id', id);
+            if (error) throw error;
+            daftarNotes = daftarNotes.filter(n => n.id !== id);
+            closePersonalNoteSheet();
+            renderDaftarNotes();
+            setConnectionStatus('connected');
+            showToast('Berhasil', 'Catatan telah dihapus.');
+        } catch (e) {
+            console.warn('Gagal menghapus catatan:', e);
+            setConnectionStatus('disconnected');
+            showToast('Gagal', 'Gagal menghapus catatan.', false);
+        }
+    });
+};
+
+/* ========================================================== */
 /* FITUR MANAJEMEN NOTES                                      */
 /* ========================================================== */
 window.openAddNoteModal = function() {
@@ -971,11 +1133,21 @@ window.closeAddNoteModal = function() {
 
 window.openDaftarNotesModal = function() {
     renderDaftarNotes();
-    toggleModal('daftar-notes-modal', true);
+    const pribadi = document.getElementById('section-pribadi');
+    const notesPage = document.getElementById('section-pribadi-notes');
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (notesPage) notesPage.classList.add('active');
+    if (pribadi) pribadi.classList.remove('active');
+    window.scrollTo({ top: 0, behavior: 'auto' });
 };
 
 window.closeDaftarNotesModal = function() {
-    toggleModal('daftar-notes-modal', false);
+    const pribadi = document.getElementById('section-pribadi');
+    const notesPage = document.getElementById('section-pribadi-notes');
+    if (notesPage) notesPage.classList.remove('active');
+    if (pribadi) pribadi.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'auto' });
 };
 
 window.simpanCatatanBaru = async function() {
@@ -1022,12 +1194,7 @@ window.salinCatatan = function(id) {
     const note = daftarNotes.find(n => n.id === id);
     if (!note) return;
 
-    let textToCopy = '';
-    if (note.title && note.title.trim() !== '' && note.title !== 'Catatan Baru') {
-        textToCopy = `📌 *${note.title}*\n${note.content}`;
-    } else {
-        textToCopy = note.content;
-    }
+    const textToCopy = note.content || '';
 
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(textToCopy).then(() => {
@@ -1079,33 +1246,31 @@ window.hapusCatatan = function(id) {
 function renderDaftarNotes() {
     const container = document.getElementById('notes-container');
     const badge = document.getElementById('badge-notes-count');
-    const modalBadge = document.getElementById('modal-badge-notes-count');
-    if (!container) return;
-
-    if (badge) badge.textContent = `${daftarNotes.length}`;
-    if (modalBadge) modalBadge.textContent = `${daftarNotes.length} Catatan`;
-
-    if (daftarNotes.length === 0) {
-        container.innerHTML = `<div class="empty-stok-msg">Belum ada catatan tersimpan.</div>`;
+    const pageContainer = document.getElementById('notes-page-container');
+    const fullCount = document.getElementById('full-notes-count');
+    if (!container && !pageContainer) return;
+    const notes = Array.isArray(daftarNotes) ? daftarNotes : [];
+    if (badge) badge.textContent = `${notes.length}`;
+    if (fullCount) fullCount.textContent = `${notes.length} catatan`;
+    const renderEmpty = `<div class="empty-stok-msg">Belum ada catatan tersimpan.</div>`;
+    if (notes.length === 0) {
+        if (container) container.innerHTML = renderEmpty;
+        if (pageContainer) pageContainer.innerHTML = renderEmpty;
+        if (typeof renderPribadiV23 === 'function') renderPribadiV23();
         return;
     }
-
-    container.innerHTML = daftarNotes.map(n => `
-        <div class="note-item-card">
-            <div class="stok-item-top">
-                <span class="stok-item-title">${n.title}</span>
-                <div style="display: flex; gap: 4px;">
-                    <button onclick="salinCatatan('${n.id}')" class="action-btn" title="Salin Catatan"><i class="fa-solid fa-copy"></i></button>
-                    <button onclick="bukaEditCatatan('${n.id}')" class="action-btn edit-btn" title="Edit Catatan"><i class="fa-solid fa-pen"></i></button>
-                    <button onclick="hapusCatatan('${n.id}')" class="action-btn delete-btn" title="Hapus Catatan"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>
-            <div class="note-item-content">${n.content}</div>
-            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 4px;">
-                <i class="fa-regular fa-clock"></i> ${formatTanggalID(n.date)}
-            </div>
-        </div>
+    const esc = (v) => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    const html = notes.map(n => `
+        <button type="button" class="note-item-card note-item-card-clickable" onclick="openPersonalNoteSheet('${String(n.id).replace(/'/g, "\\'")}')" aria-label="Buka catatan ${esc(n.title || 'Catatan')}">
+            <span class="note-list-title-row">
+                <span class="stok-item-title">${esc(n.title || 'Catatan')}</span>
+                <i class="fa-solid fa-chevron-right note-list-arrow" aria-hidden="true"></i>
+            </span>
+        </button>
     `).join('');
+    if (container) container.innerHTML = html;
+    if (pageContainer) pageContainer.innerHTML = html;
+    if (typeof renderPribadiV23 === 'function') renderPribadiV23();
 }
 
 let activeEditNoteId = null;
@@ -1601,20 +1766,63 @@ function getDiagnosisBrandData(key) {
 function renderDiagnosisBrandSelector() {
     const el = document.getElementById('diagnosis-brand-selector');
     if (!el) return;
-    el.innerHTML = NP_DIAGNOSIS_BRANDS.map(b => `<button type="button" class="np-brand-logo-btn brand-${b.key.toLowerCase()} ${b.key === activeDiagnosisBrand ? 'active' : ''}" onclick="selectDiagnosisBrand('${b.key}')" aria-label="${b.name}"><img src="${b.logo}" alt="${escapeHtmlNP(b.name)} logo" onerror="this.style.display='none';this.nextElementSibling.style.display='block';"><span class="np-brand-logo-fallback" style="display:none">${escapeHtmlNP(b.name)}</span></button>`).join('');
+
+    // Render brand buttons only once. Rebuilding innerHTML on every click caused
+    // image/font elements to be destroyed and recreated, producing a visible blink.
+    if (!el.dataset.initialized) {
+        const frag = document.createDocumentFragment();
+        NP_DIAGNOSIS_BRANDS.forEach(b => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `np-brand-logo-btn brand-${b.key.toLowerCase()}`;
+            btn.setAttribute('aria-label', b.name);
+            btn.dataset.brand = b.key;
+            btn.addEventListener('click', () => window.selectDiagnosisBrand(b.key));
+
+            const img = document.createElement('img');
+            img.src = b.logo;
+            img.alt = `${b.name} logo`;
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.onerror = function() {
+                this.style.display = 'none';
+                const fallback = this.nextElementSibling;
+                if (fallback) fallback.style.display = 'block';
+            };
+
+            const fallback = document.createElement('span');
+            fallback.className = 'np-brand-logo-fallback';
+            fallback.style.display = 'none';
+            fallback.textContent = b.name;
+
+            btn.append(img, fallback);
+            frag.appendChild(btn);
+        });
+        el.replaceChildren(frag);
+        el.dataset.initialized = 'true';
+    }
+
+    // Change only classes/ARIA state; never recreate the logo DOM nodes.
+    el.querySelectorAll('.np-brand-logo-btn').forEach(btn => {
+        const isActive = btn.dataset.brand === activeDiagnosisBrand;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', String(isActive));
+    });
 }
 
 window.selectDiagnosisBrand = function(key) {
+    if (!NP_DIAGNOSIS_BRANDS.some(b => b.key === key)) return;
+    if (activeDiagnosisBrand === key) return;
     activeDiagnosisBrand = key;
     renderDiagnosisBrandSelector();
-    renderDiagnosisInline();
+    renderDiagnosisInline(true);
 };
 
 window.copyDiagnosisCode = function(code) {
     navigator.clipboard?.writeText(code).then(() => showToast('Tersalin', `Kode ${code} disalin.`)).catch(() => showToast('Info', 'Clipboard tidak tersedia.', false));
 };
 
-function renderDiagnosisInline() {
+function renderDiagnosisInline(animateSwap = false) {
     renderDiagnosisBrandSelector();
     const panel = document.getElementById('np-diagnosis-panel');
     if (!panel) return;
@@ -1622,11 +1830,86 @@ function renderDiagnosisInline() {
     const data = getDiagnosisBrandData(activeDiagnosisBrand);
     const codes = data?.codes || [];
     const imei = BRAND_IMEI_LINKS[activeDiagnosisBrand] || BRAND_IMEI_LINKS['XIAOMI'];
-    panel.innerHTML = `<div class="np-diagnosis-panel-head"><img class="np-diagnosis-logo brand-logo-${brand.key.toLowerCase()}" src="${brand.logo}" alt="${escapeHtmlNP(brand.name)}" onerror="this.style.display='none'"><div><h4>${escapeHtmlNP(brand.name)}</h4><p>Kode dial & akses cek IMEI</p></div></div>
-        <span class="np-diag-section-label">KODE DIAL</span>
-        <div class="np-diag-code-list">${codes.map(c => `<div class="np-diag-code-row"><div class="np-diag-code-row-main"><span class="np-diag-code">${escapeHtmlNP(c.code)}</span><span class="np-diag-desc">${escapeHtmlNP(c.description)}</span></div><button class="np-diag-copy" type="button" onclick="copyDiagnosisCode(${JSON.stringify(c.code)})"><i class="fa-regular fa-copy"></i> SALIN</button></div>`).join('')}</div>
-        <div class="np-diag-imei"><div><div class="np-diag-imei-title">Cek IMEI & Garansi</div><div class="np-diag-imei-sub">${escapeHtmlNP(imei.name)}</div></div><button class="np-diag-open" type="button" onclick="openBrandImeiPortal('${activeDiagnosisBrand}')">BUKA ↗</button></div>`;
+
+    // Build the diagnosis panel only once. Replacing the whole panel on every
+    // logo click caused a visible blink while images/fonts were recreated.
+    let head = panel.querySelector('.np-diagnosis-panel-head');
+    let logo = head?.querySelector('.np-diagnosis-logo');
+    let title = head?.querySelector('h4');
+    let sub = head?.querySelector('p');
+    let codeList = panel.querySelector('.np-diag-code-list');
+    let imeiSub = panel.querySelector('.np-diag-imei-sub');
+    let imeiOpen = panel.querySelector('.np-diag-open');
+
+    if (!head || !logo || !title || !sub || !codeList || !imeiSub || !imeiOpen) {
+        panel.innerHTML = `<div class="np-diagnosis-panel-head"><img class="np-diagnosis-logo" alt=""><div><h4></h4><p>Kode dial & akses cek IMEI</p></div></div>
+            <span class="np-diag-section-label">KODE DIAL</span>
+            <div class="np-diag-code-list"></div>
+            <div class="np-diag-imei"><div><div class="np-diag-imei-title">Cek IMEI & Garansi</div><div class="np-diag-imei-sub"></div></div><button class="np-diag-open" type="button">BUKA ↗</button></div>`;
+        head = panel.querySelector('.np-diagnosis-panel-head');
+        logo = panel.querySelector('.np-diagnosis-logo');
+        title = head.querySelector('h4');
+        sub = head.querySelector('p');
+        codeList = panel.querySelector('.np-diag-code-list');
+        imeiSub = panel.querySelector('.np-diag-imei-sub');
+        imeiOpen = panel.querySelector('.np-diag-open');
+    }
+
+    const updatePanel = () => {
+        title.textContent = brand.name;
+        sub.textContent = 'Kode dial & akses cek IMEI';
+        imeiSub.textContent = imei.name;
+        imeiOpen.onclick = () => openBrandImeiPortal(activeDiagnosisBrand);
+        codeList.replaceChildren(...codes.map(c => {
+            const row = document.createElement('div');
+            row.className = 'np-diag-code-row';
+            const main = document.createElement('div');
+            main.className = 'np-diag-code-row-main';
+            const code = document.createElement('span');
+            code.className = 'np-diag-code';
+            code.textContent = c.code;
+            const desc = document.createElement('span');
+            desc.className = 'np-diag-desc';
+            desc.textContent = c.description;
+            main.append(code, desc);
+            const copy = document.createElement('button');
+            copy.className = 'np-diag-copy';
+            copy.type = 'button';
+            copy.innerHTML = '<i class="fa-regular fa-copy"></i> SALIN';
+            copy.addEventListener('click', () => copyDiagnosisCode(c.code));
+            row.append(main, copy);
+            return row;
+        }));
+    };
+
+    // Preload/decode the next logo before swapping src, so the visible logo
+    // never disappears for a frame during a brand change.
+    const nextLogo = new Image();
+    nextLogo.decoding = 'async';
+    nextLogo.onload = () => {
+        logo.className = `np-diagnosis-logo brand-logo-${brand.key.toLowerCase()}`;
+        logo.alt = brand.name;
+        logo.style.opacity = '1';
+        logo.src = brand.logo;
+    };
+    nextLogo.onerror = () => {
+        logo.className = `np-diagnosis-logo brand-logo-${brand.key.toLowerCase()}`;
+        logo.alt = brand.name;
+        logo.style.opacity = '1';
+        logo.src = brand.logo;
+    };
+    nextLogo.src = brand.logo;
+
+    updatePanel();
+
+    if (animateSwap) {
+        panel.classList.remove('np-diagnosis-swap');
+        void panel.offsetWidth;
+        panel.classList.add('np-diagnosis-swap');
+        window.setTimeout(() => panel.classList.remove('np-diagnosis-swap'), 220);
+    }
 }
+
 
 function initDiagnosisInline() {
     if (!document.getElementById('diagnosis-brand-selector')) return;
@@ -2365,10 +2648,23 @@ window.closePriceListModal = function() {
 /* NAVIGASI & AUTHENTIKASI SUPABASE                           */
 /* ========================================================== */
 function restartApp(btn) { btn?.classList.add('spinning'); setTimeout(() => window.location.reload(), 450); }
+function applyTheme(theme, persist = true) {
+    const isDark = theme !== 'light';
+    document.body.classList.toggle('dark-mode', isDark);
+
+    const icon = document.getElementById('theme-menu-icon');
+    const label = document.getElementById('theme-menu-label');
+    if (icon) {
+        icon.classList.toggle('fa-sun', isDark);
+        icon.classList.toggle('fa-moon', !isDark);
+    }
+    if (label) label.textContent = isDark ? 'Mode Terang' : 'Mode Gelap';
+
+    if (persist) localStorage.setItem('npgalery_theme', isDark ? 'dark' : 'light');
+}
+
 function toggleTheme() {
-    const isDark = document.body.classList.toggle('dark-mode');
-    document.getElementById('theme-icon')?.classList.replace(isDark ? 'fa-moon' : 'fa-sun', isDark ? 'fa-sun' : 'fa-moon');
-    localStorage.setItem('npgalery_theme', isDark ? 'dark' : 'light');
+    applyTheme(document.body.classList.contains('dark-mode') ? 'light' : 'dark');
 }
 
 // V22 — Header More menu: hanya menambahkan fungsi yang hilang pada V21.
@@ -2464,21 +2760,24 @@ window.handleNavClick = function(tabId, el) {
 };
 
 function switchTab(tabId, el) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById(tabId)?.classList.add('active'); 
-    el?.classList.add('active');
+    const target = document.getElementById(tabId);
+    if (!target) return;
+    const sections = document.querySelectorAll('.tab-content');
+    const navItems = document.querySelectorAll('.nav-item');
+    // Mutate all states in one synchronous batch so there is no intermediate blank frame.
+    sections.forEach(t => t.classList.toggle('active', t === target));
+    navItems.forEach(n => n.classList.toggle('active', n === el));
 }
 
 function switchSubTab(subId, el) {
-    const p = el.closest('.tab-content');
-    p?.querySelectorAll('.sub-content').forEach(s => s.classList.remove('active'));
-    p?.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(subId)?.classList.add('active'); 
-    el?.classList.add('active');
+    const p = el?.closest('.tab-content');
+    const target = document.getElementById(subId);
+    if (!target) return;
+    p?.querySelectorAll('.sub-content').forEach(s => s.classList.toggle('active', s === target));
+    p?.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.toggle('active', b === el));
 
     if (subId === 'sub-modal' && navigator.onLine && supabaseClient) {
-        syncTransactionsFromSupabaseOnly();
+        scheduleRealtimeSync('modal-transactions', syncTransactionsFromSupabaseOnly);
     }
 }
 
