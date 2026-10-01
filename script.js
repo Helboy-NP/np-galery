@@ -967,12 +967,254 @@ window.openShowcaseDetail = function(id) {
         }
     }
 
+    const jualBtn = document.getElementById('modal-showcase-jual');
+    if (jualBtn) jualBtn.onclick = () => openSaleNowModal(item.id);
+
     toggleModal('showcase-detail-modal', true);
 };
 
 window.closeShowcaseDetailModal = function() {
     toggleModal('showcase-detail-modal', false);
 };
+
+/* ========================================================== */
+/* JUAL SEKARANG — ETALASE → TRANSAKSI PENJUALAN             */
+/* Menghubungkan tombol detail Etalase ke form transaksi      */
+/* ========================================================== */
+let activeSaleNowItemId = null;
+let activeSaleNowPayment = '';
+let saleNowEventsReady = false;
+
+function resetSaleNowForm() {
+    const ids = ['np-sale-customer', 'np-sale-phone', 'np-sale-price'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    activeSaleNowPayment = '';
+    const paymentLabel = document.getElementById('np-sale-payment-label');
+    if (paymentLabel) paymentLabel.textContent = 'Pilih metode pembayaran';
+    document.getElementById('np-sale-payment-options')?.classList.remove('is-open');
+    const total = document.getElementById('np-sale-total-value');
+    if (total) total.textContent = 'Rp 0';
+}
+
+function formatSaleNowPriceInput(value) {
+    const numeric = parseRawToNumeric(value);
+    return numeric !== null && numeric > 0 ? numeric.toLocaleString('id-ID') : '';
+}
+
+function setupSaleNowEvents() {
+    if (saleNowEventsReady) return;
+    saleNowEventsReady = true;
+
+    const paymentTrigger = document.getElementById('np-sale-payment-trigger');
+    const paymentOptions = document.getElementById('np-sale-payment-options');
+    if (paymentTrigger && paymentOptions) {
+        paymentTrigger.onclick = () => paymentOptions.classList.toggle('is-open');
+        paymentOptions.querySelectorAll('[data-payment]').forEach(btn => {
+            btn.onclick = () => {
+                activeSaleNowPayment = btn.dataset.payment || '';
+                const label = document.getElementById('np-sale-payment-label');
+                if (label) label.textContent = activeSaleNowPayment || 'Pilih metode pembayaran';
+                paymentOptions.classList.remove('is-open');
+            };
+        });
+    }
+
+    const priceInput = document.getElementById('np-sale-price');
+    const totalValue = document.getElementById('np-sale-total-value');
+    if (priceInput) {
+        priceInput.addEventListener('input', () => {
+            const numeric = parseRawToNumeric(priceInput.value) || 0;
+            if (totalValue) totalValue.textContent = formatRupiahLengkap(numeric);
+        });
+        priceInput.addEventListener('blur', () => {
+            const numeric = parseRawToNumeric(priceInput.value) || 0;
+            priceInput.value = numeric > 0 ? numeric.toLocaleString('id-ID') : '';
+        });
+    }
+
+    const confirmBtn = document.getElementById('np-sale-confirm-btn');
+    if (confirmBtn) confirmBtn.onclick = processSaleNow;
+}
+
+window.closeSaleNowModal = function() {
+    toggleModal('np-sale-sheet-modal', false);
+    document.getElementById('np-sale-sheet-modal')?.setAttribute('aria-hidden', 'true');
+    document.getElementById('np-sale-payment-options')?.classList.remove('is-open');
+    activeSaleNowItemId = null;
+    activeSaleNowPayment = '';
+};
+
+window.openSaleNowModal = function(id) {
+    const item = daftarStokMasuk.find(s => String(s.id) === String(id));
+    if (!item) {
+        showToast('Info', 'Unit tidak ditemukan atau sudah terjual.', false);
+        return;
+    }
+
+    setupSaleNowEvents();
+    activeSaleNowItemId = item.id;
+    resetSaleNowForm();
+
+    const brand = item.produk.split(' ')[0].toUpperCase();
+    const modelName = item.produk.split(' ').slice(1).join(' ') || item.produk;
+    const price = parseRawToNumeric(item.hargaJual) || parseRawToNumeric(item.hargaDisplay) || 0;
+
+    const img = document.getElementById('np-sale-product-image');
+    const name = document.getElementById('np-sale-product-name');
+    const spec = document.getElementById('np-sale-product-spec');
+    const customer = document.getElementById('np-sale-customer');
+    const priceInput = document.getElementById('np-sale-price');
+    const total = document.getElementById('np-sale-total-value');
+
+    if (img) {
+        img.src = item.imageUrl || 'assets/np-phone-hero.svg';
+        img.onerror = function() { this.onerror = null; this.src = 'assets/np-phone-hero.svg'; };
+    }
+    if (name) name.textContent = item.produk || '-';
+    if (spec) spec.textContent = `${brand} • ${item.kondisi || '-'} • ${item.kelengkapan || '-'}`;
+    if (customer) customer.value = item.pembeli || '';
+    if (priceInput) priceInput.value = price > 0 ? price.toLocaleString('id-ID') : '';
+    if (total) total.textContent = formatRupiahLengkap(price);
+
+    toggleModal('showcase-detail-modal', false);
+    toggleModal('np-sale-sheet-modal', true);
+    document.getElementById('np-sale-sheet-modal')?.setAttribute('aria-hidden', 'false');
+    setTimeout(() => document.getElementById('np-sale-customer')?.focus(), 120);
+};
+
+async function processSaleNow() {
+    const id = activeSaleNowItemId;
+    const item = daftarStokMasuk.find(s => String(s.id) === String(id));
+    if (!item) {
+        showToast('Info', 'Unit tidak ditemukan atau sudah terjual.', false);
+        return;
+    }
+
+    const customer = document.getElementById('np-sale-customer')?.value.trim() || '';
+    const phone = document.getElementById('np-sale-phone')?.value.trim() || '';
+    const price = parseRawToNumeric(document.getElementById('np-sale-price')?.value) || 0;
+    const payment = activeSaleNowPayment || '';
+
+    if (!customer) return showToast('Periksa Data', 'Nama pembeli wajib diisi.', false);
+    if (!price || price <= 0) return showToast('Periksa Data', 'Harga penjualan wajib diisi.', false);
+    if (!payment) return showToast('Periksa Data', 'Pilih metode pembayaran terlebih dahulu.', false);
+
+    const confirmBtn = document.getElementById('np-sale-confirm-btn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Memproses...</span>';
+    }
+
+    const now = new Date();
+    const tgl = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const modalPrice = parseRawToNumeric(item.hargaModal) || 0;
+    const profit = price - modalPrice;
+    const kasId = 'kas-' + Date.now();
+    const invoicePhotoUrl = await getMasterProductPhoto(item.id);
+    const transactionPayload = {
+        id: item.id,
+        product_id: item.id,
+        product_name: item.produk,
+        invoice_photo_url: invoicePhotoUrl || null,
+        condition: item.kondisi,
+        completeness: item.kelengkapan,
+        imei: item.imei,
+        qty: parseInt(item.qty) || 1,
+        buy_price: modalPrice,
+        sell_price: price,
+        customer_name: customer,
+        customer_phone: phone,
+        payment_method: payment,
+        profit,
+        sold_date: tgl,
+        modal_status: 'belum'
+    };
+
+    try {
+        setConnectionStatus('syncing');
+        if (!supabaseClient) throw new Error('Koneksi database tidak tersedia.');
+
+        /* Simpan transaksi dulu. Jika kolom tambahan belum ada, fallback ke struktur lama. */
+        let { error: trxError } = await supabaseClient.from('transactions').insert([transactionPayload]);
+        if (trxError) {
+            const legacyPayload = { ...transactionPayload };
+            delete legacyPayload.customer_phone;
+            delete legacyPayload.payment_method;
+            delete legacyPayload.product_id;
+            delete legacyPayload.invoice_photo_url;
+            const legacyResult = await supabaseClient.from('transactions').insert([legacyPayload]);
+            if (legacyResult.error) throw legacyResult.error;
+            console.warn('Kolom detail pembayaran/telepon belum tersedia; transaksi disimpan dengan struktur kompatibilitas V2.5.');
+        }
+
+        const { error: productError } = await supabaseClient.from('product').update({
+            status: 'sold',
+            sell_price: price,
+            buyer: customer
+        }).eq('id', item.id);
+        if (productError) {
+            await supabaseClient.from('transactions').delete().eq('id', item.id);
+            throw productError;
+        }
+
+        if (profit > 0) {
+            const { error: cashError } = await supabaseClient.from('cash_mutations').insert([{
+                id: kasId,
+                description: `Laba Jual: ${item.produk}`,
+                type: 'masuk',
+                amount: profit,
+                date: tgl
+            }]);
+            if (cashError) console.warn('Laba belum masuk ke kas:', cashError);
+        }
+
+        item.pembeli = customer;
+        item.hargaJual = String(price);
+        item.tanggalTerjualRaw = tgl;
+        item.modalStatus = 'belum';
+        item.phonePembeli = phone;
+        item.metodePembayaran = payment;
+
+        daftarStokMasuk = daftarStokMasuk.filter(s => String(s.id) !== String(id));
+        const historyItem = daftarProdukRiwayat.find(s => String(s.id) === String(id));
+        if (historyItem) {
+            historyItem.status = 'sold';
+            historyItem.pembeli = customer;
+            historyItem.hargaJual = String(price);
+        }
+        daftarTerjual.unshift({ ...item, productId: item.id, invoicePhotoUrl: invoicePhotoUrl || null });
+        if (profit > 0) {
+            daftarKasPribadi.unshift({ id: kasId, keterangan: `Laba Jual: ${item.produk}`, kategori: 'masuk', nominal: profit, tanggal: tgl });
+        }
+
+        renderDaftarTerjual();
+        renderDaftarModal();
+        renderManajemenKas();
+        updateDashboardStats();
+        updatePribadiStats();
+        initShowcaseBrandDropdown();
+        renderStoreShowcase();
+        renderHomeShowcase();
+
+        setConnectionStatus('connected');
+        closeSaleNowModal();
+        showToast('Berhasil', 'Unit terjual dan transaksi tercatat.');
+        openInvoiceModal({ ...item, productId: item.id, invoicePhotoUrl: invoicePhotoUrl || null });
+    } catch (err) {
+        console.warn('Gagal memproses Jual Sekarang:', err);
+        setConnectionStatus('disconnected');
+        showToast('Gagal', 'Terjadi kendala saat menyimpan transaksi. Unit belum diubah menjadi terjual.', false);
+    } finally {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i><span>Konfirmasi Penjualan</span>';
+        }
+    }
+}
+
 
 /* ========================================================== */
 /* PRIBADI V2.3 — PROFILE & MULTI PERSONAL NOTES              */
