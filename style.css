@@ -2002,49 +2002,6 @@ body.dark-mode::before {
   -webkit-backdrop-filter: none !important;
 }
 .header-icon-btn:hover { color: var(--np-deep-violet) !important; background: var(--np-violet-soft) !important; transform: none !important; }
-.header-more-wrap { position: relative; }
-.header-more-menu {
-  position: absolute;
-  top: calc(100% + 9px);
-  right: 0;
-  width: 188px;
-  padding: 6px;
-  border: 1px solid var(--np-line);
-  border-radius: 15px;
-  background: rgba(255,255,255,.94);
-  box-shadow: 0 18px 45px rgba(48,37,76,.14);
-  backdrop-filter: blur(18px) saturate(135%);
-  -webkit-backdrop-filter: blur(18px) saturate(135%);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-5px) scale(.98);
-  transform-origin: top right;
-  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
-  z-index: 1200;
-}
-.header-more-menu.is-open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
-.header-more-menu button {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 39px;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--np-ink);
-  font: 700 11px/1 var(--font-main);
-  text-align: left;
-  cursor: pointer;
-}
-.header-more-menu button i { width: 17px; text-align: center; color: var(--np-muted); }
-.header-more-menu button:hover { background: var(--np-violet-soft); color: var(--np-deep-violet); }
-.header-more-menu button:hover i { color: var(--np-deep-violet); }
-.header-more-menu .menu-danger { color: #b33b55; }
-.header-more-menu .menu-danger i { color: #c94d66; }
-body.dark-mode .header-more-menu { background: rgba(27,22,36,.96); border-color: rgba(255,255,255,.08); box-shadow: 0 18px 45px rgba(0,0,0,.35); }
-
 /* Welcome hero menjadi trigger ringkasan. */
 .np-welcome-hero {
   cursor: pointer;
@@ -2155,7 +2112,6 @@ body.dark-mode .header-more-menu { background: rgba(27,22,36,.96); border-color:
   .app-logo { width: 29px !important; height: 29px !important; }
   .floating-header .title { font-size: 16px !important; }
   .header-icon-btn { width: 32px !important; height: 32px !important; }
-  .header-more-menu { width: 180px; }
   .np-welcome-hero { min-height: 178px !important; padding: 18px !important; }
   .np-welcome-art { width: 42%; }
   .np-phone-image { right: 2%; width: 80px; }
@@ -5340,6 +5296,14 @@ button:active, .nav-item:active, .action-btn:active, .action-btn-square:active {
 .pribadi-profile-card, .pribadi-note-card, .pribadi-settings-card, .pribadi-about-card { background:var(--card-bg); border:1px solid var(--border-subtle); box-shadow:var(--card-shadow); }
 .pribadi-profile-card { display:flex; align-items:center; gap:12px; padding:16px; border-radius:18px; }
 .pribadi-profile-avatar { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:rgba(2,132,199,.12); color:var(--azure-primary); font-size:20px; flex:0 0 auto; }
+.pribadi-profile-avatar img, .pribadi-avatar-editor-preview img { width:100%; height:100%; display:block; object-fit:cover; object-position:center; border-radius:inherit; }
+.pribadi-avatar-editor { display:flex; align-items:center; gap:12px; margin:0 0 14px; padding:10px; border:1px solid var(--border-subtle); border-radius:14px; background:var(--bg-page); }
+.pribadi-avatar-editor-preview { width:64px; height:64px; flex:0 0 64px; border-radius:16px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:rgba(2,132,199,.12); color:var(--azure-primary); font-size:23px; }
+.pribadi-avatar-editor-actions { min-width:0; flex:1; display:flex; flex-direction:column; gap:7px; }
+.pribadi-avatar-action { width:100%; min-height:34px; border:1px solid var(--border-subtle); border-radius:10px; background:var(--card-bg); color:var(--text-primary); display:flex; align-items:center; justify-content:center; gap:7px; font:inherit; font-size:10px; font-weight:800; cursor:pointer; }
+.pribadi-avatar-action:hover { border-color:var(--azure-primary); color:var(--azure-primary); }
+.pribadi-avatar-action.danger { color:#dc2626; }
+.pribadi-avatar-action.danger:hover { border-color:#dc2626; color:#dc2626; }
 .pribadi-profile-info { min-width:0; flex:1; }
 .pribadi-section-kicker { display:block; font-size:8px; line-height:1.2; letter-spacing:1.1px; font-weight:900; color:var(--azure-primary); margin-bottom:4px; }
 .pribadi-profile-info h2, .pribadi-v23-section-head h3 { margin:0; color:var(--text-primary); }
@@ -5384,6 +5348,45 @@ button:active, .nav-item:active, .action-btn:active, .action-btn-square:active {
 .pribadi-sheet-actions button { min-height:36px; }
 body.dark-mode .pribadi-profile-avatar, body.dark-mode .pribadi-note-icon, body.dark-mode .pribadi-setting-icon, body.dark-mode .pribadi-about-logo { background:rgba(56,189,248,.12); }
 @media (max-width:520px) { .pribadi-profile-card { padding:14px; } .pribadi-page-v23 { gap:14px; } }
+
+
+/* PRIBADI — logout dipindahkan dari Header More ke bagian paling bawah.
+   Mengikuti token tema V2.15 agar Light/Dark Mode tetap konsisten. */
+.pribadi-logout-wrap {
+  display:flex;
+  justify-content:center;
+  padding:8px 0 18px;
+}
+.pribadi-logout-badge {
+  min-height:34px;
+  padding:7px 12px;
+  border:1px solid rgba(237,122,36,.24);
+  border-radius:999px;
+  background:rgba(237,122,36,.08);
+  color:var(--azure-primary);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  font:800 9px/1 var(--font-main);
+  letter-spacing:.02em;
+  cursor:pointer;
+  transition:background .2s ease,border-color .2s ease,transform .2s ease;
+}
+.pribadi-logout-badge:hover {
+  background:rgba(237,122,36,.13);
+  border-color:rgba(237,122,36,.34);
+  transform:translateY(-1px);
+}
+.pribadi-logout-badge i { font-size:10px; }
+body.dark-mode .pribadi-logout-badge {
+  border-color:rgba(245,162,97,.24);
+  background:rgba(245,162,97,.08);
+}
+body.dark-mode .pribadi-logout-badge:hover {
+  background:rgba(245,162,97,.13);
+  border-color:rgba(245,162,97,.34);
+}
 
 /* PRIBADI V2.3 PATCH — clickable note list + actions inside detail */
 .note-item-card-clickable { width:100%; border:1px solid var(--border-subtle); text-align:left; cursor:pointer; color:var(--text-primary); background:var(--bg-page); }
@@ -5441,4 +5444,433 @@ body.dark-mode .pribadi-profile-avatar, body.dark-mode .pribadi-note-icon, body.
   .pribadi-inline-detail-content { padding:10px; }
   .pribadi-inline-detail-head h3 { font-size:14px; }
   .personal-note-inline-text { font-size:11.5px; }
+}
+
+
+/* ==========================================================
+   V2.5 FIX — PRIBADI CATATAN: BALANCED SPLIT + THEME STABILITY
+   Keep the note page on the existing light/dark shell. Remove
+   the oversized empty upper area and give list/detail equal cards.
+   ========================================================== */
+#section-pribadi-notes {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  min-height: 0 !important;
+}
+#section-pribadi-notes .pribadi-notes-page {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+#section-pribadi-notes .pribadi-notes-page-inner {
+  background: transparent !important;
+}
+#section-pribadi-notes .pribadi-notes-page-header {
+  background: transparent !important;
+  border-bottom-color: var(--border-subtle) !important;
+}
+#section-pribadi-notes .pribadi-notes-split {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 10px !important;
+}
+#section-pribadi-notes .pribadi-notes-list {
+  min-height: 0 !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  padding: 8px !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 14px !important;
+  background: var(--card-bg) !important;
+}
+#section-pribadi-notes .pribadi-notes-list .note-item-card-clickable {
+  background: var(--bg-page) !important;
+  color: var(--text-primary) !important;
+}
+#section-pribadi-notes .pribadi-inline-detail {
+  height: 100% !important;
+  box-sizing: border-box !important;
+  background: var(--card-bg) !important;
+  border-color: var(--border-subtle) !important;
+}
+#section-pribadi-notes .pribadi-inline-detail-content,
+#section-pribadi-notes .pribadi-inline-detail-empty {
+  color: var(--text-primary) !important;
+}
+#section-pribadi-notes .personal-note-inline-view,
+#section-pribadi-notes .pribadi-inline-edit-fields {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+
+/* Light mode: no accidental dark/white slab inside the note page. */
+body:not(.dark-mode) #section-pribadi-notes .pribadi-notes-list,
+body:not(.dark-mode) #section-pribadi-notes .pribadi-inline-detail {
+  background: #FFFFFF !important;
+  border-color: rgba(37,39,42,.10) !important;
+  color: #25272A !important;
+}
+body:not(.dark-mode) #section-pribadi-notes .pribadi-notes-list .note-item-card-clickable {
+  background: #FBF9F5 !important;
+  color: #25272A !important;
+}
+body:not(.dark-mode) #section-pribadi-notes .pribadi-notes-page,
+body:not(.dark-mode) #section-pribadi-notes .pribadi-notes-page-header {
+  color: #25272A !important;
+}
+
+/* Dark mode: restore the same obsidian surface language as the rest of the app. */
+body.dark-mode #section-pribadi-notes .pribadi-notes-list,
+body.dark-mode #section-pribadi-notes .pribadi-inline-detail {
+  background: #111113 !important;
+  border-color: rgba(237,122,36,.18) !important;
+  color: #F7F7F5 !important;
+  box-shadow: 0 0 12px rgba(237,122,36,.025), inset 0 0 0 1px rgba(237,122,36,.025) !important;
+}
+body.dark-mode #section-pribadi-notes .pribadi-notes-list .note-item-card-clickable {
+  background: #0C0C0D !important;
+  color: #F7F7F5 !important;
+  border-color: rgba(237,122,36,.14) !important;
+}
+body.dark-mode #section-pribadi-notes .pribadi-notes-page,
+body.dark-mode #section-pribadi-notes .pribadi-notes-page-header,
+body.dark-mode #section-pribadi-notes .pribadi-inline-detail-head h3,
+body.dark-mode #section-pribadi-notes .personal-note-inline-text {
+  color: #F7F7F5 !important;
+}
+body.dark-mode #section-pribadi-notes .pribadi-notes-page-title-wrap > span:last-child,
+body.dark-mode #section-pribadi-notes .pribadi-inline-detail-empty,
+body.dark-mode #section-pribadi-notes .note-list-arrow {
+  color: #9A9A9F !important;
+}
+
+@media (max-width:520px) {
+  #section-pribadi-notes .pribadi-notes-split {
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+}
+
+/* V2.8 LOCK — HAPUS CANVAS/PANEL KOSONG PADA HALAMAN CATATAN */
+#section-pribadi-notes {
+  background: transparent !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+#section-pribadi-notes .pribadi-notes-page {
+  background: transparent !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0 0 calc(86px + env(safe-area-inset-bottom)) !important;
+  margin: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+#section-pribadi-notes .pribadi-notes-page-inner {
+  background: transparent !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+#section-pribadi-notes .pribadi-notes-split {
+  padding-top: 0 !important;
+}
+
+
+/* V2.9 LOCK — CATATAN: LEPASKAN SHELL BESAR CONTENT-CARD
+   Hanya aktif saat halaman Daftar Catatan dibuka. Bagian lain
+   aplikasi tetap menggunakan shell/card normal. */
+.content-card.notes-page-shellless {
+  display: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.content-card.notes-page-shellless > #section-pribadi-notes {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+
+/* V2.10 LOCK — DAFTAR CATATAN BERDIRI DI LUAR CONTENT-CARD
+   Saat aktif, shell utama benar-benar disembunyikan agar tidak
+   meninggalkan kotak kosong. */
+.content-container > #section-pribadi-notes {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+.content-container > #section-pribadi-notes.active {
+  display: block !important;
+}
+
+
+/* V2.11 LOCK — CATATAN: DETAIL DINAMIS + TANPA PLACEHOLDER
+   Detail hanya tampil setelah catatan dipilih. Tingginya mengikuti
+   isi catatan, tanpa area kosong tetap. */
+#section-pribadi-notes .pribadi-notes-split {
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  align-content: start !important;
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding-top: 0 !important;
+}
+#section-pribadi-notes .pribadi-notes-list {
+  height: auto !important;
+  max-height: 42vh !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+#section-pribadi-notes .pribadi-inline-detail {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  align-self: start !important;
+}
+#section-pribadi-notes .pribadi-inline-detail-content {
+  height: auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: visible !important;
+  padding: 14px !important;
+}
+#section-pribadi-notes .pribadi-inline-detail-head h3 {
+  font-size: 19px !important;
+  line-height: 1.3 !important;
+  margin-top: 3px !important;
+}
+#section-pribadi-notes .personal-note-inline-view {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 4px 2px 12px !important;
+}
+#section-pribadi-notes .personal-note-inline-text {
+  font-size: 13px !important;
+  line-height: 1.75 !important;
+}
+#section-pribadi-notes .pribadi-inline-edit-fields {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+@media (max-width:520px) {
+  #section-pribadi-notes .pribadi-notes-list { max-height: 40vh !important; }
+  #section-pribadi-notes .pribadi-inline-detail-content { padding: 12px !important; }
+  #section-pribadi-notes .pribadi-inline-detail-head h3 { font-size: 18px !important; }
+  #section-pribadi-notes .personal-note-inline-text { font-size: 13px !important; line-height: 1.7 !important; }
+}
+
+
+/* ========================================================== */
+/* V2.13 LOCKED WELCOME HERO — STATIC CURVED STROKE +        */
+/* SLOW GLOW PULSE + MOVING ORANGE HIGHLIGHT INSIDE FILL     */
+/* ========================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&display=swap');
+
+.np-welcome-trace text {
+  font-family: 'Nunito', Arial, sans-serif !important;
+  font-size: 142px !important;
+  font-weight: 900 !important;
+  letter-spacing: 7px !important;
+  paint-order: stroke fill !important;
+}
+
+.np-welcome-trace-glow,
+.np-welcome-trace-stroke,
+.np-welcome-trace-base,
+.np-welcome-trace-highlight {
+  vector-effect: non-scaling-stroke;
+}
+
+/* Glow and outline use the exact same glyph shape: absolutely static. */
+.np-welcome-trace-glow {
+  fill: none !important;
+  stroke: #ff8a3d !important;
+  stroke-width: 7px !important;
+  stroke-linejoin: round !important;
+  stroke-linecap: round !important;
+  opacity: .78 !important;
+  filter: url(#npWelcomeStrokeGlow) !important;
+  animation: npWelcomeGlowPulse 7s ease-in-out infinite !important;
+}
+.np-welcome-trace-stroke {
+  fill: none !important;
+  stroke: #ff8a3d !important;
+  stroke-width: 3.2px !important;
+  stroke-linejoin: round !important;
+  stroke-linecap: round !important;
+}
+
+/* The base fill never moves. */
+.np-welcome-trace-base {
+  stroke: none !important;
+  fill: #ffffff !important;
+}
+
+/* Only this layer moves: a soft orange light sweeping through the inside of each letter. */
+.np-welcome-trace-highlight {
+  stroke: none !important;
+  fill: url(#npWelcomeSweep) !important;
+  fill-opacity: 1 !important;
+  animation: npWelcomeInnerSweep 6.8s ease-in-out infinite !important;
+}
+
+@keyframes npWelcomeInnerSweep {
+  0%, 18% { transform: translateX(-260px); }
+  72%, 100% { transform: translateX(260px); }
+}
+@keyframes npWelcomeGlowPulse {
+  0%, 100% { opacity: .62; filter: url(#npWelcomeStrokeGlow) drop-shadow(0 0 7px rgba(255,138,61,.36)); }
+  50% { opacity: .92; filter: url(#npWelcomeStrokeGlow) drop-shadow(0 0 13px rgba(255,138,61,.62)); }
+}
+
+/* Dark mode: black fill + brighter dark-orange outline. */
+body.dark-mode .np-welcome-trace-glow,
+body.dark-mode .np-welcome-trace-stroke {
+  stroke: #e56f20 !important;
+}
+body.dark-mode .np-welcome-trace-base {
+  fill: #050505 !important;
+}
+body.dark-mode .np-welcome-trace-highlight {
+  fill: url(#npWelcomeSweep) !important;
+}
+
+/* Light mode: white fill + soft orange outline. */
+body:not(.dark-mode) .np-welcome-trace-glow,
+body:not(.dark-mode) .np-welcome-trace-stroke {
+  stroke: #f28a3d !important;
+}
+body:not(.dark-mode) .np-welcome-trace-base {
+  fill: #ffffff !important;
+}
+
+@media (max-width: 760px) {
+  .np-welcome-trace text { font-size: 120px !important; letter-spacing: 6px !important; }
+}
+@media (max-width: 560px) {
+  .np-welcome-trace text { font-size: 102px !important; letter-spacing: 4px !important; }
+}
+@media (max-width: 380px) {
+  .np-welcome-trace text { font-size: 90px !important; letter-spacing: 3px !important; }
+}
+
+@font-face { font-family:'Chubby Rounded'; src:url('./fonts/Chubby-Rounded.ttf') format('truetype'); font-weight:400; font-style:normal; font-display:swap; }
+
+/* V2.15 LOCKED Welcome Hero final override */
+.np-welcome-trace text { font-family:'Chubby Rounded', Arial, sans-serif !important; font-size:82px !important; font-weight:400 !important; letter-spacing:5px !important; paint-order:stroke fill !important; }
+.np-welcome-trace-highlight { fill:transparent !important; opacity:0 !important; }
+@media (max-width:760px){ .np-welcome-trace text{font-size:72px !important;letter-spacing:4px !important;} }
+@media (max-width:560px){ .np-welcome-trace text{font-size:62px !important;letter-spacing:3px !important;} }
+@media (max-width:380px){ .np-welcome-trace text{font-size:58px !important;letter-spacing:2px !important;} }
+
+/* PRICE LIST — NEW LOCKED UI */
+.pricelist-page-header{margin:2px 2px 12px;}
+.pricelist-page-title{font-size:22px;font-weight:900;letter-spacing:.2px;color:var(--text-primary);}
+.pricelist-page-subtitle{font-size:11px;color:var(--text-secondary);margin-top:2px;}
+.pricelist-brand-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:0 2px 10px;padding:1px;}
+.pricelist-brand-chip{width:100%;min-width:0;min-height:52px;border:1px solid var(--border-subtle);background:var(--card-bg);color:var(--text-primary);border-radius:11px;padding:7px 8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s ease;overflow:hidden;}
+.pricelist-brand-chip:hover{transform:translateY(-1px);border-color:rgba(2,132,199,.35);}
+.pricelist-brand-chip.active{border-color:var(--azure-primary);box-shadow:0 0 0 2px rgba(2,132,199,.10);background:rgba(2,132,199,.035);transform:translateY(-1px);}
+.pricelist-brand-chip img{display:block;width:100%;max-width:68px;height:26px;object-fit:contain;object-position:center;}
+.pricelist-brand-logo-fallback{font-size:9px;font-weight:900;letter-spacing:.02em;text-align:center;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pricelist-search-box{position:relative;display:flex;align-items:center;margin:3px 0 11px;min-height:44px;border:1px solid var(--border-subtle);border-radius:14px;background:var(--bg-card);}
+.pricelist-search-box>i{margin-left:13px;color:var(--text-secondary);font-size:13px;}
+.pricelist-search-box input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text-primary);font-size:16px;padding:11px 8px;}
+.pricelist-search-box input::placeholder{color:var(--text-secondary);}
+#pricelist-search-clear{width:40px;height:40px;border:0;background:transparent;color:var(--text-secondary);cursor:pointer;border-radius:12px;font-size:15px;}
+#pricelist-search-clear:active{background:var(--bg-page);}
+.pricelist-cards-wrapper{display:flex;flex-direction:column;gap:7px;max-height:none;overflow:visible;padding:0 1px 12px;}
+.pricelist-model-row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;border:1px solid var(--border-subtle);background:var(--bg-card);color:var(--text-primary);border-radius:13px;padding:13px 14px;min-height:46px;cursor:pointer;}
+.pricelist-model-row span{font-size:13.5px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pricelist-model-row i{font-size:10px;color:var(--text-secondary);}
+.pricelist-empty-model{text-align:center;padding:28px 14px;color:var(--text-secondary);font-size:12px;}
+.pricelist-detail-modal-card{max-width:420px;max-height:88vh;display:flex;flex-direction:column;}
+.pricelist-detail-header{margin-bottom:8px;}
+.pricelist-detail-header h3{font-size:15px;font-weight:850;margin:0;}
+.pricelist-detail-header p{font-size:11px;color:var(--text-secondary);margin:3px 0 0;}
+.pricelist-detail-scroll{flex:1;overflow-y:auto;max-height:72vh;padding-right:2px;}
+.pricelist-back-button{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;color:var(--azure-primary);font-size:12px;font-weight:800;padding:7px 2px;margin-bottom:6px;cursor:pointer;}
+.pricelist-detail-model-title{font-size:20px;font-weight:900;color:var(--text-primary);padding:2px 1px 12px;}
+.pricelist-variant-list{display:flex;flex-direction:column;gap:9px;}
+.pricelist-variant-card{border:1px solid var(--border-subtle);background:var(--bg-page);border-radius:15px;padding:13px 14px;}
+.pricelist-variant-title{font-size:15px;font-weight:900;color:var(--text-primary);margin-bottom:9px;}
+.pricelist-location-list{display:flex;flex-direction:column;gap:5px;}
+.pricelist-location-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;font-size:12px;color:var(--text-secondary);}
+.pricelist-location-row strong{font-size:13px;font-weight:850;color:var(--text-primary);text-align:right;}
+.pricelist-location-row strong.is-empty{font-weight:500;color:var(--text-secondary);}
+@media (max-width:560px){
+  .pricelist-brand-strip{gap:5px;margin-left:1px;margin-right:1px;margin-bottom:9px;}
+  .pricelist-brand-chip{min-height:46px;border-radius:10px;padding:6px 5px;}
+  .pricelist-brand-chip img{max-width:58px;height:22px;}
+}
+body.dark-mode .pricelist-brand-chip.active{color:var(--text-primary);}
+body.dark-mode .pricelist-variant-card{background:var(--bg-card);}
+
+
+/* DIAGNOSIS — polished brand logos: transparent assets, adaptive visual sizing */
+#section-transaksi .diagnosis-brand-selector .np-brand-logo-btn,
+#section-transaksi .diagnosis-brand-selector .np-brand-logo-btn.brand-samsung,
+#section-transaksi .diagnosis-brand-selector .np-brand-logo-btn.brand-oppo,
+#section-transaksi .diagnosis-brand-selector .np-brand-logo-btn.brand-xiaomi,
+#section-transaksi .diagnosis-brand-selector .np-brand-logo-btn.brand-redmi,
+#section-transaksi .diagnosis-brand-selector .np-brand-logo-btn.brand-poco,
+#section-transaksi .diagnosis-brand-selector .np-brand-logo-btn.brand-vivo,
+#section-transaksi .diagnosis-brand-selector .np-brand-logo-btn.brand-realme,
+#section-transaksi .diagnosis-brand-selector .np-brand-logo-btn.brand-infinix,
+#section-transaksi .diagnosis-brand-selector .np-brand-logo-btn.brand-tecno,
+#section-transaksi .diagnosis-brand-selector .np-brand-logo-btn.brand-itel {
+  background:var(--card-bg);
+  border-color:var(--border-subtle);
+}
+#section-transaksi .np-brand-logo-btn img {
+  display:block;
+  width:100%;
+  max-width:76px;
+  height:30px;
+  object-fit:contain;
+  object-position:center;
+  padding:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+#section-transaksi .np-diagnosis-panel-head img.np-diagnosis-logo {
+  width:78px;
+  max-width:78px;
+  height:32px;
+  object-fit:contain;
+  object-position:center;
+  padding:0;
+  border-radius:0;
+  background:transparent !important;
+  box-shadow:none;
+}
+#section-transaksi .np-diagnosis-panel-head .brand-logo-samsung,
+#section-transaksi .np-diagnosis-panel-head .brand-logo-oppo,
+#section-transaksi .np-diagnosis-panel-head .brand-logo-xiaomi,
+#section-transaksi .np-diagnosis-panel-head .brand-logo-redmi,
+#section-transaksi .np-diagnosis-panel-head .brand-logo-poco,
+#section-transaksi .np-diagnosis-panel-head .brand-logo-vivo,
+#section-transaksi .np-diagnosis-panel-head .brand-logo-realme,
+#section-transaksi .np-diagnosis-panel-head .brand-logo-infinix,
+#section-transaksi .np-diagnosis-panel-head .brand-logo-tecno,
+#section-transaksi .np-diagnosis-panel-head .brand-logo-itel {
+  background:transparent !important;
+}
+@media(max-width:560px){
+  #section-transaksi .np-brand-logo-btn img{max-width:60px;height:23px;}
+  #section-transaksi .np-diagnosis-panel-head img.np-diagnosis-logo{max-width:68px;width:68px;height:28px;}
 }

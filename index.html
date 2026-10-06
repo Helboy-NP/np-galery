@@ -68,16 +68,6 @@
         <button class="connection-info-refresh" type="button" onclick="checkConnectionStatusManual(this)"><i class="fa-solid fa-rotate"></i> Periksa koneksi</button>
     </section>
 </div>
-<div class="header-more-wrap">
-<button class="header-icon-btn header-more-btn" id="btn-header-more" type="button" onclick="toggleHeaderMore(event)" title="Lainnya" aria-label="Menu lainnya" aria-expanded="false" aria-controls="header-more-menu">
-<i class="fa-solid fa-ellipsis-vertical"></i>
-</button>
-<div class="header-more-menu" id="header-more-menu" role="menu" aria-hidden="true">
-<button type="button" role="menuitem" onclick="restartApp(this); closeHeaderMore();"><i class="fa-solid fa-rotate-right"></i><span>Restart Aplikasi</span></button>
-<button type="button" role="menuitem" onclick="toggleTheme(); closeHeaderMore();"><i class="fa-solid fa-moon" id="theme-menu-icon"></i><span id="theme-menu-label">Mode Gelap</span></button>
-<button type="button" role="menuitem" class="menu-danger" onclick="handleLogout(); closeHeaderMore();"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></button>
-</div>
-</div>
 </div>
 </div>
 </header>
@@ -90,8 +80,29 @@
     <section class="np-welcome-hero np-welcome-typography" id="np-welcome-toggle">
         <div class="np-welcome-copy np-welcome-type-copy">
             <svg class="np-welcome-trace" viewBox="0 0 1200 180" role="img" aria-label="WELCOME HELBOY" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <filter id="npWelcomeStrokeGlow" x="-30%" y="-80%" width="160%" height="260%">
+                        <feGaussianBlur stdDeviation="4.5"/>
+                    </filter>
+                    <linearGradient id="npWelcomeBeam" gradientUnits="userSpaceOnUse" x1="-260" y1="0" x2="240" y2="0">
+                        <stop offset="0" stop-color="#ff8a3d" stop-opacity="0"/>
+                        <stop offset=".38" stop-color="#ff8a3d" stop-opacity="0"/>
+                        <stop offset=".50" stop-color="#ffd0a8" stop-opacity=".98"/>
+                        <stop offset=".62" stop-color="#ff8a3d" stop-opacity=".78"/>
+                        <stop offset="1" stop-color="#ff8a3d" stop-opacity="0"/>
+                    </linearGradient>
+                    <clipPath id="npWelcomeTextClip" clipPathUnits="userSpaceOnUse">
+                        <text class="np-welcome-trace-clip" x="600" y="112" text-anchor="middle">WELCOME HELBOY</text>
+                    </clipPath>
+                </defs>
+                <text class="np-welcome-trace-glow" x="600" y="112" text-anchor="middle">WELCOME HELBOY</text>
+                <text class="np-welcome-trace-stroke" x="600" y="112" text-anchor="middle">WELCOME HELBOY</text>
                 <text class="np-welcome-trace-base" x="600" y="112" text-anchor="middle">WELCOME HELBOY</text>
-                <text class="np-welcome-trace-neon" x="600" y="112" text-anchor="middle" pathLength="1000">WELCOME HELBOY</text>
+                <g clip-path="url(#npWelcomeTextClip)" pointer-events="none" aria-hidden="true">
+                    <rect x="-500" y="0" width="500" height="180" fill="url(#npWelcomeBeam)">
+                        <animateTransform attributeName="transform" type="translate" values="-800 0;1200 0;1200 0" keyTimes="0;.68;1" dur="5.6s" repeatCount="indefinite"/>
+                    </rect>
+                </g>
             </svg>
         </div>
         <div class="np-welcome-neon-orbit" aria-hidden="true">
@@ -148,14 +159,14 @@
 </section>
 
 <section class="tab-content" id="section-transaksi">
-<div class="np-page-intro"><span class="np-kicker">OPERATIONS</span><h2>Transaksi</h2><p>Kelola unit masuk, unit keluar, dan alat bantu diagnosis.</p></div>
+<div class="np-page-intro"><span class="np-kicker">OPERATIONS</span><h2 id="np-transaksi-page-title">Diagnosis</h2><p>Kelola unit masuk, unit keluar, dan alat bantu diagnosis.</p></div>
 
 <div class="np-transaksi-tabs" role="tablist" aria-label="Transaksi dan Diagnosis">
-  <button class="np-transaksi-tab active" id="tab-transaksi-list" type="button" role="tab" aria-selected="true" onclick="switchTransaksiSubTab('transaksi')">TRANSAKSI</button>
-  <button class="np-transaksi-tab" id="tab-diagnosis-list" type="button" role="tab" aria-selected="false" onclick="switchTransaksiSubTab('diagnosis')">DIAGNOSIS</button>
+  <button class="np-transaksi-tab" id="tab-transaksi-list" type="button" role="tab" aria-selected="false" onclick="switchTransaksiSubTab('transaksi')">TRANSAKSI</button>
+  <button class="np-transaksi-tab active" id="tab-diagnosis-list" type="button" role="tab" aria-selected="true" onclick="switchTransaksiSubTab('diagnosis')">DIAGNOSIS</button>
 </div>
 
-<div class="sub-content active" id="sub-transaksi">
+<div class="sub-content" id="sub-transaksi">
   <div class="np-transaksi-filter" role="tablist" aria-label="Filter transaksi">
     <button class="np-trx-filter active" type="button" data-filter="semua" onclick="setTransaksiFilter('semua')">SEMUA</button>
     <button class="np-trx-filter" type="button" data-filter="masuk" onclick="setTransaksiFilter('masuk')">MASUK</button>
@@ -166,7 +177,7 @@
   </div>
 </div>
 
-<div class="sub-content" id="sub-diagnosis">
+<div class="sub-content active" id="sub-diagnosis">
   <div class="np-diagnosis-intro">
     <span class="np-kicker">QUICK TOOLS</span>
     <h3>Diagnosis Perangkat</h3>
@@ -176,42 +187,24 @@
   <div class="np-diagnosis-panel" id="np-diagnosis-panel"></div>
 </div>
 </section>
-<!-- SECTION PRICE LIST (TATA LETAK: TOMBOL +, SEARCH, TOMBOL POP-UP, & FILTER SEJAJAR) -->
+<!-- SECTION PRICE LIST -->
 <section class="tab-content" id="section-pricelist">
-<div class="pricelist-filter-row">
-<!-- TOMBOL TAMBAH PRODUK BARU RINGKAS (IKON + SAJA) -->
-<button class="action-btn-square" id="btn-pricelist-add" onclick="openAddPriceListModal()" title="Tambah Model Baru" type="button">
-<i class="fa-solid fa-plus"></i>
-</button>
-<!-- AREA PENCARIAN -->
-<div class="filter-search-box">
-<i class="fa-solid fa-magnifying-glass"></i>
-<input id="filter-model-input" oninput="filterPriceList()" placeholder="Search..." type="text"/>
-<button class="action-btn" onclick="triggerPriceListModalSearch()" style="position: absolute; right: 8px; width: 26px; height: 26px;" title="Cari / Buka Pop-up" type="button">
-<i class="fa-solid fa-arrow-turn-down" style="transform: rotate(90deg); font-size: 11px;"></i>
-</button>
-</div>
-<!-- TOMBOL TAB BARU / POP-UP SEBELAH PENCARIAN -->
-<button class="action-btn-square" id="btn-pricelist-action" onclick="triggerPriceListModalSearch()" title="Lihat Hasil Pop-up" type="button">
-<i class="fa-solid fa-arrow-up-right-from-square"></i>
-</button>
-<!-- DROPDOWN FILTER MERK -->
-<div class="filter-select-box">
-<select class="form-select-glass" id="filter-brand-select" onchange="filterPriceList()">
-<option value="ALL">All Merk</option>
-</select>
-</div>
-</div>
-<div class="pricelist-summary">
-<span id="pricelist-count-badge">0 Item</span>
-</div>
-<div class="pricelist-cards-wrapper" id="pricelist-container">
-</div>
+  <div class="pricelist-page-header">
+    <div class="pricelist-page-title">PRICE LIST</div>
+    <div class="pricelist-page-subtitle">Cari model dan lihat harga per lokasi</div>
+  </div>
+  <div class="pricelist-brand-strip" id="pricelist-brand-chips" aria-label="Pilih brand"></div>
+  <div class="pricelist-search-box">
+    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+    <input id="filter-model-input" oninput="filterPriceList()" placeholder="Cari model..." type="text" autocomplete="off" aria-label="Cari model"/>
+    <button id="pricelist-search-clear" type="button" onclick="clearPriceListSearch()" title="Hapus pencarian" aria-label="Hapus pencarian"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="pricelist-cards-wrapper" id="pricelist-container"></div>
 </section>
 <section class="tab-content" id="section-pribadi">
   <div class="pribadi-page-v23">
     <div class="pribadi-profile-card">
-      <div class="pribadi-profile-avatar" aria-hidden="true"><i class="fa-solid fa-user"></i></div>
+      <div class="pribadi-profile-avatar" id="pribadi-profile-avatar" aria-hidden="true"><i class="fa-solid fa-user"></i></div>
       <div class="pribadi-profile-info">
         <span class="pribadi-section-kicker">PROFILE</span>
         <h2 id="pribadi-profile-name">Pengguna NP_Galery</h2>
@@ -252,11 +245,6 @@
           <span><strong>Tampilan</strong><small id="pribadi-theme-label">Mode gelap / terang</small></span>
           <i class="fa-solid fa-chevron-right"></i>
         </button>
-        <button class="pribadi-setting-row" type="button" onclick="showToast('Info','Pengaturan notifikasi siap dikembangkan.')">
-          <span class="pribadi-setting-icon"><i class="fa-regular fa-bell"></i></span>
-          <span><strong>Notifikasi</strong><small>Kelola pemberitahuan aplikasi</small></span>
-          <i class="fa-solid fa-chevron-right"></i>
-        </button>
         <button class="pribadi-setting-row" type="button" onclick="showToast('Info','Pengaturan keamanan siap dikembangkan.')">
           <span class="pribadi-setting-icon"><i class="fa-solid fa-shield-halved"></i></span>
           <span><strong>Keamanan</strong><small>Perlindungan dan akses data</small></span>
@@ -265,6 +253,11 @@
         <button class="pribadi-setting-row" type="button" onclick="showToast('Info','Backup & Data siap dikembangkan.')">
           <span class="pribadi-setting-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
           <span><strong>Backup &amp; Data</strong><small>Kelola data aplikasi</small></span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+        <button class="pribadi-setting-row" type="button" onclick="restartApp(this)">
+          <span class="pribadi-setting-icon"><i class="fa-solid fa-rotate-right"></i></span>
+          <span><strong>Restart Aplikasi</strong><small>Muat ulang aplikasi</small></span>
           <i class="fa-solid fa-chevron-right"></i>
         </button>
       </div>
@@ -280,12 +273,66 @@
       <div class="pribadi-about-card">
         <span class="pribadi-about-logo"><i class="fa-solid fa-images"></i></span>
         <span><strong>NP_Galery</strong><small>Data &amp; gallery management</small></span>
-        <span class="pribadi-version-badge">V2.3</span>
+        <span class="pribadi-version-badge">V2.5</span>
       </div>
+    </div>
+
+    <div class="pribadi-logout-wrap">
+      <button class="pribadi-logout-badge" type="button" onclick="handleLogout()" aria-label="Logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Logout</span>
+      </button>
     </div>
   </div>
 </section>
 </div>
+<!-- PRIBADI V2.3 — FULL PAGE DAFTAR CATATAN -->
+<section class="tab-content pribadi-notes-page" id="section-pribadi-notes">
+  <div class="pribadi-notes-page-inner">
+    <div class="pribadi-notes-page-header">
+      <button class="pribadi-notes-back" type="button" onclick="closeDaftarNotesModal()" aria-label="Kembali ke Pribadi">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div class="pribadi-notes-page-title-wrap">
+        <span class="pribadi-section-kicker">PERSONAL</span>
+        <h2>Daftar Catatan</h2>
+        <span id="full-notes-count">0 catatan</span>
+      </div>
+    </div>
+    <div class="pribadi-notes-split">
+      <div class="pribadi-notes-list" id="notes-page-container">
+        <div class="empty-stok-msg">Belum ada catatan tersimpan.</div>
+      </div>
+      <section class="pribadi-inline-detail" id="pribadi-inline-detail" aria-live="polite">
+        <div class="pribadi-inline-detail-content" id="pribadi-inline-detail-content" hidden>
+          <div class="pribadi-inline-detail-head">
+            <div>
+              <span class="pribadi-section-kicker">DETAIL CATATAN</span>
+              <h3 id="inline-note-title"></h3>
+            </div>
+          </div>
+          <div class="personal-note-inline-view" id="personal-note-inline-view">
+            <div class="personal-note-inline-text" id="inline-note-content"></div>
+          </div>
+          <div class="personal-note-edit-fields pribadi-inline-edit-fields" id="personal-note-inline-edit" hidden>
+            <label class="pribadi-edit-field"><span>Judul</span><input id="inline-note-title-input" type="text" placeholder="Judul catatan" autocomplete="off"></label>
+            <label class="pribadi-edit-field"><span>Isi Catatan</span><textarea id="inline-note-content-input" rows="10" placeholder="Tulis catatan pribadi kamu..."></textarea></label>
+          </div>
+          <div class="pribadi-sheet-actions personal-note-detail-actions" id="inline-note-view-actions">
+            <button class="note-detail-action" type="button" onclick="bukaEditCatatanDariDetail()"><i class="fa-solid fa-pen"></i> Edit</button>
+            <button class="note-detail-action" type="button" onclick="salinCatatanAktif()"><i class="fa-solid fa-copy"></i> Salin</button>
+            <button class="note-detail-action note-detail-delete" type="button" onclick="hapusCatatanAktif()"><i class="fa-solid fa-trash"></i> Hapus</button>
+          </div>
+          <div class="pribadi-sheet-actions personal-note-detail-actions" id="inline-note-edit-actions" hidden>
+            <button class="btn-cancel" type="button" onclick="batalEditCatatanDetail()">Batal</button>
+            <button class="btn-save" type="button" onclick="simpanEditCatatanDetail()"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+
 </main>
 <nav class="floating-nav-container" aria-label="Navigasi utama">
 <div class="floating-nav nav-3d">
@@ -484,56 +531,6 @@
     </div>
   </div>
 </div>
-<!-- PRIBADI V2.3 — FULL PAGE DAFTAR CATATAN -->
-<section class="tab-content pribadi-notes-page" id="section-pribadi-notes">
-  <div class="pribadi-notes-page-inner">
-    <div class="pribadi-notes-page-header">
-      <button class="pribadi-notes-back" type="button" onclick="closeDaftarNotesModal()" aria-label="Kembali ke Pribadi">
-        <i class="fa-solid fa-arrow-left"></i>
-      </button>
-      <div class="pribadi-notes-page-title-wrap">
-        <span class="pribadi-section-kicker">PERSONAL</span>
-        <h2>Daftar Catatan</h2>
-        <span id="full-notes-count">0 catatan</span>
-      </div>
-    </div>
-    <div class="pribadi-notes-split">
-      <div class="pribadi-notes-list" id="notes-page-container">
-        <div class="empty-stok-msg">Belum ada catatan tersimpan.</div>
-      </div>
-      <section class="pribadi-inline-detail" id="pribadi-inline-detail" aria-live="polite">
-        <div class="pribadi-inline-detail-empty" id="pribadi-inline-detail-empty">
-          <i class="fa-regular fa-note-sticky"></i>
-          <span>Pilih catatan untuk melihat detailnya</span>
-        </div>
-        <div class="pribadi-inline-detail-content" id="pribadi-inline-detail-content" hidden>
-          <div class="pribadi-inline-detail-head">
-            <div>
-              <span class="pribadi-section-kicker">DETAIL CATATAN</span>
-              <h3 id="inline-note-title"></h3>
-            </div>
-          </div>
-          <div class="personal-note-inline-view" id="personal-note-inline-view">
-            <div class="personal-note-inline-text" id="inline-note-content"></div>
-          </div>
-          <div class="personal-note-edit-fields pribadi-inline-edit-fields" id="personal-note-inline-edit" hidden>
-            <label class="pribadi-edit-field"><span>Judul</span><input id="inline-note-title-input" type="text" placeholder="Judul catatan" autocomplete="off"></label>
-            <label class="pribadi-edit-field"><span>Isi Catatan</span><textarea id="inline-note-content-input" rows="10" placeholder="Tulis catatan pribadi kamu..."></textarea></label>
-          </div>
-          <div class="pribadi-sheet-actions personal-note-detail-actions" id="inline-note-view-actions">
-            <button class="note-detail-action" type="button" onclick="bukaEditCatatanDariDetail()"><i class="fa-solid fa-pen"></i> Edit</button>
-            <button class="note-detail-action" type="button" onclick="salinCatatanAktif()"><i class="fa-solid fa-copy"></i> Salin</button>
-            <button class="note-detail-action note-detail-delete" type="button" onclick="hapusCatatanAktif()"><i class="fa-solid fa-trash"></i> Hapus</button>
-          </div>
-          <div class="pribadi-sheet-actions personal-note-detail-actions" id="inline-note-edit-actions" hidden>
-            <button class="btn-cancel" type="button" onclick="batalEditCatatanDetail()">Batal</button>
-            <button class="btn-save" type="button" onclick="simpanEditCatatanDetail()"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
-          </div>
-        </div>
-      </section>
-    </div>
-  </div>
-</section>
 
 <!-- MODAL POP-UP TAMBAH CATATAN KAS BARU -->
 
@@ -546,6 +543,15 @@
     <div class="pribadi-sheet-header">
       <div><span class="pribadi-section-kicker">PROFILE</span><h3 id="profile-editor-title">Edit Profil</h3></div>
       <button class="pribadi-icon-button" type="button" onclick="closeProfileEditor()" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <label class="pribadi-edit-field"><span>Nama</span><input id="pribadi-profile-name-input" type="text" placeholder="Nama kamu" autocomplete="off"></label>
+    <div class="pribadi-avatar-editor">
+      <div class="pribadi-avatar-editor-preview" id="pribadi-avatar-editor-preview"><i class="fa-solid fa-user"></i></div>
+      <div class="pribadi-avatar-editor-actions">
+        <input id="pribadi-avatar-file-input" type="file" accept="image/*" hidden onchange="handlePribadiAvatarSelected(event)">
+        <button class="pribadi-avatar-action" type="button" onclick="document.getElementById('pribadi-avatar-file-input')?.click()"><i class="fa-solid fa-image"></i><span>Ganti Avatar</span></button>
+        <button class="pribadi-avatar-action danger" type="button" onclick="removePribadiAvatar()"><i class="fa-solid fa-trash-can"></i><span>Hapus Avatar</span></button>
+      </div>
     </div>
     <label class="pribadi-edit-field"><span>Nama</span><input id="pribadi-profile-name-input" type="text" placeholder="Nama kamu" autocomplete="off"></label>
     <label class="pribadi-edit-field"><span>Role</span><input id="pribadi-profile-role-input" type="text" placeholder="Pemilik / Admin" autocomplete="off"></label>
@@ -845,24 +851,18 @@
     </button>
   </div>
 </div>
-<!-- MODAL POP-UP DETAIL PRICE LIST -->
+<!-- MODAL DETAIL PRICE LIST -->
 <div class="custom-modal-overlay" id="pricelist-detail-modal">
-<div class="custom-modal-card" style="max-width: 420px; max-height: 85vh; display: flex; flex-direction: column;">
-<div class="edit-modal-header" style="text-align: left; margin-bottom: 10px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-<div>
-<h3 style="font-size: 15px; font-weight: 800;">
-<i class="fa-solid fa-tags" style="color: var(--azure-primary); margin-right: 6px;"></i> Model price details
-                    </h3>
-<p id="modal-pricelist-subtitle" style="font-size: 11px; color: var(--text-secondary);">Smartphone price list</p>
-</div>
-<span class="badge-count" id="modal-pricelist-count">0 Item</span>
-</div>
-<div id="pricelist-modal-results-container" style="flex: 1; max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
-</div>
-<div class="edit-modal-actions" style="margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
-<button class="btn-cancel" onclick="closePriceListModal()" style="width: 100%;" type="button">Close</button>
-</div>
-</div>
+  <div class="custom-modal-card pricelist-detail-modal-card">
+    <div class="edit-modal-header pricelist-detail-header">
+      <div>
+        <h3><i class="fa-solid fa-tags" style="color: var(--azure-primary); margin-right: 6px;"></i> Price List</h3>
+        <p id="modal-pricelist-subtitle">Smartphone price list</p>
+      </div>
+      <span class="badge-count" id="modal-pricelist-count"></span>
+    </div>
+    <div id="pricelist-modal-results-container" class="pricelist-detail-scroll"></div>
+  </div>
 </div>
 <!-- MODAL WEB VIEWER IN-APP -->
 <div class="custom-modal-overlay" id="imei-web-modal">

@@ -114,6 +114,20 @@ function formatRupiah(num) {
     return formatRupiahRingkas(num);
 }
 
+function sortBrandsWithCustomOrder(brands) {
+    const order = ORDERED_BRANDS;
+    return Array.from(new Set((brands || []).filter(Boolean))).sort((a, b) => {
+        const aa = String(a).trim().toUpperCase();
+        const bb = String(b).trim().toUpperCase();
+        const ia = order.indexOf(aa);
+        const ib = order.indexOf(bb);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return aa.localeCompare(bb);
+    });
+}
+
 function naturalModelCompare(a, b) {
     return (a || '').localeCompare(b || '', undefined, { numeric: true, sensitivity: 'base' });
 }
@@ -274,92 +288,37 @@ async function syncFromSupabase() {
 /* FUNGSI SINKRONISASI MASING-MASING TABEL KE SUPABASE        */
 /* ========================================================== */
 
-// 1. TABEL PRICELIST
+// 1. PRICE LIST — NEW STRUCTURE (pricelist_new)
 async function syncPriceListFromSupabaseOnly() {
     if (!supabaseClient || isPublicWarrantyMode) return;
     try {
-        const { data, error } = await supabaseClient.from('pricelist').select('*');
+        const { data, error } = await supabaseClient
+            .from('pricelist_new')
+            .select('model_id, brand, model, ram_rom, jakarta, cikarang, bnib');
 
-        if (!error && data) {
-            if (data.length === 0) {
-                await initialMigratePriceListToSupabase();
-                return;
-            }
-            rawPriceListData = data.map(item => ({
-                id: item.id,
-                brand: item.brand,
-                model: item.model,
-                jkt: item.jkt || '--',
-                sgc: item.sgc || '--',
-                bnib: item.bnib || '--'
-            }));
+        if (error) throw error;
 
-            sortPriceListConsistently(rawPriceListData);
-            initBrandDropdown();
-            filterPriceList();
-        }
+        rawPriceListData = Array.isArray(data) ? data.map(item => ({
+            model_id: String(item.model_id || ''),
+            id: String(item.model_id || ''),
+            brand: String(item.brand || '').trim(),
+            model: String(item.model || '').trim(),
+            ram_rom: String(item.ram_rom || '').trim(),
+            jakarta: Array.isArray(item.jakarta) ? item.jakarta.filter(Number.isInteger) : [],
+            cikarang: Array.isArray(item.cikarang) ? item.cikarang.filter(Number.isInteger) : [],
+            bnib: Array.isArray(item.bnib) ? item.bnib.filter(Number.isInteger) : []
+        })) : [];
+
+        sortPriceListConsistently(rawPriceListData);
+        initPriceListUI();
     } catch (e) {
-        console.warn('Gagal memuat tabel pricelist:', e);
+        console.warn('Gagal memuat tabel pricelist_new:', e);
     }
 }
 
-async function initialMigratePriceListToSupabase() {
-    try {
-        let oldData = [];
-        try {
-            const response = await fetch('pricelist.json');
-            if (response.ok) oldData = await response.json();
-        } catch (e) {}
-
-        let bnibData = [];
-        try {
-            const resBnib = await fetch('listbnib.json');
-            if (resBnib.ok) bnibData = await resBnib.json();
-        } catch (e) {}
-
-        let mergedMap = new Map();
-        oldData.forEach(item => {
-            let key = `${item.brand.trim().toUpperCase()} - ${item.model.trim().toUpperCase()}`;
-            mergedMap.set(key, {
-                id: String(item.id || 'pl-' + Math.random().toString(36).substr(2, 9)),
-                brand: item.brand.trim().toUpperCase(),
-                model: item.model.trim(),
-                jkt: item.jkt || '--',
-                sgc: item.sgc || '--',
-                bnib: item.bnib || '--'
-            });
-        });
-
-        bnibData.forEach(item => {
-            let key = `${item.brand.trim().toUpperCase()} - ${item.model.trim().toUpperCase()}`;
-            if (mergedMap.has(key)) {
-                let existing = mergedMap.get(key);
-                if (item.bnib && item.bnib !== '--') existing.bnib = item.bnib;
-            } else {
-                mergedMap.set(key, {
-                    id: String(item.id || 'pl-' + Math.random().toString(36).substr(2, 9)),
-                    brand: item.brand.trim().toUpperCase(),
-                    model: item.model.trim(),
-                    jkt: item.jkt || '--',
-                    sgc: item.sgc || '--',
-                    bnib: item.bnib || '--'
-                });
-            }
-        });
-
-        const initialList = Array.from(mergedMap.values());
-        if (initialList.length > 0 && supabaseClient) {
-            const { error } = await supabaseClient.from('pricelist').upsert(initialList);
-            if (!error) {
-                rawPriceListData = initialList;
-                sortPriceListConsistently(rawPriceListData);
-                initBrandDropdown();
-                filterPriceList();
-            }
-        }
-    } catch (err) {
-        console.warn('Gagal migrasi data awal pricelist:', err);
-    }
+function initPriceListUI() {
+    renderPriceListBrands();
+    filterPriceList();
 }
 
 // 2. TABEL PRODUCT
@@ -502,11 +461,12 @@ function setupSupabaseRealtime() {
 
     supabaseClient
         .channel('npgalery-realtime-channel')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pricelist' }, () => scheduleRealtimeSync('pricelist', syncPriceListFromSupabaseOnly))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pricelist_new' }, () => scheduleRealtimeSync('pricelist_new', syncPriceListFromSupabaseOnly))
         .on('postgres_changes', { event: '*', schema: 'public', table: 'product' }, () => scheduleRealtimeSync('product', syncProductsFromSupabaseOnly))
         .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => scheduleRealtimeSync('transactions', syncTransactionsFromSupabaseOnly))
         .on('postgres_changes', { event: '*', schema: 'public', table: 'cash_mutations' }, () => scheduleRealtimeSync('cash_mutations', syncCashFromSupabaseOnly))
         .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, () => scheduleRealtimeSync('notes', syncNotesFromSupabaseOnly))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => scheduleRealtimeSync('profiles-avatar', syncPribadiAvatarFromSupabase))
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
                 setConnectionStatus('connected');
@@ -580,6 +540,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    await syncPribadiAvatarFromSupabase();
     await loadDiagnosisData();
     initDiagnosisInline();
     renderTransaksiCompact();
@@ -1227,12 +1188,140 @@ function getPrimaryPersonalNote() {
     return daftarNotes[0] || null;
 }
 
+let pribadiAvatarPath = null;
+let pribadiAvatarObjectUrl = null;
+
+function renderPribadiAvatar(avatarUrl = null) {
+    const targets = [
+        document.getElementById('pribadi-profile-avatar'),
+        document.getElementById('pribadi-avatar-editor-preview')
+    ].filter(Boolean);
+    targets.forEach((el) => {
+        el.innerHTML = '';
+        if (avatarUrl) {
+            const img = document.createElement('img');
+            img.src = avatarUrl;
+            img.alt = 'Avatar profil';
+            img.loading = 'lazy';
+            img.onerror = () => { el.innerHTML = '<i class="fa-solid fa-user"></i>'; };
+            el.appendChild(img);
+        } else {
+            el.innerHTML = '<i class="fa-solid fa-user"></i>';
+        }
+    });
+}
+
+async function getCurrentSupabaseUser() {
+    if (!supabaseClient) return null;
+    const { data } = await supabaseClient.auth.getUser();
+    return data?.user || null;
+}
+
+async function getProfileAvatarUrl(path) {
+    if (!supabaseClient || !path) return null;
+    const { data } = supabaseClient.storage.from('profile-avatars').getPublicUrl(path);
+    return data?.publicUrl ? `${data.publicUrl}?v=${encodeURIComponent(pribadiAvatarPath || '')}` : null;
+}
+
+async function syncPribadiAvatarFromSupabase() {
+    if (!supabaseClient || !navigator.onLine) return;
+    try {
+        const user = await getCurrentSupabaseUser();
+        if (!user) { pribadiAvatarPath = null; renderPribadiAvatar(null); return; }
+        const { data, error } = await supabaseClient.from('profiles').select('avatar_path').eq('id', user.id).maybeSingle();
+        if (error) throw error;
+        pribadiAvatarPath = data?.avatar_path || null;
+        const url = await getProfileAvatarUrl(pribadiAvatarPath);
+        renderPribadiAvatar(url);
+    } catch (err) {
+        console.warn('Gagal memuat avatar profil dari Supabase:', err);
+    }
+}
+
+async function preparePribadiAvatarImage(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+                const size = Math.min(img.naturalWidth, img.naturalHeight);
+                const sx = Math.max(0, Math.round((img.naturalWidth - size) / 2));
+                const sy = Math.max(0, Math.round((img.naturalHeight - size) / 2));
+                const canvas = document.createElement('canvas');
+                canvas.width = 512; canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, sx, sy, size, size, 0, 0, 512, 512);
+                canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Gagal memproses gambar')), 'image/jpeg', 0.88);
+            };
+            img.onerror = () => reject(new Error('Foto tidak dapat dibaca'));
+            img.src = reader.result;
+        };
+        reader.onerror = () => reject(new Error('File tidak dapat dibaca'));
+        reader.readAsDataURL(file);
+    });
+}
+
+window.handlePribadiAvatarSelected = async function(event) {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('Peringatan', 'Pilih file gambar.', false); return; }
+    if (!supabaseClient || !navigator.onLine) { showToast('Gagal', 'Avatar membutuhkan koneksi internet.', false); return; }
+    try {
+        const user = await getCurrentSupabaseUser();
+        if (!user) throw new Error('Sesi login tidak ditemukan');
+        showToast('Avatar', 'Mengunggah avatar ke cloud...');
+        const blob = await preparePribadiAvatarImage(file);
+        const previousPath = pribadiAvatarPath;
+        const path = `${user.id}/avatar_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+        const { error: uploadError } = await supabaseClient.storage.from('profile-avatars').upload(path, blob, { contentType:'image/jpeg', upsert:false });
+        if (uploadError) throw uploadError;
+        const { error: profileError } = await supabaseClient.from('profiles').upsert({ id:user.id, avatar_path:path, updated_at:new Date().toISOString() });
+        if (profileError) {
+            if (path) await supabaseClient.storage.from('profile-avatars').remove([path]);
+            throw profileError;
+        }
+        pribadiAvatarPath = path;
+        const url = await getProfileAvatarUrl(path);
+        if (previousPath && previousPath !== path) {
+            await supabaseClient.storage.from('profile-avatars').remove([previousPath]);
+        }
+        renderPribadiAvatar(url);
+        showToast('Berhasil', 'Avatar tersimpan dan akan sinkron ke perangkat lain.');
+    } catch (err) {
+        console.warn('Gagal menyimpan avatar:', err);
+        showToast('Gagal', 'Avatar belum berhasil disimpan ke cloud.', false);
+    } finally {
+        if (event?.target) event.target.value = '';
+    }
+};
+
+window.removePribadiAvatar = async function() {
+    if (!supabaseClient || !navigator.onLine) { showToast('Gagal', 'Hapus avatar membutuhkan koneksi internet.', false); return; }
+    try {
+        const user = await getCurrentSupabaseUser();
+        if (!user) throw new Error('Sesi login tidak ditemukan');
+        showToast('Avatar', 'Menghapus avatar...');
+        const path = pribadiAvatarPath;
+        const { error: profileError } = await supabaseClient.from('profiles').update({ avatar_path:null, updated_at:new Date().toISOString() }).eq('id', user.id);
+        if (profileError) throw profileError;
+        if (path) await supabaseClient.storage.from('profile-avatars').remove([path]);
+        pribadiAvatarPath = null;
+        renderPribadiAvatar(null);
+        showToast('Berhasil', 'Avatar dihapus dan dikembalikan ke default.');
+    } catch (err) {
+        console.warn('Gagal menghapus avatar:', err);
+        showToast('Gagal', 'Avatar belum berhasil dihapus.', false);
+    }
+};
+
 window.renderPribadiV23 = function() {
     const nameEl = document.getElementById('pribadi-profile-name');
     const roleEl = document.getElementById('pribadi-profile-role');
     const saved = JSON.parse(localStorage.getItem('npgalery_profile') || 'null');
     if (nameEl) nameEl.textContent = saved?.name || 'Pengguna NP_Galery';
     if (roleEl) roleEl.textContent = saved?.role || 'Pemilik / Admin';
+    renderPribadiAvatar(null);
+    if (pribadiAvatarPath && supabaseClient) getProfileAvatarUrl(pribadiAvatarPath).then(renderPribadiAvatar);
 
     const titleEl = document.getElementById('pribadi-note-title');
     const previewEl = document.getElementById('pribadi-note-preview');
@@ -1253,6 +1342,8 @@ window.openProfileEditor = function() {
     const r = document.getElementById('pribadi-profile-role-input');
     if (n) n.value = saved.name || '';
     if (r) r.value = saved.role || '';
+    if (pribadiAvatarPath && supabaseClient) getProfileAvatarUrl(pribadiAvatarPath).then(renderPribadiAvatar);
+    else renderPribadiAvatar(null);
     toggleModal('profile-editor-modal', true);
 };
 window.closeProfileEditor = function() { toggleModal('profile-editor-modal', false); };
@@ -1265,7 +1356,7 @@ window.savePribadiProfile = function() {
 };
 
 window.openPersonalNoteSheet = function(id) {
-    const note = daftarNotes.find(n => n.id === id);
+    const note = daftarNotes.find(n => String(n.id) === String(id));
     if (!note) { if (daftarNotes.length === 0) openAddNoteModal(); return; }
     activePersonalNoteId = note.id;
     activeDetailNoteId = note.id;
@@ -1294,9 +1385,7 @@ window.openPersonalNoteSheet = function(id) {
 window.closePersonalNoteSheet = function() {
     activePersonalNoteId = null;
     activeDetailNoteId = null;
-    const empty = document.getElementById('pribadi-inline-detail-empty');
     const detail = document.getElementById('pribadi-inline-detail-content');
-    if (empty) empty.hidden = false;
     if (detail) detail.hidden = true;
 };
 
@@ -1377,6 +1466,8 @@ window.openDaftarNotesModal = function() {
     renderDaftarNotes();
     const pribadi = document.getElementById('section-pribadi');
     const notesPage = document.getElementById('section-pribadi-notes');
+    const contentCard = document.querySelector('.content-card');
+    if (contentCard) contentCard.classList.add('notes-page-shellless');
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     if (notesPage) notesPage.classList.add('active');
@@ -1387,6 +1478,8 @@ window.openDaftarNotesModal = function() {
 window.closeDaftarNotesModal = function() {
     const pribadi = document.getElementById('section-pribadi');
     const notesPage = document.getElementById('section-pribadi-notes');
+    const contentCard = document.querySelector('.content-card');
+    if (contentCard) contentCard.classList.remove('notes-page-shellless');
     if (notesPage) notesPage.classList.remove('active');
     if (pribadi) pribadi.classList.add('active');
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -1502,17 +1595,37 @@ function renderDaftarNotes() {
         return;
     }
     const esc = (v) => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-    const html = notes.map(n => `
-        <button type="button" class="note-item-card note-item-card-clickable" onclick="openPersonalNoteSheet('${String(n.id).replace(/'/g, "\\'")}')" aria-label="Buka catatan ${esc(n.title || 'Catatan')}">
+    const html = notes.map(n => {
+        const noteId = String(n.id ?? '');
+        return `
+        <button type="button" class="note-item-card note-item-card-clickable" data-personal-note-id="${esc(noteId)}" aria-label="Buka catatan ${esc(n.title || 'Catatan')}">
             <span class="note-list-title-row">
                 <span class="stok-item-title">${esc(n.title || 'Catatan')}</span>
                 <i class="fa-solid fa-chevron-right note-list-arrow" aria-hidden="true"></i>
             </span>
-        </button>
-    `).join('');
+        </button>`;
+    }).join('');
     if (container) container.innerHTML = html;
     if (pageContainer) pageContainer.innerHTML = html;
     if (typeof renderPribadiV23 === 'function') renderPribadiV23();
+}
+
+// Catatan Pribadi: gunakan event delegation agar item yang dirender ulang tetap clickable.
+if (!window.__npPersonalNoteClickBound) {
+    document.addEventListener('click', function(event) {
+        const item = event.target.closest('.note-item-card-clickable[data-personal-note-id]');
+        if (!item) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const id = item.getAttribute('data-personal-note-id');
+        if (!id) return;
+        window.openPersonalNoteSheet(id);
+        requestAnimationFrame(() => {
+            const detail = document.getElementById('pribadi-inline-detail');
+            if (detail) detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    });
+    window.__npPersonalNoteClickBound = true;
 }
 
 let activeEditNoteId = null;
@@ -1808,16 +1921,16 @@ window.submitDirectWa = function() {
 /* TRANSAKSI + DIAGNOSIS INLINE                               */
 /* ========================================================== */
 const NP_DIAGNOSIS_BRANDS = [
-    { key: 'SAMSUNG', name: 'Samsung', logo: 'https://cdn.simpleicons.org/samsung/1428A0' },
-    { key: 'OPPO', name: 'OPPO', logo: 'https://cdn.simpleicons.org/oppo/1FA637' },
+    { key: 'SAMSUNG', name: 'Samsung', logo: 'assets/logo/samsung.png' },
+    { key: 'OPPO', name: 'OPPO', logo: 'assets/logo/oppo.png' },
     { key: 'XIAOMI', name: 'Xiaomi', logo: 'https://cdn.simpleicons.org/xiaomi/FF6900' },
-    { key: 'REDMI', name: 'Redmi', logo: 'https://cdn.simpleicons.org/redmi/FF6900' },
-    { key: 'POCO', name: 'POCO', logo: 'https://cdn.simpleicons.org/poco/FFD600' },
-    { key: 'VIVO', name: 'Vivo', logo: 'https://cdn.simpleicons.org/vivo/415FFF' },
-    { key: 'REALME', name: 'realme', logo: 'https://cdn.simpleicons.org/realme/FFC915' },
-    { key: 'INFINIX', name: 'Infinix', logo: 'https://cdn.simpleicons.org/infinix/000000' },
-    { key: 'TECNO', name: 'TECNO', logo: 'https://cdn.simpleicons.org/tecno/000000' },
-    { key: 'ITEL', name: 'itel', logo: 'https://cdn.simpleicons.org/itel/00AEEF' }
+    { key: 'REDMI', name: 'Redmi', logo: 'assets/logo/redmi.png' },
+    { key: 'POCO', name: 'POCO', logo: 'assets/logo/poco.png' },
+    { key: 'VIVO', name: 'Vivo', logo: 'assets/logo/vivo.png' },
+    { key: 'REALME', name: 'realme', logo: 'assets/logo/realme.png' },
+    { key: 'INFINIX', name: 'Infinix', logo: 'assets/logo/infinix.png' },
+    { key: 'TECNO', name: 'TECNO', logo: 'assets/logo/tecno.png' },
+    { key: 'ITEL', name: 'itel', logo: 'assets/logo/itel.png' }
 ];
 let activeDiagnosisBrand = 'SAMSUNG';
 let activeTransaksiFilter = 'semua';
@@ -1993,6 +2106,8 @@ window.switchTransaksiSubTab = function(tab) {
     document.getElementById('tab-diagnosis-list')?.classList.toggle('active', isDiag);
     document.getElementById('tab-transaksi-list')?.setAttribute('aria-selected', String(!isDiag));
     document.getElementById('tab-diagnosis-list')?.setAttribute('aria-selected', String(isDiag));
+    const pageTitle = document.getElementById('np-transaksi-page-title');
+    if (pageTitle) pageTitle.textContent = isDiag ? 'Diagnosis' : 'Transaksi';
     if (isDiag) renderDiagnosisInline();
 };
 
@@ -2469,421 +2584,215 @@ function getBrandStyle(brandName) {
 }
 
 /* ========================================================== */
-/* PRICE LIST & KATALOG                                       */
+/* PRICE LIST — UI TERKUNCI                                    */
 /* ========================================================== */
-window.openAddPriceListModal = function() {
-    toggleModal('add-pricelist-modal', true);
-};
+let priceListActiveBrand = '';
+let priceListDetailModelId = null;
+let priceListSearchBeforeDetail = '';
 
-window.closeAddPriceListModal = function() {
-    toggleModal('add-pricelist-modal', false);
-};
-
-window.addNewProduct = async function() {
-    const nameInput = document.getElementById('add-input-name').value.trim();
-    const jktInput = document.getElementById('add-input-jkt').value.trim();
-    const sgcInput = document.getElementById('add-input-sgc').value.trim();
-    const bnibInput = document.getElementById('add-input-bnib') ? document.getElementById('add-input-bnib').value.trim() : '';
-    
-    if (nameInput === '') {
-        showToast('Peringatan', 'Nama produk tidak boleh kosong!', false);
-        return;
-    }
-
-    const parts = nameInput.split(' ');
-    const detectedBrand = parts[0].toUpperCase();
-    const detectedModel = parts.length > 1 ? parts.slice(1).join(' ') : nameInput;
-
-    const newPriceItem = {
-        id: 'pl-' + Date.now(),
-        brand: detectedBrand,
-        model: detectedModel,
-        jkt: jktInput || '--',
-        sgc: sgcInput || '--',
-        bnib: bnibInput || '--'
-    };
-
-    if (supabaseClient) {
-        setConnectionStatus('syncing');
-        try {
-            const { error } = await supabaseClient.from('pricelist').insert([newPriceItem]);
-            if (error) throw error;
-
-            rawPriceListData.push(newPriceItem);
-            sortPriceListConsistently(rawPriceListData);
-
-            initBrandDropdown(); 
-            filterPriceList(); 
-
-            document.getElementById('add-input-name').value = ''; 
-            document.getElementById('add-input-jkt').value = ''; 
-            document.getElementById('add-input-sgc').value = ''; 
-            if (document.getElementById('add-input-bnib')) document.getElementById('add-input-bnib').value = '';
-            
-            closeAddPriceListModal();
-            setConnectionStatus('connected');
-            showToast('Berhasil!', `Produk baru tersimpan di cloud merek: ${detectedBrand}.`);
-        } catch (e) {
-            console.warn('Gagal menambah produk ke Supabase:', e);
-            setConnectionStatus('disconnected');
-            showToast('Gagal', 'Gagal menyimpan ke server Cloud.', false);
+function getPriceListModels() {
+    const map = new Map();
+    rawPriceListData.forEach(item => {
+        const key = item.model_id || `${item.brand}::${item.model}`;
+        if (!map.has(key)) {
+            map.set(key, {
+                model_id: key,
+                brand: item.brand,
+                model: item.model,
+                variants: []
+            });
         }
-    }
-};
-
-window.editProduct = function(id) {
-    const item = rawPriceListData.find(p => p.id === id);
-    if (item) {
-        currentEditId = id;
-
-        const detailModal = document.getElementById('pricelist-detail-modal');
-        if (detailModal && detailModal.classList.contains('show')) {
-            editOpenedFromDetail = true;
-            closePriceListModal();
-        } else {
-            editOpenedFromDetail = false;
-        }
-
-        const subTitle = document.getElementById('edit-modal-subtitle');
-        if (subTitle) subTitle.textContent = `${item.brand} - ${item.model}`;
-
-        const fullNameInput = document.getElementById('edit-input-fullname');
-        if (fullNameInput) {
-            fullNameInput.value = `${item.brand} ${item.model}`.trim();
-        }
-
-        document.getElementById('edit-input-jkt').value = item.jkt || '';
-        document.getElementById('edit-input-sgc').value = item.sgc || '';
-        if (document.getElementById('edit-input-bnib')) {
-            document.getElementById('edit-input-bnib').value = item.bnib || '--';
-        }
-        toggleModal('edit-custom-modal', true);
-    }
-};
-
-window.closeEditModal = function() { 
-    const previousEditId = currentEditId;
-    toggleModal('edit-custom-modal', false);
-    currentEditId = null; 
-
-    if (editOpenedFromDetail && previousEditId) {
-        openSingleProductPriceModal(previousEditId);
-    }
-    editOpenedFromDetail = false;
-};
-
-window.saveEditModal = async function() {
-    if (!currentEditId) return;
-    
-    const itemIndex = rawPriceListData.findIndex(p => p.id === currentEditId);
-    if (itemIndex === -1) return;
-    const item = rawPriceListData[itemIndex];
-
-    let updatedBrand = item.brand;
-    let updatedModel = item.model;
-
-    const fullNameInput = document.getElementById('edit-input-fullname');
-    if (fullNameInput && fullNameInput.value.trim() !== '') {
-        const fullVal = fullNameInput.value.trim();
-        const parts = fullVal.split(' ');
-        
-        if (parts.length > 1 && parts[0].toUpperCase() === item.brand) {
-            updatedBrand = item.brand;
-            updatedModel = parts.slice(1).join(' ').trim();
-        } else {
-            updatedBrand = item.brand;
-            updatedModel = fullVal;
-        }
-    }
-
-    const updatedJkt = document.getElementById('edit-input-jkt').value.trim() || '--';
-    const updatedSgc = document.getElementById('edit-input-sgc').value.trim() || '--';
-    const updatedBnib = document.getElementById('edit-input-bnib') ? (document.getElementById('edit-input-bnib').value.trim() || '--') : '--';
-
-    if (supabaseClient) {
-        setConnectionStatus('syncing');
-        try {
-            const { error } = await supabaseClient
-                .from('pricelist')
-                .update({
-                    brand: updatedBrand,
-                    model: updatedModel,
-                    jkt: updatedJkt,
-                    sgc: updatedSgc,
-                    bnib: updatedBnib
-                })
-                .eq('id', currentEditId);
-
-            if (error) throw error;
-
-            rawPriceListData[itemIndex].brand = updatedBrand;
-            rawPriceListData[itemIndex].model = updatedModel;
-            rawPriceListData[itemIndex].jkt = updatedJkt;
-            rawPriceListData[itemIndex].sgc = updatedSgc;
-            rawPriceListData[itemIndex].bnib = updatedBnib;
-
-            sortPriceListConsistently(rawPriceListData);
-
-            const savedItemId = item.id;
-            const wasFromDetail = editOpenedFromDetail;
-
-            toggleModal('edit-custom-modal', false);
-            currentEditId = null; 
-            editOpenedFromDetail = false;
-
-            initBrandDropdown();
-            filterPriceList(); 
-            setConnectionStatus('connected');
-            showToast('Berhasil!', 'Perubahan produk & harga tersimpan di Cloud.');
-            
-            if (wasFromDetail) {
-                openSingleProductPriceModal(savedItemId);
-            }
-        } catch (e) {
-            console.warn('Gagal mengedit produk di Supabase:', e);
-            setConnectionStatus('disconnected');
-            showToast('Gagal', 'Tidak dapat memperbarui data di Cloud.', false);
-        }
-    }
-};
-
-window.deleteProduct = function(id) {
-    showCustomConfirm("Hapus Model", "Yakin ingin menghapus model ini secara permanen dari server?", async () => {
-        if (supabaseClient) {
-            setConnectionStatus('syncing');
-            try {
-                const { error } = await supabaseClient.from('pricelist').delete().eq('id', id);
-                if (error) throw error;
-
-                rawPriceListData = rawPriceListData.filter(p => p.id !== id);
-
-                initBrandDropdown(); 
-                filterPriceList(); 
-                closePriceListModal();
-                setConnectionStatus('connected');
-                showToast('Berhasil', 'Produk dihapus dari Cloud.');
-            } catch (e) {
-                console.warn('Gagal menghapus produk di Supabase:', e);
-                setConnectionStatus('disconnected');
-                showToast('Gagal', 'Gagal menghapus produk.', false);
-            }
-        }
+        map.get(key).variants.push(item);
     });
-};
-
-function sortBrandsWithCustomOrder(brandList) {
-    const brandMap = new Map();
-    brandList.forEach(b => brandMap.set(b.trim().toUpperCase(), b.trim()));
-
-    const result = [];
-    ORDERED_BRANDS.forEach(target => {
-        if (brandMap.has(target)) {
-            result.push(brandMap.get(target));
-            brandMap.delete(target);
-        }
+    return Array.from(map.values()).sort((a, b) => {
+        const brandCmp = sortBrandsWithCustomOrder([a.brand, b.brand]).indexOf(a.brand) - sortBrandsWithCustomOrder([a.brand, b.brand]).indexOf(b.brand);
+        if (a.brand !== b.brand) return brandCmp || a.brand.localeCompare(b.brand);
+        return naturalModelCompare(a.model, b.model);
     });
-
-    const remaining = Array.from(brandMap.values()).sort((a, b) => a.localeCompare(b));
-    return [...result, ...remaining];
 }
 
-function initBrandDropdown() {
-    const brandSelect = document.getElementById('filter-brand-select');
-    if (!brandSelect) return;
-    
-    const currentVal = brandSelect.value || 'ALL';
-    brandSelect.innerHTML = '<option value="ALL">All Merek</option>';
-    
-    const uniqueBrands = Array.from(new Set(rawPriceListData.map(item => item.brand.trim()))).filter(Boolean);
-    const sortedBrands = sortBrandsWithCustomOrder(uniqueBrands);
+function getPriceListBrandNames() {
+    return sortBrandsWithCustomOrder(Array.from(new Set(rawPriceListData.map(x => x.brand).filter(Boolean))));
+}
 
-    sortedBrands.forEach(brand => {
-        const opt = document.createElement('option');
-        opt.value = brand;
-        opt.textContent = brand;
-        if (brand === currentVal) opt.selected = true;
-        brandSelect.appendChild(opt);
+function getPriceListBrandLogo(brand) {
+    const key = String(brand || '').trim().toUpperCase();
+    const logos = {
+        SAMSUNG: 'assets/logo/samsung.png',
+        OPPO: 'assets/logo/oppo.png',
+        XIAOMI: 'https://cdn.simpleicons.org/xiaomi/FF6900',
+        REDMI: 'assets/logo/redmi.png',
+        POCO: 'assets/logo/poco.png',
+        VIVO: 'assets/logo/vivo.png',
+        REALME: 'assets/logo/realme.png',
+        INFINIX: 'assets/logo/infinix.png',
+        TECNO: 'assets/logo/tecno.png',
+        ITEL: 'assets/logo/itel.png'
+    };
+    return logos[key] || '';
+}
+
+function renderPriceListBrands() {
+    const host = document.getElementById('pricelist-brand-chips');
+    if (!host) return;
+    const brands = getPriceListBrandNames();
+    if (!priceListActiveBrand || !brands.includes(priceListActiveBrand)) priceListActiveBrand = brands[0] || '';
+
+    const frag = document.createDocumentFragment();
+    brands.forEach(brand => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `pricelist-brand-chip ${brand === priceListActiveBrand ? 'active' : ''}`;
+        btn.setAttribute('aria-label', `Pilih brand ${brand}`);
+        btn.setAttribute('aria-pressed', String(brand === priceListActiveBrand));
+        btn.dataset.brand = brand;
+        btn.addEventListener('click', () => window.selectPriceListBrand(brand));
+
+        const img = document.createElement('img');
+        img.src = getPriceListBrandLogo(brand);
+        img.alt = `${brand} logo`;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.onerror = function() {
+            this.style.display = 'none';
+            const fallback = this.nextElementSibling;
+            if (fallback) fallback.style.display = 'block';
+        };
+
+        const fallback = document.createElement('span');
+        fallback.className = 'pricelist-brand-logo-fallback';
+        fallback.style.display = img.src ? 'none' : 'block';
+        fallback.textContent = brand;
+
+        btn.append(img, fallback);
+        frag.appendChild(btn);
     });
+    host.replaceChildren(frag);
+}
 
-    buildCustomDropdown(brandSelect);
+window.selectPriceListBrand = function(brand) {
+    priceListActiveBrand = brand || '';
+    const search = document.getElementById('filter-model-input');
+    if (search) search.value = '';
+    priceListDetailModelId = null;
+    renderPriceListBrands();
+    filterPriceList();
+};
+
+window.clearPriceListSearch = function() {
+    const search = document.getElementById('filter-model-input');
+    if (search) {
+        search.value = '';
+        search.focus();
+    }
+    filterPriceList();
+};
+
+function getCurrentPriceListSearch() {
+    const input = document.getElementById('filter-model-input');
+    return input ? input.value.trim().toLowerCase() : '';
 }
 
 function filterPriceList() {
-    const searchVal = document.getElementById('filter-model-input') ? document.getElementById('filter-model-input').value.toLowerCase().trim() : '';
-    const brandVal = document.getElementById('filter-brand-select') ? document.getElementById('filter-brand-select').value : 'ALL';
-    
-    if (!searchVal && brandVal === 'ALL') {
-        currentFilteredData = [];
-    } else {
-        currentFilteredData = rawPriceListData.filter(item => {
-            const itemBrand = (item.brand || '').trim().toUpperCase();
-            const filterBrand = brandVal.trim().toUpperCase();
-            
-            const cleanModel = getModelNameWithoutSpecs(item.model);
-            const cleanBrand = (item.brand || '').toLowerCase().trim();
-
-            return (brandVal === 'ALL' || itemBrand === filterBrand) && 
-                   (cleanModel.includes(searchVal) || cleanBrand.includes(searchVal));
-        });
-    }
-    
-    const totalPages = Math.ceil(currentFilteredData.length / itemsPerPage) || 1;
-    if (currentPage > totalPages) currentPage = totalPages;
-
-    renderPage();
-}
-
-function renderPage() {
     const container = document.getElementById('pricelist-container');
-    const badgeCount = document.getElementById('pricelist-count-badge');
     if (!container) return;
-
-    const searchInput = document.getElementById('filter-model-input');
-    const searchVal = searchInput ? searchInput.value.trim() : '';
-    const brandSelect = document.getElementById('filter-brand-select');
-    const brandVal = brandSelect ? brandSelect.value : 'ALL';
-
-    if (!searchVal && brandVal === 'ALL') {
-        if (badgeCount) badgeCount.textContent = `Pencarian Standby`;
-        container.innerHTML = `
-            <div class="empty-state" style="padding: 40px 16px;">
-                <i class="fa-solid fa-magnifying-glass-arrow-right icon-placeholder" style="font-size: 32px; opacity: 0.6;"></i>
-                <h3 style="font-size: 14px; font-weight: 800; margin-top: 6px;">Cari Model Handphone</h3>
-                <p style="font-size: 11.5px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4;">
-                    Ketik model di atas lalu tekan <b>Enter</b>, atau pilih merk untuk melihat daftar harga.
-                </p>
-            </div>
-        `;
-        return;
-    }
-
-    const totalItems = currentFilteredData.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-    if (badgeCount) badgeCount.textContent = `Menampilkan ${totalItems} Item`;
-
-    if (totalItems === 0) {
-        container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-file-circle-xmark icon-placeholder"></i><h2>Tidak Ditemukan</h2><p style="font-size: 11.5px; color: var(--text-secondary);">Tidak ada model yang cocok.</p></div>`;
-        return;
-    }
-
-    let htmlContent = '';
-    currentFilteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).forEach(item => {
-        htmlContent += `
-            <div class="stok-item-card" onclick="openSingleProductPriceModal('${item.id}')" style="cursor: pointer; padding: 10px 14px;">
-                <div class="stok-item-top" style="align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;">
-                        <span class="price-card-brand" style="${getBrandStyle(item.brand)}">${item.brand}</span>
-                        <span class="stok-item-title" style="font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.model}</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 10px; color: var(--azure-primary); font-weight: 700;">Cek Harga <i class="fa-solid fa-chevron-right" style="font-size: 8.5px;"></i></span>
-                    </div>
-                </div>
-            </div>
-        `;
+    const query = getCurrentPriceListSearch();
+    const models = getPriceListModels().filter(item => {
+        if (priceListActiveBrand && item.brand !== priceListActiveBrand) return false;
+        return !query || item.model.toLowerCase().includes(query);
     });
-    
-    htmlContent += `<div class="pagination-controls"><button class="page-btn" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>Prev</button><span class="page-info">Hal ${currentPage}/${totalPages}</span><button class="page-btn" onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>Next</button></div>`;
-    container.innerHTML = htmlContent;
+    renderPriceListModelList(models, query);
 }
 
-function changePage(direction) { currentPage += direction; renderPage(); }
-
-function generatePriceCardHTML(item) {
-    let diffHtml = '';
-    let jktMax = getHighestNumericPrice(item.jkt), sgcMax = getHighestNumericPrice(item.sgc);
-    if (jktMax !== null && sgcMax !== null) {
-        let diff = jktMax - sgcMax;
-        let cls = diff > 0 ? 'selisih-green' : (diff < 0 ? 'selisih-red' : 'selisih-neutral');
-        let txt = diff > 0 ? `+ ${formatRupiahRingkas(diff)}` : (diff < 0 ? `- ${formatRupiahRingkas(Math.abs(diff))}` : 'Rp 0');
-        diffHtml = `<div class="price-card-footer" style="padding-top: 6px;"><span class="selisih-badge ${cls}">Selisih: ${txt}</span></div>`;
+function renderPriceListModelList(models, query = '') {
+    const container = document.getElementById('pricelist-container');
+    if (!container) return;
+    if (!models.length) {
+        container.innerHTML = '<div class="pricelist-empty-model">Tidak ada model ditemukan</div>';
+        return;
     }
+    container.innerHTML = models.map(item => `
+        <button type="button" class="pricelist-model-row" onclick="openPriceListModelDetail('${escapeHtmlNP(item.model_id).replace(/'/g, '&#39;')}')">
+            <span>${escapeHtmlNP(item.model)}</span>
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    `).join('');
+}
 
-    let bnibBadgeHtml = '';
-    if (item.bnib && item.bnib.trim() !== '--' && item.bnib.trim() !== '') {
-        bnibBadgeHtml = `
-            <div class="price-card-top-badge" style="margin-top: 2px; margin-bottom: 6px;">
-                <span class="badge-bnib-tag" title="Harga BNIB">
-                    <i class="fa-solid fa-box" style="font-size: 8.5px;"></i> ${formatDisplayPrice(item.bnib)}
-                </span>
-            </div>
-        `;
-    }
+function formatPriceArray(values) {
+    if (!Array.isArray(values) || !values.length) return '';
+    return values.map(v => Number(v).toLocaleString('id-ID')).join(' / ');
+}
 
+function variantSort(a, b) {
+    const parse = value => {
+        const m = String(value || '').match(/^(\d+)\/(\d+)$/);
+        return m ? [Number(m[1]), Number(m[2])] : [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
+    };
+    const [ar, aso] = parse(a.ram_rom), [br, bso] = parse(b.ram_rom);
+    return ar - br || aso - bso || String(a.ram_rom).localeCompare(String(b.ram_rom));
+}
+
+function generateNewPriceVariantCard(item) {
+    const rows = [
+        ['Jakarta', item.jakarta],
+        ['Cikarang', item.cikarang],
+        ['BNIB', item.bnib]
+    ];
     return `
-        <div class="price-card" style="margin: 0; background: var(--bg-page);">
-            <div class="price-card-header">
-                <div>
-                    <span class="price-card-brand" style="${getBrandStyle(item.brand)}">${item.brand}</span>
-                    <div class="price-card-model" style="font-size: 13.5px; margin-top: 3px;">${item.model}</div>
-                </div>
-                <div class="price-card-actions">
-                    <button class="action-btn edit-btn" onclick="editProduct('${item.id}')" title="Edit Produk & Harga"><i class="fa-solid fa-pen"></i></button>
-                    <button class="action-btn delete-btn" onclick="deleteProduct('${item.id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
-                </div>
+        <div class="pricelist-variant-card">
+            <div class="pricelist-variant-title">${escapeHtmlNP(item.ram_rom)}</div>
+            <div class="pricelist-location-list">
+                ${rows.map(([label, values]) => {
+                    const display = formatPriceArray(values);
+                    return `<div class="pricelist-location-row"><span>${label}</span><strong class="${display ? '' : 'is-empty'}">${display || '—'}</strong></div>`;
+                }).join('')}
             </div>
-            ${bnibBadgeHtml}
-            <div class="price-compare-stack" style="margin-top: 4px;">
-                <div class="price-box"><span class="price-box-label">Jakarta</span><span class="price-box-val">${formatDisplayPrice(item.jkt)}</span></div>
-                <div class="price-box"><span class="price-box-label">Cikarang</span><span class="price-box-val">${formatDisplayPrice(item.sgc)}</span></div>
-            </div>
-            ${diffHtml}
         </div>
     `;
 }
 
-window.openSingleProductPriceModal = function(id) {
-    const item = rawPriceListData.find(p => p.id === id);
-    if (!item) return;
-
+window.openPriceListModelDetail = function(modelId) {
+    const model = getPriceListModels().find(item => item.model_id === modelId);
+    if (!model) return;
     const container = document.getElementById('pricelist-modal-results-container');
-    const countBadge = document.getElementById('modal-pricelist-count');
     const subtitle = document.getElementById('modal-pricelist-subtitle');
-
+    const countBadge = document.getElementById('modal-pricelist-count');
     if (!container) return;
 
-    if (countBadge) countBadge.textContent = "1 Model";
-    if (subtitle) subtitle.textContent = `${item.brand} - ${item.model}`;
-
-    container.innerHTML = generatePriceCardHTML(item);
+    priceListDetailModelId = modelId;
+    priceListSearchBeforeDetail = getCurrentPriceListSearch();
+    if (subtitle) subtitle.textContent = model.brand;
+    if (countBadge) countBadge.textContent = '';
+    container.innerHTML = `
+        <button type="button" class="pricelist-back-button" onclick="closePriceListModal()"><i class="fa-solid fa-arrow-left"></i><span>Kembali</span></button>
+        <div class="pricelist-detail-model-title">${escapeHtmlNP(model.model)}</div>
+        <div class="pricelist-variant-list">${model.variants.sort(variantSort).map(generateNewPriceVariantCard).join('')}</div>
+    `;
     toggleModal('pricelist-detail-modal', true);
 };
 
 window.triggerPriceListModalSearch = function() {
-    const searchInput = document.getElementById('filter-model-input');
-    const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
-
-    if (!searchVal) {
-        showToast('Peringatan', 'Ketik nama model smartphone terlebih dahulu!', false);
-        return;
-    }
-
-    const container = document.getElementById('pricelist-modal-results-container');
-    const countBadge = document.getElementById('modal-pricelist-count');
-    const subtitle = document.getElementById('modal-pricelist-subtitle');
-
-    if (!container) return;
-
-    const matched = rawPriceListData.filter(item => {
-        const cleanModel = getModelNameWithoutSpecs(item.model);
-        const cleanBrand = (item.brand || '').toLowerCase().trim();
-        return cleanModel.includes(searchVal) || cleanBrand.includes(searchVal);
-    });
-
-    if (countBadge) countBadge.textContent = `${matched.length} Item`;
-    if (subtitle) subtitle.textContent = `Hasil pencarian untuk "${searchInput.value.trim()}"`;
-
-    if (matched.length === 0) {
-        container.innerHTML = `<div class="empty-stok-msg">Tidak ada model yang cocok dengan "${searchInput.value.trim()}"</div>`;
-    } else {
-        container.innerHTML = matched.map(item => generatePriceCardHTML(item)).join('');
-    }
-
-    toggleModal('pricelist-detail-modal', true);
+    filterPriceList();
 };
 
 window.closePriceListModal = function() {
     toggleModal('pricelist-detail-modal', false);
+    priceListDetailModelId = null;
+    const search = document.getElementById('filter-model-input');
+    if (search) search.value = priceListSearchBeforeDetail;
+    filterPriceList();
+};
+
+// Compatibility stubs for legacy Price List actions; CRUD will be implemented against pricelist_new in its dedicated phase.
+window.openAddPriceListModal = function() {
+    showToast('Info', 'Tambah/edit Price List belum diaktifkan pada tampilan baru.', false);
+};
+window.editProduct = function() {
+    showToast('Info', 'Edit Price List akan menggunakan struktur pricelist_new.', false);
+};
+window.deleteProduct = function() {
+    showToast('Info', 'Hapus Price List akan menggunakan struktur pricelist_new.', false);
 };
 
 /* ========================================================== */
@@ -2908,30 +2817,6 @@ function applyTheme(theme, persist = true) {
 function toggleTheme() {
     applyTheme(document.body.classList.contains('dark-mode') ? 'light' : 'dark');
 }
-
-// V22 — Header More menu: hanya menambahkan fungsi yang hilang pada V21.
-window.toggleHeaderMore = function(event) {
-    event?.stopPropagation();
-    const menu = document.getElementById('header-more-menu');
-    const trigger = document.getElementById('btn-header-more');
-    if (!menu) return;
-    const open = menu.classList.toggle('is-open');
-    menu.setAttribute('aria-hidden', open ? 'false' : 'true');
-    trigger?.setAttribute('aria-expanded', open ? 'true' : 'false');
-};
-
-window.closeHeaderMore = function() {
-    const menu = document.getElementById('header-more-menu');
-    const trigger = document.getElementById('btn-header-more');
-    menu?.classList.remove('is-open');
-    menu?.setAttribute('aria-hidden', 'true');
-    trigger?.setAttribute('aria-expanded', 'false');
-};
-
-document.addEventListener('click', (event) => {
-    const wrap = document.querySelector('.header-more-wrap');
-    if (wrap && !wrap.contains(event.target)) window.closeHeaderMore();
-});
 
 function handleLogout() {
     showCustomConfirm("Keluar", "Yakin ingin keluar?", async () => { 
@@ -3006,6 +2891,9 @@ function switchTab(tabId, el) {
     if (!target) return;
     const sections = document.querySelectorAll('.tab-content');
     const navItems = document.querySelectorAll('.nav-item');
+    // Leaving the standalone Catatan page must restore the normal content shell.
+    const contentCard = document.querySelector('.content-card');
+    if (contentCard) contentCard.classList.remove('notes-page-shellless');
     // Mutate all states in one synchronous batch so there is no intermediate blank frame.
     sections.forEach(t => t.classList.toggle('active', t === target));
     navItems.forEach(n => n.classList.toggle('active', n === el));
