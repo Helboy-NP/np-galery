@@ -47,6 +47,7 @@ let calcEquation = "";
 
 // STATE FOTO FISIK UNIT STOK
 let selectedStockPhotoFile = null;
+let selectedStockCatalogVariant = null;
 
 // MASTER FOTO PRODUK (terpisah dari foto fisik unit)
 let masterProductPhotos = new Map();
@@ -310,6 +311,7 @@ async function syncPriceListFromSupabaseOnly() {
         })) : [];
 
         sortPriceListConsistently(rawPriceListData);
+        ensurePriceListModelOrder();
         initPriceListUI();
     } catch (e) {
         console.warn('Gagal memuat tabel pricelist_new:', e);
@@ -2584,11 +2586,15 @@ function getBrandStyle(brandName) {
 }
 
 /* ========================================================== */
-/* PRICE LIST — UI TERKUNCI                                    */
+/* PRICE LIST — UI + CRUD SUPABASE                            */
 /* ========================================================== */
 let priceListActiveBrand = '';
 let priceListDetailModelId = null;
 let priceListSearchBeforeDetail = '';
+let priceListModelOrder = new Map();
+let priceListCrudMode = 'add';
+let priceListCrudModelId = null;
+let priceListCrudVariants = [];
 
 function getPriceListModels() {
     const map = new Map();
@@ -2604,11 +2610,40 @@ function getPriceListModels() {
         }
         map.get(key).variants.push(item);
     });
-    return Array.from(map.values()).sort((a, b) => {
+    const models = Array.from(map.values());
+    return models.sort((a, b) => {
+        const ai = priceListModelOrder.has(a.model_id) ? priceListModelOrder.get(a.model_id) : Number.MAX_SAFE_INTEGER;
+        const bi = priceListModelOrder.has(b.model_id) ? priceListModelOrder.get(b.model_id) : Number.MAX_SAFE_INTEGER;
+        if (ai !== bi) return ai - bi;
         const brandCmp = sortBrandsWithCustomOrder([a.brand, b.brand]).indexOf(a.brand) - sortBrandsWithCustomOrder([a.brand, b.brand]).indexOf(b.brand);
         if (a.brand !== b.brand) return brandCmp || a.brand.localeCompare(b.brand);
         return naturalModelCompare(a.model, b.model);
     });
+}
+
+function ensurePriceListModelOrder() {
+    const sorted = [...rawPriceListData].sort((a, b) => {
+        const brandA = (a.brand || '').trim().toUpperCase();
+        const brandB = (b.brand || '').trim().toUpperCase();
+        const indexA = ORDERED_BRANDS.indexOf(brandA);
+        const indexB = ORDERED_BRANDS.indexOf(brandB);
+        if (indexA !== -1 && indexB !== -1 && indexA !== indexB) return indexA - indexB;
+        if (indexA !== -1 && indexB === -1) return -1;
+        if (indexA === -1 && indexB !== -1) return 1;
+        if (brandA !== brandB) return brandA.localeCompare(brandB);
+        return naturalModelCompare(a.model, b.model);
+    });
+    let next = 0;
+    sorted.forEach(item => {
+        const key = String(item.model_id || `${item.brand}::${item.model}`);
+        if (!priceListModelOrder.has(key)) priceListModelOrder.set(key, next++);
+    });
+    if (priceListModelOrder.size) {
+        let max = Math.max(...Array.from(priceListModelOrder.values()).filter(Number.isFinite), -1);
+        getPriceListModels().forEach(model => {
+            if (!priceListModelOrder.has(model.model_id)) priceListModelOrder.set(model.model_id, ++max);
+        });
+    }
 }
 
 function getPriceListBrandNames() {
@@ -2681,10 +2716,7 @@ window.selectPriceListBrand = function(brand) {
 
 window.clearPriceListSearch = function() {
     const search = document.getElementById('filter-model-input');
-    if (search) {
-        search.value = '';
-        search.focus();
-    }
+    if (search) { search.value = ''; search.focus(); }
     filterPriceList();
 };
 
@@ -2711,22 +2743,20 @@ function renderPriceListModelList(models, query = '') {
         container.innerHTML = '<div class="pricelist-empty-model">Tidak ada model ditemukan</div>';
         return;
     }
-    container.innerHTML = models.map(item => `
-        <button type="button" class="pricelist-model-row" onclick="openPriceListModelDetail('${escapeHtmlNP(item.model_id).replace(/'/g, '&#39;')}')">
-            <span>${escapeHtmlNP(item.model)}</span>
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-    `).join('');
+    container.innerHTML = models.map(item => {
+        const modelText = escapeHtmlNP(item.model).replace(/\((4G|5G)\)|\b(4G|5G)\b/gi, (_, parenTag, bareTag) => `<em class="pricelist-network-tag">${parenTag || bareTag}</em>`);
+        return `<button type="button" class="pricelist-model-row" onclick="openPriceListModelDetail('${escapeHtmlNP(item.model_id).replace(/'/g, '&#39;')}')"><span>${modelText}</span><i class="fa-solid fa-chevron-right"></i></button>`;
+    }).join('');
 }
 
-function formatPriceArray(values) {
-    if (!Array.isArray(values) || !values.length) return '';
-    return values.map(v => Number(v).toLocaleString('id-ID')).join(' / ');
+function formatPriceValues(values) {
+    if (!Array.isArray(values) || !values.length) return [];
+    return values.map(v => Number(v)).filter(Number.isFinite).sort((a, b) => a - b).map(v => v.toLocaleString('id-ID'));
 }
 
 function variantSort(a, b) {
     const parse = value => {
-        const m = String(value || '').match(/^(\d+)\/(\d+)$/);
+        const m = String(value || '').match(/^(\d+)\s*\/\s*(\d+)$/);
         return m ? [Number(m[1]), Number(m[2])] : [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
     };
     const [ar, aso] = parse(a.ram_rom), [br, bso] = parse(b.ram_rom);
@@ -2734,47 +2764,43 @@ function variantSort(a, b) {
 }
 
 function generateNewPriceVariantCard(item) {
-    const rows = [
-        ['Jakarta', item.jakarta],
-        ['Cikarang', item.cikarang],
-        ['BNIB', item.bnib]
-    ];
-    return `
-        <div class="pricelist-variant-card">
-            <div class="pricelist-variant-title">${escapeHtmlNP(item.ram_rom)}</div>
-            <div class="pricelist-location-list">
-                ${rows.map(([label, values]) => {
-                    const display = formatPriceArray(values);
-                    return `<div class="pricelist-location-row"><span>${label}</span><strong class="${display ? '' : 'is-empty'}">${display || '—'}</strong></div>`;
-                }).join('')}
-            </div>
-        </div>
-    `;
+    const columns = [['JAKARTA', item.jakarta], ['CIKARANG', item.cikarang], ['BNIB', item.bnib]];
+    return `<section class="pricelist-variant-card"><div class="pricelist-variant-title">${escapeHtmlNP(item.ram_rom)}</div><div class="pricelist-price-grid">${columns.map(([label, values]) => {
+        const prices = formatPriceValues(values);
+        return `<div class="pricelist-price-column"><span class="pricelist-price-location">${label}</span><div class="pricelist-price-values">${prices.length ? prices.map(price => `<strong>${price}</strong>`).join('') : '<strong class="is-empty">—</strong>'}</div></div>`;
+    }).join('')}</div></section>`;
 }
 
 window.openPriceListModelDetail = function(modelId) {
     const model = getPriceListModels().find(item => item.model_id === modelId);
     if (!model) return;
     const container = document.getElementById('pricelist-modal-results-container');
+    const modalTitle = document.getElementById('modal-pricelist-title');
     const subtitle = document.getElementById('modal-pricelist-subtitle');
     const countBadge = document.getElementById('modal-pricelist-count');
     if (!container) return;
 
     priceListDetailModelId = modelId;
     priceListSearchBeforeDetail = getCurrentPriceListSearch();
-    if (subtitle) subtitle.textContent = model.brand;
+    if (modalTitle) modalTitle.textContent = `${model.brand} ${model.model}`.trim();
+    if (subtitle) subtitle.textContent = '';
     if (countBadge) countBadge.textContent = '';
-    container.innerHTML = `
-        <button type="button" class="pricelist-back-button" onclick="closePriceListModal()"><i class="fa-solid fa-arrow-left"></i><span>Kembali</span></button>
-        <div class="pricelist-detail-model-title">${escapeHtmlNP(model.model)}</div>
-        <div class="pricelist-variant-list">${model.variants.sort(variantSort).map(generateNewPriceVariantCard).join('')}</div>
-    `;
+    container.innerHTML = `<div class="pricelist-variant-list">${[...model.variants].sort(variantSort).map(generateNewPriceVariantCard).join('')}</div><div class="pricelist-detail-actions"><button type="button" class="pricelist-detail-action edit" onclick="openEditPriceListModel('${escapeHtmlNP(model.model_id).replace(/'/g, '&#39;')}')"><i class="fa-solid fa-pen"></i> Edit</button><button type="button" class="pricelist-detail-action delete" onclick="deletePriceListModel('${escapeHtmlNP(model.model_id).replace(/'/g, '&#39;')}')"><i class="fa-solid fa-trash"></i> Hapus</button></div>`;
     toggleModal('pricelist-detail-modal', true);
 };
 
-window.triggerPriceListModalSearch = function() {
-    filterPriceList();
-};
+window.triggerPriceListModalSearch = function() { filterPriceList(); };
+
+(function initPriceListOverlayClose() {
+    function bind() {
+        const modal = document.getElementById('pricelist-detail-modal');
+        const card = modal ? modal.querySelector('.pricelist-detail-modal-card') : null;
+        if (!modal || !card || modal.dataset.outsideCloseBound === '1') return;
+        modal.dataset.outsideCloseBound = '1';
+        modal.addEventListener('click', function(event) { if (event.target === modal) closePriceListModal(); });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true }); else bind();
+})();
 
 window.closePriceListModal = function() {
     toggleModal('pricelist-detail-modal', false);
@@ -2784,16 +2810,234 @@ window.closePriceListModal = function() {
     filterPriceList();
 };
 
-// Compatibility stubs for legacy Price List actions; CRUD will be implemented against pricelist_new in its dedicated phase.
+function priceListSlug(value) {
+    return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 90);
+}
+
+function priceListParsePriceArray(value) {
+    if (value === null || value === undefined || value === '') return [];
+    const parts = Array.isArray(value) ? value : String(value).split(/[\/,;|]+/);
+    return parts.map(v => String(v).replace(/[^0-9]/g, '')).filter(Boolean).map(Number).filter(Number.isInteger);
+}
+
+function priceListVariantPayloadFromDom(root) {
+    const blocks = Array.from(root.querySelectorAll('.pricelist-crud-variant'));
+    const seen = new Set();
+    const variants = [];
+    for (const block of blocks) {
+        const ram = String(block.querySelector('[data-field="ram_rom"]')?.value || '').trim();
+        if (!ram) throw new Error('RAM/ROM wajib diisi pada semua variasi.');
+        const key = ram.toLowerCase().replace(/\s+/g, '');
+        if (seen.has(key)) throw new Error(`RAM/ROM ${ram} dimasukkan lebih dari sekali.`);
+        seen.add(key);
+        variants.push({
+            ram_rom: ram,
+            jakarta: priceListParsePriceArray(block.querySelector('[data-field="jakarta"]')?.value),
+            cikarang: priceListParsePriceArray(block.querySelector('[data-field="cikarang"]')?.value),
+            bnib: priceListParsePriceArray(block.querySelector('[data-field="bnib"]')?.value)
+        });
+    }
+    if (!variants.length) throw new Error('Minimal satu variasi RAM/ROM harus diisi.');
+    return variants;
+}
+
+function priceListVariantBlockHtml(variant = {}, index = 0, existingVariants = []) {
+    const existingText = existingVariants.length ? `Variasi tersedia: ${existingVariants.map(v => escapeHtmlNP(v)).join(', ')}` : '';
+    return `<div class="pricelist-crud-variant" data-variant-index="${index}">
+        <div class="pricelist-crud-variant-head"><span class="pricelist-crud-variant-title">VARIASI ${index + 1}</span>${index > 0 ? `<button type="button" class="pricelist-crud-remove" onclick="removePriceListVariant(this)" title="Hapus variasi"><i class="fa-solid fa-xmark"></i></button>` : ''}</div>
+        <div class="pricelist-crud-group"><label>RAM / ROM</label><input class="pricelist-crud-input" data-field="ram_rom" list="pricelist-ramrom-options" value="${escapeHtmlNP(variant.ram_rom || '')}" placeholder="Contoh: 8/256" autocomplete="off"><div class="pricelist-crud-existing">${existingText}</div></div>
+        <div class="pricelist-crud-price-grid">
+            <div class="pricelist-crud-group"><label>Jakarta</label><input class="pricelist-crud-input" data-field="jakarta" inputmode="numeric" value="${escapeHtmlNP((variant.jakarta || []).join(' / '))}" placeholder="Boleh kosong"></div>
+            <div class="pricelist-crud-group"><label>Cikarang</label><input class="pricelist-crud-input" data-field="cikarang" inputmode="numeric" value="${escapeHtmlNP((variant.cikarang || []).join(' / '))}" placeholder="Boleh kosong"></div>
+            <div class="pricelist-crud-group"><label>BNIB</label><input class="pricelist-crud-input" data-field="bnib" inputmode="numeric" value="${escapeHtmlNP((variant.bnib || []).join(' / '))}" placeholder="Boleh kosong"></div>
+        </div>
+    </div>`;
+}
+
+function ensurePriceListCrudModal() {
+    if (document.getElementById('pricelist-crud-modal')) return;
+    document.body.insertAdjacentHTML('beforeend', `<div class="custom-modal-overlay" id="pricelist-crud-modal"><div class="custom-modal-card pricelist-crud-modal-card"><div class="pricelist-crud-head"><div><h3 id="pricelist-crud-title">Tambah Daftar</h3><p id="pricelist-crud-subtitle">Tambah model atau variasi ke Price List</p></div><button type="button" class="pricelist-crud-close" onclick="closePriceListCrudModal()" aria-label="Tutup">&times;</button></div><div class="pricelist-crud-body" id="pricelist-crud-body"></div><div class="pricelist-crud-foot"><button type="button" class="pricelist-crud-btn cancel" onclick="closePriceListCrudModal()">Batal</button><button type="button" class="pricelist-crud-btn save" id="pricelist-crud-save" onclick="savePriceListCrud()">Simpan</button></div></div></div>`);
+}
+
+function renderPriceListCrudForm(mode, model) {
+    ensurePriceListCrudModal();
+    const body = document.getElementById('pricelist-crud-body');
+    const title = document.getElementById('pricelist-crud-title');
+    const subtitle = document.getElementById('pricelist-crud-subtitle');
+    if (!body || !title || !subtitle) return;
+    priceListCrudMode = mode;
+    priceListCrudModelId = model?.model_id || null;
+    const existingVariants = model ? model.variants.map(v => v.ram_rom).sort(variantSort) : [];
+    priceListCrudVariants = model ? model.variants.map(v => ({...v})) : [{ ram_rom: '', jakarta: [], cikarang: [], bnib: [] }];
+    title.textContent = mode === 'edit' ? 'Edit Model' : 'Tambah Daftar';
+    subtitle.textContent = mode === 'edit' ? 'Ubah data model dan variasinya tanpa memindahkan posisi model.' : 'Tambahkan model baru atau variasi ke model yang sudah ada.';
+    const brands = getPriceListBrandNames();
+    const datalist = brands.map(b => `<option value="${escapeHtmlNP(b)}"></option>`).join('');
+    const editIdentityNote = mode === 'edit' ? 'Brand dan Model dikunci agar posisi/order model tidak berubah.' : 'Jika model sudah ada, variasi baru akan masuk ke model tersebut.';
+    const brandReadonly = mode === 'edit' ? 'readonly' : '';
+    const modelReadonly = mode === 'edit' ? 'readonly' : '';
+    body.innerHTML = `<div class="pricelist-crud-group"><label>Brand</label><input class="pricelist-crud-input" id="pricelist-crud-brand" list="pricelist-brand-options" value="${escapeHtmlNP(model?.brand || '')}" placeholder="Contoh: Samsung" autocomplete="off" ${brandReadonly}><datalist id="pricelist-brand-options">${datalist}</datalist></div><div class="pricelist-crud-group"><label>Model</label><input class="pricelist-crud-input" id="pricelist-crud-model" value="${escapeHtmlNP(model?.model || '')}" placeholder="Contoh: A56 5G" autocomplete="off" ${modelReadonly}><div class="pricelist-crud-model-note" id="pricelist-crud-model-note">${editIdentityNote}</div></div><div class="pricelist-crud-group"><label>Variasi RAM / ROM + Harga</label><div id="pricelist-crud-variants">${priceListCrudVariants.map((v, i) => priceListVariantBlockHtml(v, i, existingVariants)).join('')}</div><datalist id="pricelist-ramrom-options">${existingVariants.map(v => `<option value="${escapeHtmlNP(v)}"></option>`).join('')}</datalist><button type="button" class="pricelist-crud-add-variant" onclick="addPriceListVariant()"><i class="fa-solid fa-plus"></i> Tambah Variasi</button></div>`;
+    toggleModal('pricelist-crud-modal', true);
+}
+
 window.openAddPriceListModal = function() {
-    showToast('Info', 'Tambah/edit Price List belum diaktifkan pada tampilan baru.', false);
+    if (isPublicWarrantyMode) return showToast('Info', 'Perubahan Price List hanya tersedia di aplikasi utama.', false);
+    const model = null;
+    renderPriceListCrudForm('add', model);
 };
-window.editProduct = function() {
-    showToast('Info', 'Edit Price List akan menggunakan struktur pricelist_new.', false);
+
+window.openEditPriceListModel = function(modelId) {
+    if (isPublicWarrantyMode) return showToast('Info', 'Perubahan Price List hanya tersedia di aplikasi utama.', false);
+    const model = getPriceListModels().find(item => item.model_id === modelId);
+    if (!model) return;
+    closePriceListModal();
+    renderPriceListCrudForm('edit', model);
 };
-window.deleteProduct = function() {
-    showToast('Info', 'Hapus Price List akan menggunakan struktur pricelist_new.', false);
+
+window.closePriceListCrudModal = function() {
+    toggleModal('pricelist-crud-modal', false);
+    priceListCrudMode = 'add';
+    priceListCrudModelId = null;
 };
+
+window.addPriceListVariant = function() {
+    const host = document.getElementById('pricelist-crud-variants');
+    if (!host) return;
+    const existing = priceListCrudMode === 'edit' && priceListCrudModelId ? (getPriceListModels().find(m => m.model_id === priceListCrudModelId)?.variants || []).map(v => v.ram_rom).sort() : [];
+    const index = host.querySelectorAll('.pricelist-crud-variant').length;
+    host.insertAdjacentHTML('beforeend', priceListVariantBlockHtml({ram_rom:'',jakarta:[],cikarang:[],bnib:[]}, index, existing));
+};
+
+window.removePriceListVariant = function(button) {
+    const block = button?.closest('.pricelist-crud-variant');
+    const host = document.getElementById('pricelist-crud-variants');
+    if (!block || !host) return;
+    if (host.querySelectorAll('.pricelist-crud-variant').length <= 1) return;
+    block.remove();
+    host.querySelectorAll('.pricelist-crud-variant').forEach((el, i) => {
+        const label = el.querySelector('.pricelist-crud-variant-title');
+        if (label) label.textContent = `VARIASI ${i + 1}`;
+        el.dataset.variantIndex = i;
+    });
+};
+
+function normalizePriceListModelId(brand, model, existingId = null) {
+    if (existingId) return existingId;
+    const base = priceListSlug(`${brand}-${model}`) || `model-${Date.now()}`;
+    let candidate = base;
+    let n = 2;
+    while (rawPriceListData.some(item => String(item.model_id) === candidate)) candidate = `${base}-${n++}`;
+    return candidate;
+}
+
+function priceListFindExistingModel(brand, model) {
+    const b = String(brand || '').trim().toLowerCase();
+    const m = String(model || '').trim().toLowerCase();
+    return getPriceListModels().find(item => item.brand.trim().toLowerCase() === b && item.model.trim().toLowerCase() === m) || null;
+}
+
+function priceListArrayEqual(a, b) {
+    const aa = Array.isArray(a) ? a.map(Number).filter(Number.isInteger).sort((x,y)=>x-y) : [];
+    const bb = Array.isArray(b) ? b.map(Number).filter(Number.isInteger).sort((x,y)=>x-y) : [];
+    return aa.length === bb.length && aa.every((v, i) => v === bb[i]);
+}
+
+async function priceListInsertRows(rows) {
+    const { data, error } = await supabaseClient.from('pricelist_new').insert(rows).select('model_id, brand, model, ram_rom, jakarta, cikarang, bnib');
+    if (error) throw error;
+    return data || rows;
+}
+
+window.savePriceListCrud = async function() {
+    const saveBtn = document.getElementById('pricelist-crud-save');
+    const body = document.getElementById('pricelist-crud-body');
+    if (!body) return;
+    const brand = String(document.getElementById('pricelist-crud-brand')?.value || '').trim();
+    const modelName = String(document.getElementById('pricelist-crud-model')?.value || '').trim();
+    if (!brand || !modelName) return showToast('Periksa Data', 'Brand dan Model wajib diisi.', false);
+    if (!supabaseClient || !navigator.onLine) return showToast('Gagal', 'Price List membutuhkan koneksi internet.', false);
+
+    let variants;
+    try { variants = priceListVariantPayloadFromDom(body); } catch (err) { return showToast('Periksa Data', err.message, false); }
+
+    const existingByRam = new Map();
+    rawPriceListData.filter(x => priceListCrudMode === 'edit' ? String(x.model_id) === String(priceListCrudModelId) : false).forEach(x => existingByRam.set(String(x.ram_rom).trim().toLowerCase(), x));
+    const duplicateAgainstOtherModel = variants.find(v => rawPriceListData.some(x => String(x.model_id) !== String(priceListCrudModelId || '') && String(x.brand).trim().toLowerCase() === brand.toLowerCase() && String(x.model).trim().toLowerCase() === modelName.toLowerCase() && String(x.ram_rom).trim().toLowerCase() === v.ram_rom.toLowerCase()));
+    if (duplicateAgainstOtherModel && priceListCrudMode === 'edit') return showToast('Duplikat', `RAM/ROM ${duplicateAgainstOtherModel.ram_rom} sudah dipakai pada model lain.`, false);
+
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Menyimpan...'; }
+    try {
+        const reopenModelId = priceListCrudModelId;
+        const wasEditMode = priceListCrudMode === 'edit';
+        if (priceListCrudMode === 'edit') {
+            const modelId = String(priceListCrudModelId);
+            const existingRows = rawPriceListData.filter(x => String(x.model_id) === modelId);
+            const keepKeys = new Set(variants.map(v => v.ram_rom.toLowerCase()));
+            const rowsToDelete = existingRows.filter(x => !keepKeys.has(String(x.ram_rom).trim().toLowerCase()));
+            if (rowsToDelete.length) {
+                for (const row of rowsToDelete) {
+                    const { error } = await supabaseClient.from('pricelist_new').delete().eq('model_id', modelId).eq('ram_rom', row.ram_rom);
+                    if (error) throw error;
+                }
+            }
+            for (const v of variants) {
+                const old = existingByRam.get(v.ram_rom.toLowerCase());
+                const payload = { model_id: modelId, brand, model: modelName, ram_rom: v.ram_rom, jakarta: v.jakarta, cikarang: v.cikarang, bnib: v.bnib };
+                if (old) {
+                    const { error } = await supabaseClient.from('pricelist_new').update(payload).eq('model_id', modelId).eq('ram_rom', old.ram_rom);
+                    if (error) throw error;
+                } else {
+                    await priceListInsertRows([payload]);
+                }
+            }
+            showToast('Berhasil', 'Model berhasil diperbarui dan tersinkron ke Supabase.');
+        } else {
+            const existingModel = priceListFindExistingModel(brand, modelName);
+            const modelId = existingModel ? existingModel.model_id : normalizePriceListModelId(brand, modelName);
+            const existingKeys = new Set((existingModel?.variants || []).map(v => String(v.ram_rom).trim().toLowerCase()));
+            const duplicates = variants.filter(v => existingKeys.has(v.ram_rom.toLowerCase()));
+            if (duplicates.length) return showToast('Duplikat', `${duplicates.map(v => v.ram_rom).join(', ')} sudah ada pada model tersebut.`, false);
+            const rows = variants.map(v => ({ model_id: modelId, brand, model: modelName, ram_rom: v.ram_rom, jakarta: v.jakarta, cikarang: v.cikarang, bnib: v.bnib }));
+            await priceListInsertRows(rows);
+            if (!existingModel) {
+                const maxOrder = Math.max(...Array.from(priceListModelOrder.values()).filter(Number.isFinite), -1);
+                priceListModelOrder.set(modelId, maxOrder + 1);
+            }
+            showToast('Berhasil', existingModel ? 'Variasi berhasil ditambahkan ke model yang sudah ada.' : 'Model baru berhasil ditambahkan ke Price List.');
+        }
+        closePriceListCrudModal();
+        await syncPriceListFromSupabaseOnly();
+        if (wasEditMode && reopenModelId) window.openPriceListModelDetail(reopenModelId);
+    } catch (error) {
+        console.error('CRUD Price List gagal:', error);
+        showToast('Gagal', error?.message || 'Data Price List belum berhasil disimpan.', false);
+    } finally {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; }
+    }
+};
+
+window.deletePriceListModel = async function(modelId) {
+    if (isPublicWarrantyMode) return showToast('Info', 'Perubahan Price List hanya tersedia di aplikasi utama.', false);
+    const model = getPriceListModels().find(item => item.model_id === modelId);
+    if (!model) return;
+    showCustomConfirm('Hapus Model', `Yakin ingin menghapus ${model.brand} ${model.model} beserta semua variasi dan harganya?`, async () => {
+        if (!supabaseClient || !navigator.onLine) return showToast('Gagal', 'Hapus model membutuhkan koneksi internet.', false);
+        try {
+            const { error } = await supabaseClient.from('pricelist_new').delete().eq('model_id', modelId);
+            if (error) throw error;
+            rawPriceListData = rawPriceListData.filter(item => String(item.model_id) !== String(modelId));
+            priceListModelOrder.delete(modelId);
+            closePriceListModal();
+            renderPriceListBrands();
+            filterPriceList();
+            showToast('Berhasil', `${model.brand} ${model.model} berhasil dihapus dari Price List.`);
+        } catch (error) {
+            console.error('Hapus Price List gagal:', error);
+            showToast('Gagal', error?.message || 'Model belum berhasil dihapus.', false);
+        }
+    });
+};
+
 
 /* ========================================================== */
 /* NAVIGASI & AUTHENTIKASI SUPABASE                           */
@@ -2915,7 +3159,16 @@ window.handleAutocomplete = function(query) {
     const listElem = document.getElementById('stok-autocomplete-list');
     if (!listElem) return;
 
-    const trimmed = query.trim().toLowerCase();
+    const inputElem = document.getElementById('stok-produk-input');
+    const trimmed = String(query || '').trim().toLowerCase();
+    // Jika pengguna mengedit teks setelah memilih varian, lepaskan referensi pilihan lama.
+    if (selectedStockCatalogVariant && inputElem && query !== selectedStockCatalogVariant.label) {
+        selectedStockCatalogVariant = null;
+    } else if (selectedStockCatalogVariant && query === selectedStockCatalogVariant.label) {
+        listElem.innerHTML = '';
+        listElem.classList.add('hidden');
+        return;
+    }
     if (trimmed.length < 2) {
         listElem.innerHTML = '';
         listElem.classList.add('hidden');
@@ -2923,122 +3176,142 @@ window.handleAutocomplete = function(query) {
     }
 
     const matches = rawPriceListData.filter(item => {
-        const fullStr = `${item.brand}${item.model}`.toLowerCase();
-        return fullStr.includes(trimmed);
-    });
+        const searchable = `${item.brand || ''} ${item.model || ''} ${item.ram_rom || ''}`.toLowerCase();
+        return searchable.includes(trimmed);
+    }).slice(0, 80);
 
     if (matches.length === 0) {
-        listElem.innerHTML = '<li style="color:var(--text-secondary); cursor:default; padding: 10px 12px;">Tidak ada produk yang cocok</li>';
+        listElem.innerHTML = '<li class="np-stock-autocomplete-empty">Tidak ada produk yang cocok</li>';
         listElem.classList.remove('hidden');
         return;
     }
 
-    let html = '';
-    matches.forEach(item => {
-        const labelText = `${item.brand} - ${item.model}`;
-        html += `<li onmousedown="selectStokKatalog('${labelText}')">${labelText}</li>`;
-    });
-
-    listElem.innerHTML = html;
+    listElem.innerHTML = matches.map(item => {
+        const index = rawPriceListData.indexOf(item);
+        const brand = escapeHtmlNP(String(item.brand || '').trim());
+        const model = escapeHtmlNP(String(item.model || '').trim());
+        const ramRom = escapeHtmlNP(String(item.ram_rom || '').trim());
+        return `<li class="np-stock-autocomplete-option" data-stock-catalog-index="${index}" onmousedown="selectStokKatalogByIndex(${index})"><span class="np-stock-option-model">${brand} - ${model}</span>${ramRom ? `<small>${ramRom}</small>` : '<small>Varian belum tercatat</small>'}</li>`;
+    }).join('');
     listElem.classList.remove('hidden');
 };
 
+window.selectStokKatalogByIndex = function(index) {
+    const item = rawPriceListData[Number(index)];
+    const input = document.getElementById('stok-produk-input');
+    if (!item || !input) return;
+    const brand = String(item.brand || '').trim();
+    const model = String(item.model || '').trim();
+    const ramRom = String(item.ram_rom || '').trim();
+    const label = `${brand} - ${model}${ramRom ? ` (${ramRom})` : ''}`;
+    selectedStockCatalogVariant = {
+        model_id: String(item.model_id || item.id || ''),
+        brand, model, ram_rom: ramRom, label
+    };
+    input.value = label;
+    document.getElementById('stok-autocomplete-list')?.classList.add('hidden');
+};
+
+// Backward-compatible entry point for any existing callers.
 window.selectStokKatalog = function(val) {
-    document.getElementById('stok-produk-input').value = val;
+    const input = document.getElementById('stok-produk-input');
+    if (input) input.value = val;
+    selectedStockCatalogVariant = null;
     document.getElementById('stok-autocomplete-list')?.classList.add('hidden');
 };
 
 // SIMPAN STOK DENGAN DUKUNGAN UNGGAH FOTO FISIK UNIT, HARGA DISPLAY, & NEGO
 window.simpanStokBaru = async function() {
-    let produk = document.getElementById('stok-produk-input').value.trim();
-    let imei = document.getElementById('stok-imei').value.trim();
-    let tanggal = document.getElementById('stok-tanggal').value;
+    const produk = document.getElementById('stok-produk-input').value.trim();
+    const imei = document.getElementById('stok-imei').value.trim();
+    const tanggal = document.getElementById('stok-tanggal').value;
+    const qtyInput = document.getElementById('stok-qty');
+    const qty = Number.parseInt(qtyInput?.value, 10);
     if (!produk || !imei || !tanggal) { showToast('Gagal', 'Lengkapi form stok!', false); return; }
+    if (!Number.isInteger(qty) || qty < 1) { showToast('Gagal', 'Qty minimal 1.', false); qtyInput?.focus(); return; }
+    if (!supabaseClient) { showToast('Gagal', 'Koneksi Supabase belum tersedia. Stok tidak disimpan.', false); return; }
+
+    const normalizeImei = value => String(value || '').replace(/\s+/g, '').toUpperCase();
+    const normalizedImei = normalizeImei(imei);
+    const duplicateInMemory = [...daftarProdukRiwayat, ...daftarTerjual].some(item => normalizeImei(item.imei) === normalizedImei);
+    if (duplicateInMemory) { showToast('Gagal', 'IMEI / SN ini sudah tercatat. Periksa kembali sebelum menyimpan.', false); return; }
 
     const saveBtn = document.getElementById('btn-save-stok');
     if (saveBtn) {
+        if (saveBtn.disabled) return;
         saveBtn.disabled = true;
         saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
     }
 
     const newId = 'stok-' + Date.now();
     let uploadedImageUrl = null;
+    try {
+        if (selectedStockPhotoFile) {
+            setConnectionStatus('syncing');
+            uploadedImageUrl = await uploadProductPhotoToStorage(selectedStockPhotoFile, newId);
+            if (!uploadedImageUrl) throw new Error('Foto unit gagal diunggah. Silakan coba lagi.');
+        }
 
-    if (selectedStockPhotoFile) {
+        // Cek ulang ke sumber data lokal tepat sebelum insert untuk mengurangi risiko duplikasi.
+        const duplicateBeforeInsert = [...daftarProdukRiwayat, ...daftarTerjual].some(item => normalizeImei(item.imei) === normalizedImei);
+        if (duplicateBeforeInsert) throw new Error('IMEI / SN ini sudah tercatat. Periksa kembali sebelum menyimpan.');
+
+        const displayPriceInputVal = document.getElementById('stok-display-harga')?.value.trim() || '';
+        const isNegoCheckbox = document.getElementById('stok-is-nego');
+        const isNegoVal = isNegoCheckbox ? isNegoCheckbox.checked : true;
+        const newStockItem = {
+            id: newId,
+            name: produk,
+            condition: document.getElementById('stok-kondisi').value,
+            completeness: document.getElementById('stok-kelengkapan').value,
+            imei: imei,
+            qty,
+            buy_price: parseRawToNumeric(document.getElementById('stok-harga').value) || 0,
+            sell_price: 0,
+            display_price: parseRawToNumeric(displayPriceInputVal) || 0,
+            is_nego: isNegoVal,
+            status: 'ready',
+            buyer: '',
+            date: tanggal,
+            image_url: uploadedImageUrl
+        };
+
         setConnectionStatus('syncing');
-        uploadedImageUrl = await uploadProductPhotoToStorage(selectedStockPhotoFile, newId);
-    }
+        const { error } = await supabaseClient.from('product').insert([newStockItem]);
+        if (error) throw error;
 
-    const displayPriceInputVal = document.getElementById('stok-display-harga')?.value.trim() || '';
-    const isNegoCheckbox = document.getElementById('stok-is-nego');
-    const isNegoVal = isNegoCheckbox ? isNegoCheckbox.checked : true;
+        daftarStokMasuk.unshift({
+            id: newStockItem.id, produk: newStockItem.name, kondisi: newStockItem.condition,
+            kelengkapan: newStockItem.completeness, imei: newStockItem.imei, qty: String(newStockItem.qty),
+            hargaModal: String(newStockItem.buy_price), hargaJual: '', hargaDisplay: String(newStockItem.display_price),
+            isNego: newStockItem.is_nego, pembeli: '', tanggal: newStockItem.date, imageUrl: uploadedImageUrl
+        });
+        daftarProdukRiwayat.unshift({
+            id: newStockItem.id, produk: newStockItem.name, kondisi: newStockItem.condition,
+            kelengkapan: newStockItem.completeness, imei: newStockItem.imei, qty: String(newStockItem.qty),
+            hargaModal: String(newStockItem.buy_price), hargaJual: '', hargaDisplay: String(newStockItem.display_price),
+            isNego: newStockItem.is_nego, pembeli: '', tanggal: newStockItem.date, imageUrl: uploadedImageUrl, status: 'ready'
+        });
 
-    const newStockItem = {
-        id: newId,
-        name: produk,
-        condition: document.getElementById('stok-kondisi').value,
-        completeness: document.getElementById('stok-kelengkapan').value,
-        imei: imei,
-        qty: parseInt(document.getElementById('stok-qty').value) || 1,
-        buy_price: parseRawToNumeric(document.getElementById('stok-harga').value) || 0,
-        sell_price: 0,
-        display_price: parseRawToNumeric(displayPriceInputVal) || 0,
-        is_nego: isNegoVal,
-        status: 'ready',
-        buyer: '',
-        date: tanggal,
-        image_url: uploadedImageUrl
-    };
-
-    if (supabaseClient) {
-        setConnectionStatus('syncing');
-        try {
-            const { error } = await supabaseClient.from('product').insert([newStockItem]);
-            if (error) throw error;
-
-            daftarStokMasuk.unshift({
-                id: newStockItem.id,
-                produk: newStockItem.name,
-                kondisi: newStockItem.condition,
-                kelengkapan: newStockItem.completeness,
-                imei: newStockItem.imei,
-                qty: String(newStockItem.qty),
-                hargaModal: String(newStockItem.buy_price),
-                hargaJual: '',
-                hargaDisplay: String(newStockItem.display_price),
-                isNego: newStockItem.is_nego,
-                pembeli: '',
-                tanggal: newStockItem.date,
-                imageUrl: uploadedImageUrl
-            });
-            daftarProdukRiwayat.unshift({
-                id: newStockItem.id, produk: newStockItem.name, kondisi: newStockItem.condition,
-                kelengkapan: newStockItem.completeness, imei: newStockItem.imei, qty: String(newStockItem.qty),
-                hargaModal: String(newStockItem.buy_price), hargaJual: '', hargaDisplay: String(newStockItem.display_price),
-                isNego: newStockItem.is_nego, pembeli: '', tanggal: newStockItem.date, imageUrl: uploadedImageUrl, status: 'ready'
-            });
-
-            updateDashboardStats();
-            initShowcaseBrandDropdown();
-
-            document.getElementById('stok-produk-input').value = '';
-            document.getElementById('stok-imei').value = '';
-            document.getElementById('stok-harga').value = '';
-            if (document.getElementById('stok-display-harga')) document.getElementById('stok-display-harga').value = '';
-            removeStockPhotoSelection();
-            closeAddStokModal();
-
-            setConnectionStatus('connected');
-            showToast('Tersimpan', 'Stok, display price, & foto unit tersimpan di Cloud.');
-        } catch (e) {
-            console.warn('Gagal simpan stok ke Supabase:', e);
-            setConnectionStatus('disconnected');
-            showToast('Gagal', 'Gagal menyimpan stok ke server.', false);
-        } finally {
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save`;
-            }
+        updateDashboardStats();
+        initShowcaseBrandDropdown();
+        document.getElementById('stok-produk-input').value = '';
+        document.getElementById('stok-imei').value = '';
+        document.getElementById('stok-harga').value = '';
+        if (document.getElementById('stok-display-harga')) document.getElementById('stok-display-harga').value = '';
+        selectedStockCatalogVariant = null;
+        removeStockPhotoSelection();
+        closeAddStokModal();
+        setConnectionStatus('connected');
+        showToast('Tersimpan', 'Stok, varian, display price, & foto unit tersimpan di Cloud.');
+    } catch (e) {
+        console.warn('Gagal simpan stok ke Supabase:', e);
+        setConnectionStatus('disconnected');
+        showToast('Gagal', e?.message || 'Gagal menyimpan stok ke server.', false);
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save`;
         }
     }
 };
@@ -3578,10 +3851,10 @@ window.downloadInvoiceImage = function() {
     setTimeout(() => {
         html2canvas(canvasWrap, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true }).then(canvas => {
             let link = document.createElement('a');
-            link.download = `Invoice_A4_NPGalery_${activeInvoiceData.produk.replace(/\s+/g, '_')}_${Date.now()}.png`;
+            link.download = `Invoice_A5_Landscape_NPGalery_${activeInvoiceData.produk.replace(/\s+/g, '_')}_${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-            showToast('Berhasil!', 'Nota invoice format A4 diunduh.');
+            showToast('Berhasil!', 'Nota invoice format A5 Landscape diunduh.');
         });
     }, 200);
 };

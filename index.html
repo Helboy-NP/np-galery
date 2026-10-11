@@ -178,11 +178,6 @@
 </div>
 
 <div class="sub-content active" id="sub-diagnosis">
-  <div class="np-diagnosis-intro">
-    <span class="np-kicker">QUICK TOOLS</span>
-    <h3>Diagnosis Perangkat</h3>
-    <p>Kode dial dan akses cek IMEI berdasarkan brand.</p>
-  </div>
   <div class="diagnosis-brand-selector" id="diagnosis-brand-selector" aria-label="Pilih brand diagnosis"></div>
   <div class="np-diagnosis-panel" id="np-diagnosis-panel"></div>
 </div>
@@ -192,6 +187,9 @@
   <div class="pricelist-page-header">
     <div class="pricelist-page-title">PRICE LIST</div>
     <div class="pricelist-page-subtitle">Cari model dan lihat harga per lokasi</div>
+    <button type="button" class="pricelist-add-button" onclick="openAddPriceListModal()">
+      <i class="fa-solid fa-plus"></i><span>Tambah Daftar</span>
+    </button>
   </div>
   <div class="pricelist-brand-strip" id="pricelist-brand-chips" aria-label="Pilih brand"></div>
   <div class="pricelist-search-box">
@@ -442,28 +440,30 @@
     <div class="np-stock-sheet-body">
       <section class="np-stock-section">
         <div class="np-stock-section-title"><span>UNIT</span><small>Produk & kondisi</small></div>
-        <div class="add-form-group np-stock-photo-group">
-          <label><i class="fa-solid fa-camera"></i> Foto Fisik Unit (Opsional)</label>
-          <div class="stock-photo-upload-wrap">
-            <input accept="image/*" id="stok-foto-input" onchange="handleStockPhotoSelect(this)" style="display: none;" type="file"/>
-            <button class="btn-upload-photo-pill" onclick="document.getElementById('stok-foto-input').click()" type="button">
-              <i class="fa-solid fa-image"></i> Pilih / Ambil Foto Unit
-            </button>
-            <div class="stock-photo-preview-box hidden" id="stok-foto-preview-box">
-              <img alt="Preview Foto Unit" id="stok-foto-preview-img" src=""/>
-              <button class="btn-remove-photo" onclick="removeStockPhotoSelection()" title="Hapus Foto" type="button">
-                <i class="fa-solid fa-xmark"></i>
+        <div class="np-stock-unit-picker">
+          <div class="add-form-group np-stock-photo-group">
+            <label><i class="fa-solid fa-camera"></i> Foto Unit <span>(Opsional)</span></label>
+            <div class="stock-photo-upload-wrap">
+              <input accept="image/*" id="stok-foto-input" onchange="handleStockPhotoSelect(this)" style="display: none;" type="file"/>
+              <button class="btn-upload-photo-pill" onclick="document.getElementById('stok-foto-input').click()" type="button">
+                <i class="fa-solid fa-image"></i> Pilih / Ambil Foto
               </button>
+              <div class="stock-photo-preview-box hidden" id="stok-foto-preview-box">
+                <img alt="Preview Foto Unit" id="stok-foto-preview-img" src=""/>
+                <button class="btn-remove-photo" onclick="removeStockPhotoSelection()" title="Hapus Foto" type="button">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="add-form-group position-relative">
-          <label>Select Phone Model</label>
-          <div class="autocomplete-wrapper">
-            <i class="fa-solid fa-magnifying-glass icon-search-glass"></i>
-            <input autocomplete="off" id="stok-produk-input" onfocus="handleAutocomplete(this.value)" onkeyup="handleAutocomplete(this.value)" placeholder="Search - - -" type="text"/>
-            <ul class="autocomplete-list hidden" id="stok-autocomplete-list"></ul>
+          <div class="add-form-group position-relative np-stock-model-group">
+            <label>Select Phone Model + RAM/ROM</label>
+            <div class="autocomplete-wrapper">
+              <i class="fa-solid fa-magnifying-glass icon-search-glass"></i>
+              <input autocomplete="off" id="stok-produk-input" onfocus="handleAutocomplete(this.value)" oninput="handleAutocomplete(this.value)" placeholder="Cari model / RAM / ROM" type="text"/>
+              <ul class="autocomplete-list hidden" id="stok-autocomplete-list"></ul>
+            </div>
           </div>
         </div>
 
@@ -506,19 +506,19 @@
 
       <section class="np-stock-section">
         <div class="np-stock-section-title"><span>HARGA & TANGGAL</span><small>Informasi transaksi</small></div>
-        <div class="add-price-row">
-          <div class="add-form-group half-width">
+        <div class="np-stock-price-grid">
+          <div class="add-form-group">
             <label>Equity (Modal)</label>
             <input id="stok-harga" placeholder="Contoh: 1.500.000" type="text"/>
           </div>
-          <div class="add-form-group half-width">
+          <div class="add-form-group">
             <label>Date</label>
             <input id="stok-tanggal" type="date"/>
           </div>
-        </div>
-        <div class="add-form-group">
-          <label><i class="fa-solid fa-store"></i> Display Price (Katalog)</label>
-          <input id="stok-display-harga" placeholder="Contoh: 1.850.000" type="text"/>
+          <div class="add-form-group">
+            <label><i class="fa-solid fa-store"></i> Display Price</label>
+            <input id="stok-display-harga" placeholder="1.850.000" type="text"/>
+          </div>
         </div>
       </section>
     </div>
@@ -854,12 +854,11 @@
 <!-- MODAL DETAIL PRICE LIST -->
 <div class="custom-modal-overlay" id="pricelist-detail-modal">
   <div class="custom-modal-card pricelist-detail-modal-card">
-    <div class="edit-modal-header pricelist-detail-header">
-      <div>
-        <h3><i class="fa-solid fa-tags" style="color: var(--azure-primary); margin-right: 6px;"></i> Price List</h3>
-        <p id="modal-pricelist-subtitle">Smartphone price list</p>
-      </div>
-      <span class="badge-count" id="modal-pricelist-count"></span>
+    <div class="pricelist-detail-header">
+      <h3 id="modal-pricelist-title"></h3>
+      <button type="button" class="pricelist-detail-close" onclick="closePriceListModal()" title="Tutup" aria-label="Tutup Price List">&times;</button>
+      <p id="modal-pricelist-subtitle" aria-hidden="true"></p>
+      <span class="badge-count" id="modal-pricelist-count" aria-hidden="true"></span>
     </div>
     <div id="pricelist-modal-results-container" class="pricelist-detail-scroll"></div>
   </div>
@@ -1018,7 +1017,7 @@
 <div id="story-banner-canvas-wrap" style="position: absolute; left: -9999px; top: 0; width: 480px; z-index: -1;">
 <div class="elegant-story-card" id="story-banner-canvas"></div>
 </div>
-<div id="invoice-render-canvas-wrap" style="position: absolute; left: -9999px; top: 0; width: 794px; z-index: -1;">
+<div id="invoice-render-canvas-wrap" style="position: absolute; left: -9999px; top: 0; width: 794px; height: 559px; z-index: -1;">
 <div id="invoice-render-canvas"></div>
 </div>
 <div class="toast-container" id="toast-container"></div>
