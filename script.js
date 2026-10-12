@@ -528,17 +528,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Akses aplikasi admin ditentukan oleh sesi Supabase, bukan flag localStorage.
+    if (authModal) authModal.classList.remove('hidden');
     if (supabaseClient) {
-        const { data: sessionData } = await supabaseClient.auth.getSession();
-        if (sessionData && sessionData.session) {
-            localStorage.setItem('npgalery_logged_in', 'true');
-            if (authModal) authModal.classList.add('hidden');
-        } else {
-            const isLoggedIn = localStorage.getItem('npgalery_logged_in');
-            if (authModal) {
-                if (isLoggedIn === 'true') authModal.classList.add('hidden');
-                else authModal.classList.remove('hidden');
+        try {
+            const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+            if (sessionError) throw sessionError;
+            if (sessionData?.session) {
+                if (authModal) authModal.classList.add('hidden');
+            } else {
+                // Hapus flag lama agar tidak lagi dipakai sebagai bukti login.
+                localStorage.removeItem('npgalery_logged_in');
+                if (authModal) authModal.classList.remove('hidden');
             }
+        } catch (authError) {
+            console.error('Pemeriksaan sesi Supabase gagal:', authError);
+            if (authModal) authModal.classList.remove('hidden');
+            showToast('Sesi belum dapat diverifikasi', 'Silakan login kembali setelah koneksi tersedia.', false);
         }
     }
 
@@ -2064,29 +2070,20 @@ window.saveNpTransactionEdit = async function() {
 };
 window.deleteNpTransaction = function(type, encodedId) {
     const id = decodeURIComponent(String(encodedId || ''));
-    showCustomConfirm('Hapus Transaksi', type === 'masuk' ? 'Hapus riwayat transaksi masuk ini? Unit juga akan dihapus dari stok.' : 'Hapus transaksi keluar ini? Invoice/riwayat penjualannya juga akan terhapus.', async () => {
+    showCustomConfirm('Hapus Transaksi', type === 'masuk' ? 'Hapus riwayat transaksi masuk ini? Unit juga akan dihapus dari stok.' : 'Hapus riwayat penjualan ini? Stok tetap dianggap terjual dan tidak akan dikembalikan.', async () => {
         try {
             setConnectionStatus('syncing');
             if (type === 'masuk') {
                 if (supabaseClient) { const {error}=await supabaseClient.from('product').delete().eq('id',id); if(error) throw error; }
                 daftarProdukRiwayat = daftarProdukRiwayat.filter(x=>String(x.id)!==id); daftarStokMasuk=daftarStokMasuk.filter(x=>String(x.id)!==id);
             } else {
-                const soldItem = daftarTerjual.find(x=>String(x.id)===id);
+                /* Hapus catatan penjualan saja. Jangan ubah status produk menjadi ready
+                   dan jangan masukkan kembali ke daftar stok: barang sudah terjual. */
                 if (supabaseClient) {
-                    const {error}=await supabaseClient.from('transactions').delete().eq('id',id); if(error) throw error;
-                    if (soldItem?.productId) {
-                        const {error:restoreError}=await supabaseClient.from('product').update({status:'ready', buyer:''}).eq('id',soldItem.productId);
-                        if (restoreError) throw restoreError;
-                    }
+                    const {error}=await supabaseClient.from('transactions').delete().eq('id',id);
+                    if(error) throw error;
                 }
                 daftarTerjual=daftarTerjual.filter(x=>String(x.id)!==id);
-                if (soldItem?.productId) {
-                    const history=daftarProdukRiwayat.find(x=>String(x.id)===String(soldItem.productId));
-                    if (history) { history.status='ready'; history.pembeli=''; history.hargaJual=history.hargaJual || ''; }
-                    if (history && !daftarStokMasuk.some(x=>String(x.id)===String(history.id))) {
-                        const {status,...activeItem}=history; daftarStokMasuk.unshift({...activeItem});
-                    }
-                }
             }
             renderTransaksiCompact(); renderDaftarTerjual(); updateDashboardStats(); renderHomeShowcase();
             setConnectionStatus('connected'); showToast('Berhasil','Transaksi berhasil dihapus.');
@@ -3063,12 +3060,21 @@ function toggleTheme() {
 }
 
 function handleLogout() {
-    showCustomConfirm("Keluar", "Yakin ingin keluar?", async () => { 
-        if (supabaseClient) {
-            try { await supabaseClient.auth.signOut(); } catch (err) {}
+    showCustomConfirm("Keluar", "Yakin ingin keluar?", async () => {
+        if (!supabaseClient) {
+            showToast('Gagal Logout', 'Koneksi autentikasi belum siap. Coba lagi saat koneksi tersedia.', false);
+            return;
         }
-        localStorage.setItem('npgalery_logged_in', 'false'); 
-        document.getElementById('auth-modal')?.classList.remove('hidden'); 
+        try {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) throw error;
+            localStorage.removeItem('npgalery_logged_in');
+            document.getElementById('auth-modal')?.classList.remove('hidden');
+            showToast('Logout berhasil', 'Sesi admin telah diakhiri.');
+        } catch (err) {
+            console.error('Logout Supabase gagal:', err);
+            showToast('Logout belum berhasil', 'Sesi belum dapat diakhiri. Periksa koneksi lalu coba lagi.', false);
+        }
     });
 }
 
@@ -3095,7 +3101,8 @@ async function handleLogin(e) {
 
         if (error) throw error;
 
-        localStorage.setItem('npgalery_logged_in', 'true');
+        // Jangan menyimpan status login sebagai flag lokal; sesi Supabase adalah sumber kebenaran.
+        localStorage.removeItem('npgalery_logged_in');
         document.getElementById('auth-modal')?.classList.add('hidden');
         if (document.getElementById('auth-username')) document.getElementById('auth-username').value = '';
         if (document.getElementById('auth-password')) document.getElementById('auth-password').value = '';
@@ -3732,8 +3739,8 @@ function renderInvoiceQRCode(containerId, item) {
     if (window.QRCode) {
         new QRCode(el, {
             text: warrantyTargetUrl,
-            width: 90,
-            height: 90,
+            width: 180,
+            height: 180,
             colorDark: "#000000",
             colorLight: "#FFFFFF",
             correctLevel: QRCode.CorrectLevel.H
@@ -3907,7 +3914,12 @@ window.openWarrantyCertificateModal = function(unitIdOrObject) {
     const body = document.getElementById('warranty-certificate-body');
     if (!body) return;
 
-    const brand = item.produk.split(' ')[0].toUpperCase();
+    const safeProductName = escapeHtmlNP(item.produk || 'Produk');
+    const safeImei = escapeHtmlNP(item.imei || '-');
+    const safeCondition = escapeHtmlNP(item.kondisi || '-');
+    const safeCompleteness = escapeHtmlNP(item.kelengkapan || '-');
+    const safeBuyer = escapeHtmlNP(item.pembeli || 'Pelanggan Setia');
+    const brand = escapeHtmlNP((item.produk || 'Produk').split(' ')[0].toUpperCase());
     const tglBeliRaw = item.tanggalTerjualRaw || item.tanggal || new Date().toISOString().slice(0, 10);
     const countdownInfo = calculateWarrantyCountdown(tglBeliRaw);
 
@@ -3924,7 +3936,7 @@ window.openWarrantyCertificateModal = function(unitIdOrObject) {
             <div class="warranty-cert-hero">
                 <div>
                     <span class="price-card-brand" style="${getBrandStyle(brand)}">${brand}</span>
-                    <h3 style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin-top: 4px;">${item.produk}</h3>
+                    <h3 style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin-top: 4px;">${safeProductName}</h3>
                 </div>
                 <div class="warranty-cert-badge-wrap">
                     ${statusBadgeHtml}
@@ -3944,11 +3956,11 @@ window.openWarrantyCertificateModal = function(unitIdOrObject) {
             <div class="warranty-details-stack">
                 <div class="warranty-detail-row">
                     <span class="w-label">Nomor IMEI / SN</span>
-                    <span class="w-val mono">${item.imei || '-'}</span>
+                    <span class="w-val mono">${safeImei}</span>
                 </div>
                 <div class="warranty-detail-row">
                     <span class="w-label">Kondisi & Kelengkapan</span>
-                    <span class="w-val">${item.kondisi} • ${item.kelengkapan}</span>
+                    <span class="w-val">${safeCondition} • ${safeCompleteness}</span>
                 </div>
                 <div class="warranty-detail-row">
                     <span class="w-label">Tanggal Pembelian</span>
@@ -3956,7 +3968,7 @@ window.openWarrantyCertificateModal = function(unitIdOrObject) {
                 </div>
                 <div class="warranty-detail-row">
                     <span class="w-label">Nama Pemilik</span>
-                    <span class="w-val">${item.pembeli || 'Pelanggan Setia'}</span>
+                    <span class="w-val">${safeBuyer}</span>
                 </div>
             </div>
 
@@ -4036,56 +4048,55 @@ window.claimWarrantyViaWhatsApp = function() {
 
 async function checkUrlForWarrantyParam() {
     const urlParams = new URLSearchParams(window.location.search);
-    const warrantyId = urlParams.get('warranty');
+    const warrantyId = (urlParams.get('warranty') || '').trim();
     if (!warrantyId) return;
 
     const authModal = document.getElementById('auth-modal');
     if (authModal) authModal.classList.add('hidden');
 
-    let found = daftarTerjual.find(t => t.id === warrantyId) || daftarStokMasuk.find(s => s.id === warrantyId);
-
+    // Jika data sudah tersedia dari sesi aplikasi internal, gunakan data lokal.
+    // Mode publik biasanya tidak memuat dataset internal sehingga menggunakan RPC terbatas.
+    const found = daftarTerjual.find(t => t.id === warrantyId) || daftarStokMasuk.find(s => s.id === warrantyId);
     if (found) {
         openWarrantyCertificateModal(found);
-    } else if (supabaseClient) {
-        try {
-            const { data: trxData } = await supabaseClient.from('transactions').select('*').eq('id', warrantyId).maybeSingle();
-            if (trxData) {
-                openWarrantyCertificateModal({
-                    id: trxData.id,
-                    produk: trxData.product_name,
-                    kondisi: trxData.condition || 'Second',
-                    kelengkapan: trxData.completeness || 'Fullset',
-                    imei: trxData.imei || '-',
-                    qty: String(trxData.qty || 1),
-                    hargaModal: '0',
-                    hargaJual: String(trxData.sell_price || 0),
-                    pembeli: trxData.customer_name || '',
-                    tanggal: trxData.date || '',
-                    tanggalTerjualRaw: trxData.sold_date || (trxData.created_at ? trxData.created_at.slice(0, 10) : '')
-                });
-            } else {
-                const { data: prodData } = await supabaseClient.from('product').select('*').eq('id', warrantyId).maybeSingle();
-                if (prodData) {
-                    openWarrantyCertificateModal({
-                        id: prodData.id,
-                        produk: prodData.name,
-                        kondisi: prodData.condition || 'Second',
-                        kelengkapan: prodData.completeness || 'Fullset',
-                        imei: prodData.imei || '-',
-                        qty: String(prodData.qty || 1),
-                        hargaModal: '0',
-                        hargaJual: String(prodData.sell_price || 0),
-                        pembeli: prodData.buyer || '',
-                        tanggal: prodData.date || '',
-                        tanggalTerjualRaw: prodData.date || (prodData.created_at ? prodData.created_at.slice(0, 10) : '')
-                    });
-                } else {
-                    showToast('Info', 'Data kartu garansi unit tidak ditemukan.', false);
-                }
-            }
-        } catch (err) {
-            console.warn('Gagal memuat garansi publik:', err);
+        return;
+    }
+
+    if (!supabaseClient) {
+        showToast('Garansi tidak tersedia', 'Koneksi layanan garansi belum siap. Silakan coba kembali.', false);
+        return;
+    }
+
+    try {
+        // Jangan membaca langsung tabel internal atau memakai select('*') pada jalur publik.
+        // RPC aman mengembalikan IMEI tersamarkan dan tidak membocorkan nama pelanggan.
+        const { data, error } = await supabaseClient.rpc('lookup_warranty_public_safe', {
+            p_warranty_id: warrantyId
+        });
+        if (error) throw error;
+
+        const warranty = Array.isArray(data) ? data[0] : data;
+        if (!warranty) {
+            showToast('Info', 'Data kartu garansi unit tidak ditemukan.', false);
+            return;
         }
+
+        openWarrantyCertificateModal({
+            id: warranty.warranty_id,
+            produk: warranty.product_name || 'Produk',
+            kondisi: warranty.product_condition || 'Second',
+            kelengkapan: warranty.product_completeness || 'Fullset',
+            imei: warranty.imei || '-',
+            qty: '1',
+            hargaModal: '0',
+            hargaJual: '0',
+            pembeli: warranty.customer_name || '',
+            tanggal: warranty.purchase_date || '',
+            tanggalTerjualRaw: warranty.purchase_date || ''
+        });
+    } catch (err) {
+        console.warn('Gagal memuat garansi publik melalui lookup aman:', err);
+        showToast('Garansi belum dapat dimuat', 'Layanan garansi perlu disiapkan di Supabase terlebih dahulu. Silakan coba lagi nanti.', false);
     }
 }
 

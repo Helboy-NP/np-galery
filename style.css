@@ -6277,8 +6277,8 @@ body.dark-mode .pricelist-crud-variant{background:var(--bg-card);}
 }
 .invoice-qr-wrap { margin-bottom: 1px !important; }
 .invoice-qr-box {
-    width: 76px !important;
-    height: 76px !important;
+    width: 104px !important;
+    height: 104px !important;
     padding: 3px !important;
     border: 1px solid #D8D2CB !important;
     border-radius: 4px !important;
